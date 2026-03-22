@@ -4,9 +4,18 @@ import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { config } from '../../config.js';
 import { UnauthorizedError } from '../../lib/errors.js';
+import { hashPassword } from '../../lib/hash.js';
 import { signAccessToken, signRefreshToken } from '../../lib/jwt.js';
 import { prisma } from '../../lib/prisma.js';
 import { buildCapabilities } from '../auth/auth.service.js';
+
+const DEMO_OWNER_EMAIL = 'admin@kort.local';
+const DEMO_OWNER_PHONE = '+77010000001';
+const DEMO_OWNER_PASSWORD = 'demo1234';
+const DEMO_OWNER_NAME = 'Demo Owner';
+const DEMO_ORG_ID = 'org-demo';
+const DEMO_ORG_NAME = 'Demo Company';
+const DEMO_ORG_SLUG = 'demo-company';
 
 function safeCompare(provided: string, expected: string): boolean {
   const pa = Buffer.allocUnsafe(128);
@@ -20,9 +29,94 @@ function safeCompare(provided: string, expected: string): boolean {
 
 const accessSchema = z.object({ password: z.string().min(1) });
 
-export async function serviceRoutes(app: FastifyInstance) {
-  if (process.env.NODE_ENV === 'production') return;
+async function ensureServiceOwnerMembership() {
+  const existing = await prisma.membership.findFirst({
+    where: { role: 'owner', status: 'active' },
+    include: { user: true, org: true },
+    orderBy: { joinedAt: 'asc' },
+  });
 
+  if (existing) {
+    return existing;
+  }
+
+  const passwordHash = await hashPassword(DEMO_OWNER_PASSWORD);
+
+  await prisma.$transaction(async (tx) => {
+    const owner = await tx.user.upsert({
+      where: { email: DEMO_OWNER_EMAIL },
+      update: {
+        fullName: DEMO_OWNER_NAME,
+        phone: DEMO_OWNER_PHONE,
+        status: 'active',
+      },
+      create: {
+        id: 'u-owner',
+        email: DEMO_OWNER_EMAIL,
+        phone: DEMO_OWNER_PHONE,
+        fullName: DEMO_OWNER_NAME,
+        password: passwordHash,
+        status: 'active',
+      },
+    });
+
+    const org = await tx.organization.upsert({
+      where: { slug: DEMO_ORG_SLUG },
+      update: {
+        name: DEMO_ORG_NAME,
+        currency: 'KZT',
+        mode: 'advanced',
+        onboardingCompleted: true,
+      },
+      create: {
+        id: DEMO_ORG_ID,
+        name: DEMO_ORG_NAME,
+        slug: DEMO_ORG_SLUG,
+        currency: 'KZT',
+        mode: 'advanced',
+        onboardingCompleted: true,
+      },
+    });
+
+    await tx.membership.upsert({
+      where: { userId_orgId: { userId: owner.id, orgId: org.id } },
+      update: {
+        role: 'owner',
+        status: 'active',
+        source: 'service_bootstrap',
+        joinedAt: new Date(),
+        employeeAccountStatus: 'active',
+      },
+      create: {
+        userId: owner.id,
+        orgId: org.id,
+        role: 'owner',
+        status: 'active',
+        source: 'service_bootstrap',
+        joinedAt: new Date(),
+        employeeAccountStatus: 'active',
+      },
+    });
+
+    await tx.chapanProfile.upsert({
+      where: { orgId: org.id },
+      update: {},
+      create: {
+        orgId: org.id,
+        displayName: 'Чапан Цех',
+        descriptor: 'Demo workspace',
+      },
+    });
+  });
+
+  return prisma.membership.findFirstOrThrow({
+    where: { role: 'owner', status: 'active' },
+    include: { user: true, org: true },
+    orderBy: { joinedAt: 'asc' },
+  });
+}
+
+export async function serviceRoutes(app: FastifyInstance) {
   // POST /api/v1/service/access
   app.post('/access', async (request, reply) => {
     const body = accessSchema.parse(request.body);
@@ -31,15 +125,7 @@ export async function serviceRoutes(app: FastifyInstance) {
       throw new UnauthorizedError('Access denied.');
     }
 
-    const membership = await prisma.membership.findFirst({
-      where: { role: 'owner', status: 'active' },
-      include: { user: true, org: true },
-      orderBy: { joinedAt: 'asc' },
-    });
-
-    if (!membership) {
-      throw new UnauthorizedError('No active owner found. Run the seed script first.');
-    }
+    const membership = await ensureServiceOwnerMembership();
 
     const { user, org } = membership;
     const jti = nanoid();
