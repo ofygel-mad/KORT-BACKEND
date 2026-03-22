@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.db
+*.db-journal
+
+# DB reports — contain raw data including password hashes and tokens, NEVER commit
+../_database-report/

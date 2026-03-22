@@ -1,0 +1,853 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  AUTH & IDENTITY
+// ═══════════════════════════════════════════════════════════════
+
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique          // nullable — phone-only employees may have no email
+  phone     String?  @unique          // unique: used as login identifier for employees
+  fullName  String   @map("full_name")
+  avatarUrl String?  @map("avatar_url")
+  password  String
+  status    String   @default("active") // active | pending | inactive
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  refreshTokens RefreshToken[]
+  memberships   Membership[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ORGANIZATIONS & MEMBERSHIPS
+// ═══════════════════════════════════════════════════════════════
+
+model Organization {
+  id                  String   @id @default(cuid())
+  name                String
+  slug                String   @unique
+  mode                String   @default("basic") // basic | advanced | industrial
+  currency            String   @default("KZT")
+  industry            String?
+  onboardingCompleted Boolean  @default(false) @map("onboarding_completed")
+
+  // Extended org profile (Settings → Организация)
+  legalName   String? @map("legal_name")
+  bin         String?
+  iin         String?
+  legalForm   String? @map("legal_form")
+  director    String?
+  accountant  String?
+  address     String?
+  city        String?
+  phone       String?
+  email       String?
+  website     String?
+  bankName    String? @map("bank_name")
+  bankBik     String? @map("bank_bik")
+  bankAccount String? @map("bank_account")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memberships        Membership[]
+  invites            Invite[]
+  membershipRequests MembershipRequest[]
+
+  // CRM
+  customers Customer[]
+  leads     Lead[]
+  deals     Deal[]
+  tasks     Task[]
+
+  // Chapan workshop
+  chapanProfile  ChapanProfile?
+  chapanClients  ChapanClient[]
+  chapanOrders   ChapanOrder[]
+  chapanRequests ChapanRequest[]
+  chapanWorkers  ChapanWorker[]
+  chapanProducts ChapanCatalogProduct[]
+  chapanFabrics  ChapanCatalogFabric[]
+  chapanSizes    ChapanCatalogSize[]
+
+  // Warehouse
+  warehouseItems       WarehouseItem[]
+  warehouseCategories  WarehouseCategory[]
+  warehouseMovements   WarehouseMovement[]
+  warehouseReservations WarehouseReservation[]
+  warehouseBomLines    WarehouseBOMLine[]
+  warehouseAlerts      WarehouseAlert[]
+  warehouseLots        WarehouseLot[]
+  warehouseLocations   WarehouseLocation[]
+
+  // Accounting
+  accountingEntries    AccountingEntry[]
+  accountingGaps       AccountingGap[]
+  importTemplates      ImportTemplate[]
+
+  @@map("organizations")
+}
+
+model Membership {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  orgId  String @map("org_id")
+  role   String @default("viewer") // owner | admin | manager | viewer
+
+  // Org membership lifecycle
+  status   String    @default("pending") // pending | active | rejected
+  source   String    @default("manual")  // company_registration | admin_added | invite | request | manual
+  joinedAt DateTime? @map("joined_at")
+
+  // Employee-specific fields (populated when source = 'admin_added')
+  department             String   @default("")
+  employeePermissions    String[] @default([]) @map("employee_permissions")
+  addedById              String?  @map("added_by_id") // userId of admin who created this employee
+  addedByName            String?  @map("added_by_name")
+  employeeAccountStatus  String   @default("active") @map("employee_account_status")
+  // ^ values: active | pending_first_login | dismissed
+  // 'dismissed' = fired, login blocked; 'pending_first_login' = phone+phone auth required
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, orgId])
+  @@index([orgId])
+  @@map("memberships")
+}
+
+model Invite {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  orgId       String    @map("org_id")
+  role        String    @default("manager")
+  autoApprove Boolean   @default(true) @map("auto_approve")
+  kind        String    @default("referral") // invite | referral
+  createdBy   String    @map("created_by")
+  expiresAt   DateTime? @map("expires_at")
+  usedAt      DateTime? @map("used_at")
+  usedBy      String?   @map("used_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("invites")
+}
+
+model MembershipRequest {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  orgId         String   @map("org_id")
+  fullName      String   @map("full_name")
+  email         String
+  requestedRole String   @default("viewer") @map("requested_role")
+  status        String   @default("pending") // pending | approved | rejected
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, status])
+  @@map("membership_requests")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CRM: CUSTOMERS
+// ═══════════════════════════════════════════════════════════════
+
+model Customer {
+  id          String   @id @default(cuid())
+  orgId       String   @map("org_id")
+  fullName    String   @map("full_name")
+  phone       String?
+  email       String?
+  companyName String?  @map("company_name")
+  status      String   @default("new")
+  source      String?  @default("manual")
+  notes       String?
+  tags        String[] @default([])
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  leads Lead[]
+  deals Deal[]
+
+  @@index([orgId])
+  @@map("customers")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CRM: LEADS
+// ═══════════════════════════════════════════════════════════════
+
+model Lead {
+  id            String    @id @default(cuid())
+  orgId         String    @map("org_id")
+  customerId    String?   @map("customer_id")
+  fullName      String    @map("full_name")
+  phone         String
+  email         String?
+  companyName   String?   @map("company_name")
+  source        String
+  stage         String    @default("new")
+  pipeline      String    @default("qualifier")
+  assignedTo    String?   @map("assigned_to")
+  assignedName  String?   @map("assigned_name")
+  callbackAt    DateTime? @map("callback_at")
+  meetingAt     DateTime? @map("meeting_at")
+  budget        Float?
+  comment       String?
+  checklistDone String[]  @default([]) @map("checklist_done")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  history  LeadHistory[]
+
+  @@index([orgId, pipeline, stage])
+  @@map("leads")
+}
+
+model LeadHistory {
+  id        String   @id @default(cuid())
+  leadId    String   @map("lead_id")
+  type      String
+  content   String
+  author    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@map("lead_history")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CRM: DEALS
+// ═══════════════════════════════════════════════════════════════
+
+model Deal {
+  id              String    @id @default(cuid())
+  orgId           String    @map("org_id")
+  customerId      String?   @map("customer_id")
+  leadId          String?   @map("lead_id")
+  fullName        String    @map("full_name")
+  phone           String?
+  email           String?
+  companyName     String?   @map("company_name")
+  source          String?
+  title           String
+  stage           String    @default("awaiting_meeting")
+  value           Float     @default(0)
+  probability     Int       @default(20)
+  currency        String    @default("KZT")
+  assignedTo      String?   @map("assigned_to")
+  assignedName    String?   @map("assigned_name")
+  qualifierName   String?   @map("qualifier_name")
+  expectedCloseAt DateTime? @map("expected_close_at")
+  meetingAt       DateTime? @map("meeting_at")
+  stageEnteredAt  DateTime  @default(now()) @map("stage_entered_at")
+  wonAt           DateTime? @map("won_at")
+  lostAt          DateTime? @map("lost_at")
+  lostReason      String?   @map("lost_reason")
+  lostComment     String?   @map("lost_comment")
+  notes           String?
+  checklistDone   String[]  @default([]) @map("checklist_done")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  org        Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer   Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  activities DealActivity[]
+  tasks      Task[]
+
+  @@index([orgId, stage])
+  @@map("deals")
+}
+
+model DealActivity {
+  id        String   @id @default(cuid())
+  dealId    String   @map("deal_id")
+  type      String
+  content   String
+  author    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@map("deal_activities")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CRM: TASKS
+// ═══════════════════════════════════════════════════════════════
+
+model Task {
+  id                String    @id @default(cuid())
+  orgId             String    @map("org_id")
+  dealId            String?   @map("deal_id")
+  title             String
+  description       String?
+  status            String    @default("todo")
+  priority          String    @default("medium")
+  assignedTo        String?   @map("assigned_to")
+  assignedName      String?   @map("assigned_name")
+  createdBy         String?   @map("created_by")
+  taskType          String    @default("manual") @map("task_type")
+  dueDate           DateTime? @map("due_date")
+  completedAt       DateTime? @map("completed_at")
+  linkedEntityType  String?   @map("linked_entity_type")
+  linkedEntityId    String?   @map("linked_entity_id")
+  linkedEntityTitle String?   @map("linked_entity_title")
+  tags              String[]  @default([])
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  org        Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  deal       Deal?          @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  subtasks   TaskSubtask[]
+  activities TaskActivity[]
+
+  @@index([orgId, status])
+  @@map("tasks")
+}
+
+model TaskSubtask {
+  id        String   @id @default(cuid())
+  taskId    String   @map("task_id")
+  title     String
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_subtasks")
+}
+
+model TaskActivity {
+  id        String   @id @default(cuid())
+  taskId    String   @map("task_id")
+  type      String
+  content   String
+  author    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_activities")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CHAPAN WORKSHOP
+// ═══════════════════════════════════════════════════════════════
+
+model ChapanProfile {
+  id                      String  @id @default(cuid())
+  orgId                   String  @unique @map("org_id")
+  displayName             String  @default("Чапан") @map("display_name")
+  descriptor              String  @default("")
+  orderPrefix             String  @default("ЧП") @map("order_prefix")
+  orderCounter            Int     @default(0) @map("order_counter")
+  requestCounter          Int     @default(0) @map("request_counter")
+  publicIntakeTitle       String  @default("Оставьте заявку на пошив") @map("public_intake_title")
+  publicIntakeDescription String  @default("") @map("public_intake_description")
+  publicIntakeEnabled     Boolean @default(true) @map("public_intake_enabled")
+  supportLabel            String  @default("") @map("support_label")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@map("chapan_profiles")
+}
+
+model ChapanWorker {
+  id    String @id @default(cuid())
+  orgId String @map("org_id")
+  name  String
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, name])
+  @@map("chapan_workers")
+}
+
+model ChapanCatalogProduct {
+  id    String @id @default(cuid())
+  orgId String @map("org_id")
+  name  String
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, name])
+  @@map("chapan_catalog_products")
+}
+
+model ChapanCatalogFabric {
+  id    String @id @default(cuid())
+  orgId String @map("org_id")
+  name  String
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, name])
+  @@map("chapan_catalog_fabrics")
+}
+
+model ChapanCatalogSize {
+  id    String @id @default(cuid())
+  orgId String @map("org_id")
+  name  String
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, name])
+  @@map("chapan_catalog_sizes")
+}
+
+model ChapanClient {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  fullName  String   @map("full_name")
+  phone     String
+  email     String?
+  company   String?
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org    Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orders ChapanOrder[]
+
+  @@index([orgId])
+  @@map("chapan_clients")
+}
+
+model ChapanRequest {
+  id               String    @id @default(cuid())
+  orgId            String    @map("org_id")
+  requestNumber    String    @map("request_number")
+  customerName     String    @map("customer_name")
+  phone            String
+  messengers       String[]  @default([])
+  city             String?
+  deliveryMethod   String?   @map("delivery_method")
+  leadSource       String?   @map("lead_source")
+  preferredContact String    @default("phone") @map("preferred_contact")
+  desiredDate      DateTime? @map("desired_date")
+  notes            String?
+  source           String    @default("public_form")
+  status           String    @default("new")
+  createdOrderId   String?   @map("created_order_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  org   Organization        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  items ChapanRequestItem[]
+
+  @@index([orgId, status])
+  @@map("chapan_requests")
+}
+
+model ChapanRequestItem {
+  id               String  @id @default(cuid())
+  requestId        String  @map("request_id")
+  productName      String  @map("product_name")
+  fabricPreference String? @map("fabric_preference")
+  size             String?
+  quantity         Int     @default(1)
+  notes            String?
+
+  request ChapanRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@map("chapan_request_items")
+}
+
+model ChapanOrder {
+  id            String    @id @default(cuid())
+  orgId         String    @map("org_id")
+  orderNumber   String    @map("order_number")
+  clientId      String    @map("client_id")
+  clientName    String    @map("client_name")
+  clientPhone   String    @map("client_phone")
+  status        String    @default("new")
+  paymentStatus String    @default("not_paid") @map("payment_status")
+  priority      String    @default("normal")
+  totalAmount   Float     @default(0) @map("total_amount")
+  paidAmount    Float     @default(0) @map("paid_amount")
+  dueDate       DateTime? @map("due_date")
+  completedAt   DateTime? @map("completed_at")
+  cancelledAt   DateTime? @map("cancelled_at")
+  cancelReason  String?   @map("cancel_reason")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  org             Organization           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  client          ChapanClient           @relation(fields: [clientId], references: [id])
+  items           ChapanOrderItem[]
+  productionTasks ChapanProductionTask[]
+  payments        ChapanPayment[]
+  transfer        ChapanTransfer?
+  activities      ChapanActivity[]
+
+  @@index([orgId, status])
+  @@index([orgId, createdAt])
+  @@map("chapan_orders")
+}
+
+model ChapanOrderItem {
+  id            String  @id @default(cuid())
+  orderId       String  @map("order_id")
+  productName   String  @map("product_name")
+  fabric        String
+  size          String
+  quantity      Int     @default(1)
+  unitPrice     Float   @map("unit_price")
+  notes         String?
+  workshopNotes String? @map("workshop_notes")
+
+  order          ChapanOrder           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productionTask ChapanProductionTask?
+
+  @@map("chapan_order_items")
+}
+
+model ChapanProductionTask {
+  id          String    @id @default(cuid())
+  orderId     String    @map("order_id")
+  orderItemId String    @unique @map("order_item_id")
+  productName String    @map("product_name")
+  fabric      String
+  size        String
+  quantity    Int
+  status      String    @default("pending")
+  assignedTo  String?   @map("assigned_to")
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  notes       String?
+  defects     String?
+  isBlocked   Boolean   @default(false) @map("is_blocked")
+  blockReason String?   @map("block_reason")
+
+  order     ChapanOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItem ChapanOrderItem @relation(fields: [orderItemId], references: [id])
+
+  @@index([orderId])
+  @@index([status])
+  @@map("chapan_production_tasks")
+}
+
+model ChapanPayment {
+  id      String   @id @default(cuid())
+  orderId String   @map("order_id")
+  amount  Float
+  method  String
+  notes   String?
+  paidAt  DateTime @default(now()) @map("paid_at")
+
+  order ChapanOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("chapan_payments")
+}
+
+model ChapanTransfer {
+  id                 String    @id @default(cuid())
+  orderId            String    @unique @map("order_id")
+  confirmedByManager Boolean   @default(false) @map("confirmed_by_manager")
+  confirmedByClient  Boolean   @default(false) @map("confirmed_by_client")
+  transferredAt      DateTime? @map("transferred_at")
+  notes              String?
+
+  order ChapanOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("chapan_transfers")
+}
+
+model ChapanActivity {
+  id         String   @id @default(cuid())
+  orderId    String   @map("order_id")
+  type       String
+  content    String
+  authorId   String   @map("author_id")
+  authorName String   @map("author_name")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  order ChapanOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("chapan_activities")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WAREHOUSE MODULE
+// ═══════════════════════════════════════════════════════════════
+
+model WarehouseCategory {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  name      String
+  color     String   @default("#888888")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org   Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  items WarehouseItem[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+  @@map("warehouse_categories")
+}
+
+model WarehouseLocation {
+  id    String @id @default(cuid())
+  orgId String @map("org_id")
+  name  String
+
+  org   Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  items WarehouseItem[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+  @@map("warehouse_locations")
+}
+
+model WarehouseItem {
+  id           String   @id @default(cuid())
+  orgId        String   @map("org_id")
+  categoryId   String?  @map("category_id")
+  locationId   String?  @map("location_id")
+  sku          String?
+  name         String
+  unit         String   @default("шт")   // шт | кг | м | л | пар | рулон | лист
+  qty          Float    @default(0)
+  qtyReserved  Float    @default(0)       @map("qty_reserved")
+  qtyMin       Float    @default(0)       @map("qty_min")   // порог низкого остатка
+  qtyMax       Float?   @map("qty_max")
+  costPrice    Float?   @map("cost_price")
+  tags         String[] @default([])
+  notes        String?
+  qrCode       String?  @unique           @map("qr_code")
+  createdAt    DateTime @default(now())   @map("created_at")
+  updatedAt    DateTime @updatedAt        @map("updated_at")
+
+  org          Organization          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  category     WarehouseCategory?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  location     WarehouseLocation?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  movements    WarehouseMovement[]
+  reservations WarehouseReservation[]
+  bomLines     WarehouseBOMLine[]
+  lots         WarehouseLot[]
+  alerts       WarehouseAlert[]
+
+  @@index([orgId])
+  @@index([orgId, categoryId])
+  @@map("warehouse_items")
+}
+
+model WarehouseMovement {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  itemId    String   @map("item_id")
+  // in | out | adjustment | write_off | return | transfer | reserved | reservation_released
+  type      String
+  qty       Float
+  qtyBefore Float    @map("qty_before")
+  qtyAfter  Float    @map("qty_after")
+  // Reference to source document (chapan order, deal, etc.)
+  sourceId  String?  @map("source_id")
+  sourceType String? @map("source_type") // chapan_order | deal | manual
+  lotId     String?  @map("lot_id")
+  reason    String?
+  author    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org  Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  item WarehouseItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, createdAt])
+  @@index([itemId])
+  @@map("warehouse_movements")
+}
+
+model WarehouseReservation {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  itemId    String   @map("item_id")
+  qty       Float
+  sourceId  String   @map("source_id")   // ChapanOrder.id or Deal.id
+  sourceType String  @map("source_type") // chapan_order | deal | manual
+  // active | released | fulfilled
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org  Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  item WarehouseItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, status])
+  @@index([sourceId])
+  @@map("warehouse_reservations")
+}
+
+// Bill of Materials: product SKU/name → list of warehouse items needed per unit
+model WarehouseBOMLine {
+  id          String @id @default(cuid())
+  orgId       String @map("org_id")
+  // Key: matches ChapanCatalogProduct.name or WorkshopProduct.name
+  productKey  String @map("product_key")
+  itemId      String @map("item_id")
+  qtyPerUnit  Float  @map("qty_per_unit")
+
+  org  Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  item WarehouseItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, productKey, itemId])
+  @@index([orgId, productKey])
+  @@map("warehouse_bom_lines")
+}
+
+model WarehouseAlert {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  itemId    String   @map("item_id")
+  // low_stock | shortage_for_order | predicted_shortage | expired_lot
+  type      String
+  sourceId  String?  @map("source_id")   // order id that triggered shortage
+  qtyNeed   Float?   @map("qty_need")
+  qtyHave   Float?   @map("qty_have")
+  // open | resolved | snoozed
+  status    String   @default("open")
+  createdAt DateTime @default(now()) @map("created_at")
+  resolvedAt DateTime? @map("resolved_at")
+
+  org  Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  item WarehouseItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, status])
+  @@index([itemId])
+  @@map("warehouse_alerts")
+}
+
+// Batch/lot tracking (for industrial mode)
+model WarehouseLot {
+  id         String    @id @default(cuid())
+  orgId      String    @map("org_id")
+  itemId     String    @map("item_id")
+  lotNumber  String    @map("lot_number")
+  qty        Float
+  supplier   String?
+  receivedAt DateTime  @default(now()) @map("received_at")
+  expiresAt  DateTime? @map("expires_at")
+  notes      String?
+
+  org  Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  item WarehouseItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, itemId])
+  @@map("warehouse_lots")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ACCOUNTING MODULE
+// ═══════════════════════════════════════════════════════════════
+
+model AccountingEntry {
+  id           String   @id @default(cuid())
+  orgId        String   @map("org_id")
+  seq          Int      // monotonic per-org counter
+  type         String   // income | expense | transfer | adjustment | write_off | return
+  amount       Float
+  currency     String   @default("KZT")
+  category     String   // Реализация | Материалы | ФОТ | Возврат | Перемещение | Прочее
+  account      String   // Касса | Каспи | Банк | Склад | Дебиторка
+  counterparty String?
+  sourceModule String?  @map("source_module") // deal | order | warehouse | manual | import
+  sourceId     String?  @map("source_id")
+  sourceLabel  String?  @map("source_label")
+  period       String   // YYYY-MM
+  author       String
+  prevHash     String?  @map("prev_hash")
+  hash         String   @unique
+  isReconciled Boolean  @default(false) @map("is_reconciled")
+  reconciledAt DateTime? @map("reconciled_at")
+  reconciledBy String?  @map("reconciled_by")
+  tags         String[] @default([])
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, seq])
+  @@index([orgId, period])
+  @@index([orgId, type])
+  @@index([orgId, sourceModule, sourceId])
+  @@map("accounting_entries")
+}
+
+model AccountingGap {
+  id           String    @id @default(cuid())
+  orgId        String    @map("org_id")
+  type         String    // missing_movement | unpaid | unposted | duplicate | cost_missing
+  severity     String    @default("warning") // info | warning | error
+  description  String
+  sourceModule String    @map("source_module")
+  sourceId     String    @map("source_id")
+  status       String    @default("open") // open | ignored | resolved
+  resolvedAt   DateTime? @map("resolved_at")
+  resolvedBy   String?   @map("resolved_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, sourceModule, sourceId, type])
+  @@index([orgId, status])
+  @@map("accounting_gaps")
+}
+
+model ImportTemplate {
+  id             String    @id @default(cuid())
+  orgId          String    @map("org_id")
+  name           String
+  target         String    // customers | warehouse_items | orders | catalog | accounting ...
+  mapping        Json      // Record<sourceColumn, targetField>
+  headerRowIndex Int       @default(0) @map("header_row_index")
+  dataStartRow   Int       @default(1) @map("data_start_row")
+  sheetName      String?   @map("sheet_name")
+  usedCount      Int       @default(0) @map("used_count")
+  lastUsedAt     DateTime? @map("last_used_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, name])
+  @@index([orgId])
+  @@map("import_templates")
+}
