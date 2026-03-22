@@ -41,6 +41,15 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+model ServiceCredential {
+  id           String   @id
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("service_credentials")
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  ORGANIZATIONS & MEMBERSHIPS
 // ═══════════════════════════════════════════════════════════════

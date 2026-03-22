@@ -1,10 +1,9 @@
-import { timingSafeEqual } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { config } from '../../config.js';
-import { UnauthorizedError } from '../../lib/errors.js';
-import { hashPassword } from '../../lib/hash.js';
+import { ForbiddenError, UnauthorizedError, ValidationError } from '../../lib/errors.js';
+import { hashPassword, verifyPassword } from '../../lib/hash.js';
 import { signAccessToken, signRefreshToken } from '../../lib/jwt.js';
 import { prisma } from '../../lib/prisma.js';
 import { buildCapabilities } from '../auth/auth.service.js';
@@ -16,18 +15,55 @@ const DEMO_OWNER_NAME = 'Demo Owner';
 const DEMO_ORG_ID = 'org-demo';
 const DEMO_ORG_NAME = 'Demo Company';
 const DEMO_ORG_SLUG = 'demo-company';
-
-function safeCompare(provided: string, expected: string): boolean {
-  const pa = Buffer.allocUnsafe(128);
-  const pb = Buffer.allocUnsafe(128);
-  pa.fill(0);
-  pb.fill(0);
-  Buffer.from(provided).copy(pa);
-  Buffer.from(expected).copy(pb);
-  return timingSafeEqual(pa, pb) && provided === expected;
-}
+const SERVICE_CREDENTIAL_ID = 'service-console';
+const DEFAULT_SERVICE_PASSWORD = 'kortdev1234';
 
 const accessSchema = z.object({ password: z.string().min(1) });
+const changePasswordSchema = z.object({
+  current_password: z.string().min(1, 'Current password is required.'),
+  new_password: z.string().min(8, 'New password must contain at least 8 characters.'),
+});
+
+async function ensureServiceCredential() {
+  const existing = await prisma.serviceCredential.findUnique({
+    where: { id: SERVICE_CREDENTIAL_ID },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  const seedPassword = config.CONSOLE_SERVICE_PASSWORD?.trim() || DEFAULT_SERVICE_PASSWORD;
+  const passwordHash = await hashPassword(seedPassword);
+
+  return prisma.serviceCredential.upsert({
+    where: { id: SERVICE_CREDENTIAL_ID },
+    update: {},
+    create: {
+      id: SERVICE_CREDENTIAL_ID,
+      passwordHash,
+    },
+  });
+}
+
+async function verifyServiceAccessPassword(secret: string) {
+  const credential = await ensureServiceCredential();
+  return verifyPassword(secret, credential.passwordHash);
+}
+
+async function assertOwnerSession(userId: string) {
+  const membership = await prisma.membership.findFirst({
+    where: {
+      userId,
+      role: 'owner',
+      status: 'active',
+    },
+  });
+
+  if (!membership) {
+    throw new ForbiddenError('Only an active owner can rotate the service password.');
+  }
+}
 
 async function ensureServiceOwnerMembership() {
   const existing = await prisma.membership.findFirst({
@@ -120,8 +156,8 @@ export async function serviceRoutes(app: FastifyInstance) {
   // POST /api/v1/service/access
   app.post('/access', async (request, reply) => {
     const body = accessSchema.parse(request.body);
-    const expected = config.CONSOLE_SERVICE_PASSWORD;
-    if (!expected || !safeCompare(body.password, expected)) {
+    const accepted = await verifyServiceAccessPassword(body.password);
+    if (!accepted) {
       throw new UnauthorizedError('Access denied.');
     }
 
@@ -179,6 +215,36 @@ export async function serviceRoutes(app: FastifyInstance) {
         joinedAt: membership.joinedAt?.toISOString() ?? new Date().toISOString(),
         updatedAt: membership.updatedAt.toISOString(),
       },
+    });
+  });
+
+  app.post('/password', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const body = changePasswordSchema.parse(request.body);
+
+    if (body.current_password === body.new_password) {
+      throw new ValidationError('New password must be different from the current password.');
+    }
+
+    await assertOwnerSession(request.userId);
+
+    const accepted = await verifyServiceAccessPassword(body.current_password);
+    if (!accepted) {
+      throw new UnauthorizedError('Current service password is incorrect.');
+    }
+
+    const passwordHash = await hashPassword(body.new_password);
+    const credential = await prisma.serviceCredential.upsert({
+      where: { id: SERVICE_CREDENTIAL_ID },
+      update: { passwordHash },
+      create: {
+        id: SERVICE_CREDENTIAL_ID,
+        passwordHash,
+      },
+    });
+
+    return reply.send({
+      ok: true,
+      updated_at: credential.updatedAt.toISOString(),
     });
   });
 }
