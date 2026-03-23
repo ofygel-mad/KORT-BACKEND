@@ -1,5 +1,4 @@
 import type { Prisma } from '@prisma/client';
-import { syncDealWon } from '../accounting/accounting.sync.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { paginate, paginatedResponse, type PaginationParams } from '../../lib/pagination.js';
 import { prisma } from '../../lib/prisma.js';
@@ -344,17 +343,6 @@ export async function update(orgId: string, id: string, data: Record<string, unk
         author: authorName,
       },
     });
-
-    // Sync accounting when deal is won
-    if (nextStage === 'won' && updated.value > 0) {
-      await syncDealWon({
-        orgId,
-        dealId: id,
-        title: updated.title,
-        value: updated.value,
-        assignedName: updated.assignedName ?? authorName,
-      }).catch(() => {}); // non-blocking
-    }
   } else if (Object.keys(updateData).length > 0) {
     await prisma.dealActivity.create({
       data: {

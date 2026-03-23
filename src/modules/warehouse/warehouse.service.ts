@@ -697,9 +697,12 @@ export async function createLot(
 // ─────────────────────────────────────────────────────────────
 
 export async function getWarehouseSummary(orgId: string) {
-  const [totalItems, openAlerts, totalMovementsToday] = await Promise.all([
+  const [totalItems, openAlerts, , totalMovementsToday] = await Promise.all([
     prisma.warehouseItem.count({ where: { orgId } }),
     prisma.warehouseAlert.count({ where: { orgId, status: 'open' } }),
+    prisma.warehouseItem.count({
+      where: { orgId, qtyMin: { gt: 0 } },
+    }),
     prisma.warehouseMovement.count({
       where: {
         orgId,

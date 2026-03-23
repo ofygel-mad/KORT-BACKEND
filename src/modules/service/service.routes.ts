@@ -1,167 +1,45 @@
+import { timingSafeEqual } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { config } from '../../config.js';
-import { ForbiddenError, UnauthorizedError, ValidationError } from '../../lib/errors.js';
-import { hashPassword, verifyPassword } from '../../lib/hash.js';
+import { UnauthorizedError } from '../../lib/errors.js';
 import { signAccessToken, signRefreshToken } from '../../lib/jwt.js';
 import { prisma } from '../../lib/prisma.js';
 import { buildCapabilities } from '../auth/auth.service.js';
 
-const DEMO_OWNER_EMAIL = 'admin@kort.local';
-const DEMO_OWNER_PHONE = '+77010000001';
-const DEMO_OWNER_PASSWORD = 'demo1234';
-const DEMO_OWNER_NAME = 'Demo Owner';
-const DEMO_ORG_ID = 'org-demo';
-const DEMO_ORG_NAME = 'Demo Company';
-const DEMO_ORG_SLUG = 'demo-company';
-const SERVICE_CREDENTIAL_ID = 'service-console';
-const DEFAULT_SERVICE_PASSWORD = 'kortdev1234';
+function safeCompare(provided: string, expected: string): boolean {
+  const pa = Buffer.allocUnsafe(128);
+  const pb = Buffer.allocUnsafe(128);
+  pa.fill(0);
+  pb.fill(0);
+  Buffer.from(provided).copy(pa);
+  Buffer.from(expected).copy(pb);
+  return timingSafeEqual(pa, pb) && provided === expected;
+}
 
 const accessSchema = z.object({ password: z.string().min(1) });
-const changePasswordSchema = z.object({
-  current_password: z.string().min(1, 'Current password is required.'),
-  new_password: z.string().min(8, 'New password must contain at least 8 characters.'),
-});
-
-async function ensureServiceCredential() {
-  const existing = await prisma.serviceCredential.findUnique({
-    where: { id: SERVICE_CREDENTIAL_ID },
-  });
-
-  if (existing) {
-    return existing;
-  }
-
-  const seedPassword = config.CONSOLE_SERVICE_PASSWORD?.trim() || DEFAULT_SERVICE_PASSWORD;
-  const passwordHash = await hashPassword(seedPassword);
-
-  return prisma.serviceCredential.upsert({
-    where: { id: SERVICE_CREDENTIAL_ID },
-    update: {},
-    create: {
-      id: SERVICE_CREDENTIAL_ID,
-      passwordHash,
-    },
-  });
-}
-
-async function verifyServiceAccessPassword(secret: string) {
-  const credential = await ensureServiceCredential();
-  return verifyPassword(secret, credential.passwordHash);
-}
-
-async function assertOwnerSession(userId: string) {
-  const membership = await prisma.membership.findFirst({
-    where: {
-      userId,
-      role: 'owner',
-      status: 'active',
-    },
-  });
-
-  if (!membership) {
-    throw new ForbiddenError('Only an active owner can rotate the service password.');
-  }
-}
-
-async function ensureServiceOwnerMembership() {
-  const existing = await prisma.membership.findFirst({
-    where: { role: 'owner', status: 'active' },
-    include: { user: true, org: true },
-    orderBy: { joinedAt: 'asc' },
-  });
-
-  if (existing) {
-    return existing;
-  }
-
-  const passwordHash = await hashPassword(DEMO_OWNER_PASSWORD);
-
-  await prisma.$transaction(async (tx) => {
-    const owner = await tx.user.upsert({
-      where: { email: DEMO_OWNER_EMAIL },
-      update: {
-        fullName: DEMO_OWNER_NAME,
-        phone: DEMO_OWNER_PHONE,
-        status: 'active',
-      },
-      create: {
-        id: 'u-owner',
-        email: DEMO_OWNER_EMAIL,
-        phone: DEMO_OWNER_PHONE,
-        fullName: DEMO_OWNER_NAME,
-        password: passwordHash,
-        status: 'active',
-      },
-    });
-
-    const org = await tx.organization.upsert({
-      where: { slug: DEMO_ORG_SLUG },
-      update: {
-        name: DEMO_ORG_NAME,
-        currency: 'KZT',
-        mode: 'advanced',
-        onboardingCompleted: true,
-      },
-      create: {
-        id: DEMO_ORG_ID,
-        name: DEMO_ORG_NAME,
-        slug: DEMO_ORG_SLUG,
-        currency: 'KZT',
-        mode: 'advanced',
-        onboardingCompleted: true,
-      },
-    });
-
-    await tx.membership.upsert({
-      where: { userId_orgId: { userId: owner.id, orgId: org.id } },
-      update: {
-        role: 'owner',
-        status: 'active',
-        source: 'service_bootstrap',
-        joinedAt: new Date(),
-        employeeAccountStatus: 'active',
-      },
-      create: {
-        userId: owner.id,
-        orgId: org.id,
-        role: 'owner',
-        status: 'active',
-        source: 'service_bootstrap',
-        joinedAt: new Date(),
-        employeeAccountStatus: 'active',
-      },
-    });
-
-    await tx.chapanProfile.upsert({
-      where: { orgId: org.id },
-      update: {},
-      create: {
-        orgId: org.id,
-        displayName: 'Чапан Цех',
-        descriptor: 'Demo workspace',
-      },
-    });
-  });
-
-  return prisma.membership.findFirstOrThrow({
-    where: { role: 'owner', status: 'active' },
-    include: { user: true, org: true },
-    orderBy: { joinedAt: 'asc' },
-  });
-}
 
 export async function serviceRoutes(app: FastifyInstance) {
+  if (process.env.NODE_ENV === 'production') return;
+
   // POST /api/v1/service/access
   app.post('/access', async (request, reply) => {
     const body = accessSchema.parse(request.body);
-    const accepted = await verifyServiceAccessPassword(body.password);
-    if (!accepted) {
+    const expected = config.CONSOLE_SERVICE_PASSWORD;
+    if (!expected || !safeCompare(body.password, expected)) {
       throw new UnauthorizedError('Access denied.');
     }
 
-    const membership = await ensureServiceOwnerMembership();
+    const membership = await prisma.membership.findFirst({
+      where: { role: 'owner', status: 'active' },
+      include: { user: true, org: true },
+      orderBy: { joinedAt: 'asc' },
+    });
+
+    if (!membership) {
+      throw new UnauthorizedError('No active owner found. Run the seed script first.');
+    }
 
     const { user, org } = membership;
     const jti = nanoid();
@@ -215,36 +93,6 @@ export async function serviceRoutes(app: FastifyInstance) {
         joinedAt: membership.joinedAt?.toISOString() ?? new Date().toISOString(),
         updatedAt: membership.updatedAt.toISOString(),
       },
-    });
-  });
-
-  app.post('/password', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const body = changePasswordSchema.parse(request.body);
-
-    if (body.current_password === body.new_password) {
-      throw new ValidationError('New password must be different from the current password.');
-    }
-
-    await assertOwnerSession(request.userId);
-
-    const accepted = await verifyServiceAccessPassword(body.current_password);
-    if (!accepted) {
-      throw new UnauthorizedError('Current service password is incorrect.');
-    }
-
-    const passwordHash = await hashPassword(body.new_password);
-    const credential = await prisma.serviceCredential.upsert({
-      where: { id: SERVICE_CREDENTIAL_ID },
-      update: { passwordHash },
-      create: {
-        id: SERVICE_CREDENTIAL_ID,
-        passwordHash,
-      },
-    });
-
-    return reply.send({
-      ok: true,
-      updated_at: credential.updatedAt.toISOString(),
     });
   });
 }

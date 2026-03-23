@@ -41,13 +41,77 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-model ServiceCredential {
-  id           String   @id
-  passwordHash String   @map("password_hash")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+model AccountingEntry {
+  id            String   @id @default(cuid())
+  orgId         String   @map("org_id")
+  seq           Int
+  type          String
+  amount        Float
+  currency      String   @default("KZT")
+  category      String
+  account       String
+  counterparty  String?
+  sourceModule  String?  @map("source_module")
+  sourceId      String?  @map("source_id")
+  sourceLabel   String?  @map("source_label")
+  period        String
+  author        String
+  prevHash      String?  @map("prev_hash")
+  hash          String   @unique
+  isReconciled  Boolean  @default(false) @map("is_reconciled")
+  reconciledAt  DateTime? @map("reconciled_at")
+  reconciledBy  String?  @map("reconciled_by")
+  tags          String[] @default([])
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
 
-  @@map("service_credentials")
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, seq])
+  @@index([orgId, period])
+  @@index([orgId, type])
+  @@index([orgId, sourceModule, sourceId])
+  @@map("accounting_entries")
+}
+
+model AccountingGap {
+  id           String    @id @default(cuid())
+  orgId        String    @map("org_id")
+  type         String
+  severity     String    @default("warning")
+  description  String
+  sourceModule String    @map("source_module")
+  sourceId     String    @map("source_id")
+  status       String    @default("open")
+  resolvedAt   DateTime? @map("resolved_at")
+  resolvedBy   String?   @map("resolved_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, sourceModule, sourceId, type])
+  @@index([orgId, status])
+  @@map("accounting_gaps")
+}
+
+model ImportTemplate {
+  id             String   @id @default(cuid())
+  orgId          String   @map("org_id")
+  name           String
+  target         String
+  mapping        Json
+  headerRowIndex Int      @default(0) @map("header_row_index")
+  dataStartRow   Int      @default(1) @map("data_start_row")
+  sheetName      String?  @map("sheet_name")
+  usedCount      Int      @default(0) @map("used_count")
+  lastUsedAt     DateTime? @map("last_used_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, name])
+  @@index([orgId])
+  @@map("import_templates")
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -111,8 +175,6 @@ model Organization {
   warehouseAlerts      WarehouseAlert[]
   warehouseLots        WarehouseLot[]
   warehouseLocations   WarehouseLocation[]
-
-  // Accounting
   accountingEntries    AccountingEntry[]
   accountingGaps       AccountingGap[]
   importTemplates      ImportTemplate[]
@@ -517,6 +579,7 @@ model ChapanOrder {
   completedAt   DateTime? @map("completed_at")
   cancelledAt   DateTime? @map("cancelled_at")
   cancelReason  String?   @map("cancel_reason")
+  internalNote  String?   @map("internal_note")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
@@ -543,6 +606,7 @@ model ChapanOrderItem {
   unitPrice     Float   @map("unit_price")
   notes         String?
   workshopNotes String? @map("workshop_notes")
+  color         String?
 
   order          ChapanOrder           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productionTask ChapanProductionTask?
@@ -782,81 +846,4 @@ model WarehouseLot {
 
   @@index([orgId, itemId])
   @@map("warehouse_lots")
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  ACCOUNTING MODULE
-// ═══════════════════════════════════════════════════════════════
-
-model AccountingEntry {
-  id           String   @id @default(cuid())
-  orgId        String   @map("org_id")
-  seq          Int      // monotonic per-org counter
-  type         String   // income | expense | transfer | adjustment | write_off | return
-  amount       Float
-  currency     String   @default("KZT")
-  category     String   // Реализация | Материалы | ФОТ | Возврат | Перемещение | Прочее
-  account      String   // Касса | Каспи | Банк | Склад | Дебиторка
-  counterparty String?
-  sourceModule String?  @map("source_module") // deal | order | warehouse | manual | import
-  sourceId     String?  @map("source_id")
-  sourceLabel  String?  @map("source_label")
-  period       String   // YYYY-MM
-  author       String
-  prevHash     String?  @map("prev_hash")
-  hash         String   @unique
-  isReconciled Boolean  @default(false) @map("is_reconciled")
-  reconciledAt DateTime? @map("reconciled_at")
-  reconciledBy String?  @map("reconciled_by")
-  tags         String[] @default([])
-  notes        String?
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-
-  @@unique([orgId, seq])
-  @@index([orgId, period])
-  @@index([orgId, type])
-  @@index([orgId, sourceModule, sourceId])
-  @@map("accounting_entries")
-}
-
-model AccountingGap {
-  id           String    @id @default(cuid())
-  orgId        String    @map("org_id")
-  type         String    // missing_movement | unpaid | unposted | duplicate | cost_missing
-  severity     String    @default("warning") // info | warning | error
-  description  String
-  sourceModule String    @map("source_module")
-  sourceId     String    @map("source_id")
-  status       String    @default("open") // open | ignored | resolved
-  resolvedAt   DateTime? @map("resolved_at")
-  resolvedBy   String?   @map("resolved_by")
-  createdAt    DateTime  @default(now()) @map("created_at")
-
-  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-
-  @@unique([orgId, sourceModule, sourceId, type])
-  @@index([orgId, status])
-  @@map("accounting_gaps")
-}
-
-model ImportTemplate {
-  id             String    @id @default(cuid())
-  orgId          String    @map("org_id")
-  name           String
-  target         String    // customers | warehouse_items | orders | catalog | accounting ...
-  mapping        Json      // Record<sourceColumn, targetField>
-  headerRowIndex Int       @default(0) @map("header_row_index")
-  dataStartRow   Int       @default(1) @map("data_start_row")
-  sheetName      String?   @map("sheet_name")
-  usedCount      Int       @default(0) @map("used_count")
-  lastUsedAt     DateTime? @map("last_used_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-
-  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-
-  @@unique([orgId, name])
-  @@index([orgId])
-  @@map("import_templates")
 }

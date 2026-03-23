@@ -28,13 +28,13 @@ export const DEAL_STAGES: readonly DealStageMeta[] = [
   { id: 'awaiting_payment', name: 'Awaiting payment', position: 5, type: 'open', stage_type: 'open', color: '#f97316' },
   { id: 'won', name: 'Won', position: 6, type: 'won', stage_type: 'won', color: '#10b981' },
   { id: 'lost', name: 'Lost', position: 7, type: 'lost', stage_type: 'lost', color: '#ef4444' },
-] as const;
+];
 
-function toIso(value: Date | null | undefined) {
+function toIso(value: Date | null | undefined): string | null {
   return value?.toISOString() ?? null;
 }
 
-function slugify(value: string) {
+function slugify(value: string): string {
   const normalized = value
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -43,7 +43,12 @@ function slugify(value: string) {
   return normalized || 'user';
 }
 
-function buildPerson(id: string | null | undefined, fullName: string | null | undefined) {
+type Person = {
+  id: string;
+  full_name: string;
+};
+
+function buildPerson(id: string | null | undefined, fullName: string | null | undefined): Person | null {
   if (!id && !fullName) {
     return null;
   }
@@ -54,7 +59,7 @@ function buildPerson(id: string | null | undefined, fullName: string | null | un
   };
 }
 
-export function getDealStatus(stage: string | null | undefined) {
+export function getDealStatus(stage: string | null | undefined): 'open' | 'won' | 'lost' {
   if (stage === 'won') {
     return 'won';
   }
@@ -67,14 +72,16 @@ export function getDealStatus(stage: string | null | undefined) {
 }
 
 export function getDealStageMeta(stage: string | null | undefined): DealStageMeta {
-  return DEAL_STAGES.find((item) => item.id === stage) ?? {
-    id: 'awaiting_meeting',
-    name: 'Awaiting meeting',
-    position: 1,
-    type: 'open',
-    stage_type: 'open',
-    color: '#3b82f6',
-  };
+  return (
+    DEAL_STAGES.find((item) => item.id === stage) ?? {
+      id: 'awaiting_meeting',
+      name: 'Awaiting meeting',
+      position: 1,
+      type: 'open',
+      stage_type: 'open',
+      color: '#3b82f6',
+    }
+  );
 }
 
 export function getDealPipeline() {
@@ -209,7 +216,7 @@ export function serializeDealBoardItem(deal: Deal) {
   };
 }
 
-function normalizeDealActivityType(type: string) {
+function normalizeDealActivityType(type: string): string {
   switch (type) {
     case 'note':
     case 'note.created':
@@ -230,7 +237,7 @@ function normalizeDealActivityType(type: string) {
 
 function buildDealActivityPayload(type: string, content: string) {
   if (type === 'stage.changed') {
-    const match = content.match(/^(.*?)\s*(?:->|→)\s*(.*?)$/);
+    const match = content.match(/^(.*?)\s*(?:->|\u2192)\s*(.*?)$/);
     if (match) {
       return {
         from: match[1]?.trim() ?? '',
@@ -264,7 +271,7 @@ export function serializeDealActivity(activity: DealActivity) {
   };
 }
 
-export function normalizeTaskStatus(status: string | null | undefined) {
+export function normalizeTaskStatus(status: string | null | undefined): 'open' | 'done' | 'cancelled' {
   if (status === 'done') {
     return 'done';
   }
@@ -276,7 +283,7 @@ export function normalizeTaskStatus(status: string | null | undefined) {
   return 'open';
 }
 
-export function normalizeTaskPriority(priority: string | null | undefined) {
+export function normalizeTaskPriority(priority: string | null | undefined): 'high' | 'medium' | 'low' {
   if (priority === 'critical') {
     return 'high';
   }

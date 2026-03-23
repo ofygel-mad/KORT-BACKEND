@@ -1,5 +1,5 @@
-import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import type { FastifyInstance } from 'fastify';
 import { UnauthorizedError } from '../../lib/errors.js';
 import { verifyAccessToken } from '../../lib/jwt.js';
 import * as svc from './frontend-compat.service.js';
@@ -8,28 +8,37 @@ export async function frontendCompatRoutes(app: FastifyInstance) {
   const authHandlers = {
     preHandler: [app.authenticate, app.resolveOrg],
   };
+
   const summaryQuerySchema = z.object({
     date_from: z.string().optional(),
     date_to: z.string().optional(),
   });
+
   const auditQuerySchema = z.object({
     search: z.string().optional(),
     action: z.string().optional(),
   });
+
   const searchQuerySchema = z.object({
     q: z.string().trim().min(1),
     limit: z.coerce.number().int().min(1).max(20).default(8),
     types: z.string().optional(),
   });
+
   const aiChatSchema = z.object({
     message: z.string().trim().min(1),
     customer_id: z.string().optional(),
     deal_id: z.string().optional(),
-    history: z.array(z.object({
-      role: z.enum(['user', 'assistant']),
-      content: z.string(),
-    })).optional(),
+    history: z
+      .array(
+        z.object({
+          role: z.enum(['user', 'assistant']),
+          content: z.string(),
+        }),
+      )
+      .optional(),
   });
+
   const customFieldParamsSchema = z.object({
     entityType: z.enum(['customer', 'deal']),
     entityId: z.string().min(1),
@@ -49,7 +58,6 @@ export async function frontendCompatRoutes(app: FastifyInstance) {
 
   app.get('/reports/summary/', authHandlers, async (request) => {
     const query = summaryQuerySchema.parse(request.query);
-
     return svc.getSummary(request.orgId, {
       dateFrom: query.date_from,
       dateTo: query.date_to,
@@ -62,47 +70,44 @@ export async function frontendCompatRoutes(app: FastifyInstance) {
 
   app.get('/audit/', authHandlers, async (request) => {
     const query = auditQuerySchema.parse(request.query);
-
     return svc.listAudit(request.orgId, query);
   });
 
-  app.get('/pipelines/', authHandlers, async () => {
+  app.get('/pipelines/', async () => {
     return svc.listPipelines();
   });
 
-  app.get('/exchange-rates/', authHandlers, async () => {
+  app.get('/exchange-rates/', async () => {
     return svc.getExchangeRates();
   });
 
   app.post('/ai/chat/', authHandlers, async (request) => {
     const body = aiChatSchema.parse(request.body);
-
     return svc.replyFromAssistant(request.orgId, body);
   });
 
   app.get('/custom-fields/values/:entityType/:entityId/', authHandlers, async (request) => {
     const params = customFieldParamsSchema.parse(request.params);
-
     return svc.getCustomFieldValues(request.orgId, params);
   });
 
   app.post('/custom-fields/values/:entityType/:entityId/', authHandlers, async (request) => {
     const params = customFieldParamsSchema.parse(request.params);
     const values = z.record(z.string(), z.unknown()).parse(request.body);
-
     return svc.saveCustomFieldValues(request.orgId, params, values);
   });
 
   app.get('/search/', authHandlers, async (request) => {
     const query = searchQuerySchema.parse(request.query);
-
     return svc.searchWorkspace(request.orgId, query);
   });
 
   app.get('/sse/', async (request, reply) => {
-    const { token } = z.object({
-      token: z.string().min(1),
-    }).parse(request.query);
+    const { token } = z
+      .object({
+        token: z.string().min(1),
+      })
+      .parse(request.query);
 
     try {
       verifyAccessToken(token);
@@ -117,7 +122,6 @@ export async function frontendCompatRoutes(app: FastifyInstance) {
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
     });
-
     reply.raw.write('event: connected\n');
     reply.raw.write(`data: ${JSON.stringify({ status: 'ok' })}\n\n`);
 

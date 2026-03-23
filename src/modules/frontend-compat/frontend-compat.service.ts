@@ -1,12 +1,5 @@
-import type { Customer, Prisma, TaskActivity } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
-import {
-  DEAL_STAGES,
-  getDealPipeline,
-  getDealStageMeta,
-  serializeDealActivity,
-  serializeTask,
-} from './crm-compat.js';
+import { DEAL_STAGES, getDealPipeline, getDealStageMeta, serializeDealActivity, serializeTask } from './crm-compat.js';
 
 type SummaryParams = {
   dateFrom?: string;
@@ -54,15 +47,13 @@ const TODAY_TASK_SELECT = {
       },
     },
   },
-} as const;
+};
 
 function getDayBounds(now = new Date()) {
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
-
   const end = new Date(start);
   end.setDate(end.getDate() + 1);
-
   return { start, end };
 }
 
@@ -92,10 +83,8 @@ function toDateRange({ dateFrom, dateTo }: SummaryParams) {
 
   start.setHours(0, 0, 0, 0);
   end.setHours(0, 0, 0, 0);
-
   const endExclusive = new Date(end);
   endExclusive.setDate(endExclusive.getDate() + 1);
-
   return { start, endExclusive };
 }
 
@@ -113,7 +102,6 @@ function toMonthLabel(key: string) {
   const [yearPart, monthPart] = key.split('-');
   const year = Number(yearPart);
   const month = Number(monthPart);
-
   return new Date(year, month - 1, 1).toLocaleDateString('en-US', {
     month: 'short',
     year: 'numeric',
@@ -128,7 +116,7 @@ function percentageDelta(current: number, previous: number) {
   return Math.round(((current - previous) / previous) * 100);
 }
 
-function mapSourceLabel(value: string | null) {
+function mapSourceLabel(value: string | null | undefined) {
   return value?.trim() || 'manual';
 }
 
@@ -167,7 +155,7 @@ function normalizeFeedType(type: string, content: string) {
   }
 }
 
-function buildTaskFeedType(activity: TaskActivity) {
+function buildTaskFeedType(activity: { type: string; content: string }) {
   if (activity.type === 'system') {
     return 'task_created';
   }
@@ -305,8 +293,7 @@ export async function getSummary(orgId: string, params: SummaryParams) {
   const previousStart = shiftDate(start, -periodDays);
   const previousEndExclusive = new Date(start);
   const { start: dayStart, end: dayEnd } = getDayBounds();
-
-  const dealWindow: Prisma.DealWhereInput = {
+  const dealWindow = {
     orgId,
     createdAt: {
       gte: start,
@@ -441,6 +428,7 @@ export async function getSummary(orgId: string, params: SummaryParams) {
 
     const key = toMonthKey(deal.wonAt);
     const bucket = revenueByMonthMap.get(key);
+
     if (!bucket) {
       return;
     }
@@ -470,10 +458,12 @@ export async function getSummary(orgId: string, params: SummaryParams) {
       count: row._count._all,
       amount: row._sum.value ?? 0,
     })),
-    customers_by_source: (customerSources.length > 0 ? customerSources : [{ source: null, _count: { _all: customersCount } }]).map((row) => ({
-      source: mapSourceLabel(row.source),
-      count: row._count._all,
-    })),
+    customers_by_source: (customerSources.length > 0 ? customerSources : [{ source: null, _count: { _all: customersCount } }]).map(
+      (row) => ({
+        source: mapSourceLabel(row.source),
+        count: row._count._all,
+      }),
+    ),
     revenue_by_month: monthKeys.map((key) => ({
       month: toMonthLabel(key),
       revenue: revenueByMonthMap.get(key)?.revenue ?? 0,
@@ -705,12 +695,9 @@ export async function listAudit(orgId: string, filters: AuditFilters) {
       return true;
     }
 
-    return [
-      row.entity_label,
-      row.entity_type,
-      row.actor_name,
-      row.action,
-    ].some((value) => value.toLowerCase().includes(searchTerm));
+    return [row.entity_label, row.entity_type, row.actor_name, row.action].some((value) =>
+      value.toLowerCase().includes(searchTerm),
+    );
   });
 
   return {
@@ -789,11 +776,11 @@ export async function replyFromAssistant(orgId: string, input: AssistantInput) {
   const lowerMessage = input.message.toLowerCase();
   let guidance = 'Keep the next action explicit: owner, deadline, and one concrete outcome.';
 
-  if (lowerMessage.includes('next') || lowerMessage.includes('след')) {
+  if (lowerMessage.includes('next') || lowerMessage.includes('\u0441\u043b\u0435\u0434')) {
     guidance = 'Best next step: confirm the owner, schedule a date, and capture the commitment in a task or note right away.';
-  } else if (lowerMessage.includes('risk') || lowerMessage.includes('риск')) {
+  } else if (lowerMessage.includes('risk') || lowerMessage.includes('\u0440\u0438\u0441\u043a')) {
     guidance = 'Main risks to check: missing owner, no follow-up date, stale stage, and no recent activity on the record.';
-  } else if (lowerMessage.includes('summary') || lowerMessage.includes('сводк')) {
+  } else if (lowerMessage.includes('summary') || lowerMessage.includes('\u0441\u0432\u043e\u0434\u043a')) {
     guidance = 'Short summary: review the latest activity, confirm current stage, and write the next step in one sentence.';
   }
 
@@ -809,11 +796,7 @@ export async function getCustomFieldValues(_orgId: string, _params: CustomFieldP
   };
 }
 
-export async function saveCustomFieldValues(
-  _orgId: string,
-  _params: CustomFieldParams,
-  values: Record<string, unknown>,
-) {
+export async function saveCustomFieldValues(_orgId: string, _params: CustomFieldParams, values: Record<string, unknown>) {
   return {
     schema: [],
     values,
@@ -827,8 +810,8 @@ export async function searchWorkspace(orgId: string, query: SearchQuery) {
       .map((value) => value.trim().toLowerCase())
       .filter(Boolean),
   );
-
   const contains = query.q.trim();
+
   const [customers, deals, tasks] = await Promise.all([
     types.has('customer')
       ? prisma.customer.findMany({
@@ -843,7 +826,7 @@ export async function searchWorkspace(orgId: string, query: SearchQuery) {
           orderBy: { updatedAt: 'desc' },
           take: query.limit,
         })
-      : Promise.resolve<Customer[]>([]),
+      : Promise.resolve([]),
     types.has('deal')
       ? prisma.deal.findMany({
           where: {
@@ -908,7 +891,6 @@ export async function searchWorkspace(orgId: string, query: SearchQuery) {
       })),
       ...tasks.map((task) => {
         const serialized = serializeTask(task);
-
         return {
           id: task.id,
           type: 'task',
@@ -920,8 +902,7 @@ export async function searchWorkspace(orgId: string, query: SearchQuery) {
           },
         };
       }),
-    ]
-      .slice(0, query.limit),
+    ].slice(0, query.limit),
   };
 }
 

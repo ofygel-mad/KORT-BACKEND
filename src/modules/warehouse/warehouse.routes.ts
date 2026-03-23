@@ -72,7 +72,7 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
   });
 
   app.post<{ Body: svc.CreateItemDto }>('/items', async (req, reply) => {
-    const authorName = req.userFullName || 'Неизвестно';
+    const authorName = req.userFullName ?? 'Неизвестно';
     const item = await svc.createItem(req.orgId!, req.body, authorName);
     return reply.status(201).send(item);
   });
@@ -108,7 +108,7 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
       reason?: string;
     };
   }>('/movements', async (req, reply) => {
-    const authorName = req.userFullName || 'Неизвестно';
+    const authorName = req.userFullName ?? 'Неизвестно';
     await svc.addMovement(req.orgId!, { ...req.body, author: authorName });
     return reply.status(204).send();
   });
@@ -168,7 +168,7 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
       notes?: string;
     };
   }>('/lots', async (req, reply) => {
-    const authorName = req.userFullName || 'Неизвестно';
+    const authorName = req.userFullName ?? 'Неизвестно';
     const lot = await svc.createLot(req.orgId!, req.body, authorName);
     return reply.status(201).send(lot);
   });
