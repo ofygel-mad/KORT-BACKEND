@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { config } from '../../config.js';
 import { UnauthorizedError } from '../../lib/errors.js';
+import { hashPassword } from '../../lib/hash.js';
 import { signAccessToken, signRefreshToken } from '../../lib/jwt.js';
 import { prisma } from '../../lib/prisma.js';
 import { buildCapabilities } from '../auth/auth.service.js';
@@ -20,8 +21,90 @@ function safeCompare(provided: string, expected: string): boolean {
 
 const accessSchema = z.object({ password: z.string().min(1) });
 
+const DEMO_OWNER = {
+  email: 'admin@kort.local',
+  phone: '+77010000001',
+  fullName: 'Arman Kaliev',
+  password: 'demo1234',
+} as const;
+
+const DEMO_ORG = {
+  name: 'Demo Company',
+  slug: 'demo-company',
+  currency: 'KZT',
+} as const;
+
+async function isEmptyDatabase() {
+  const [usersCount, orgsCount, membershipsCount] = await Promise.all([
+    prisma.user.count(),
+    prisma.organization.count(),
+    prisma.membership.count(),
+  ]);
+
+  return usersCount === 0 && orgsCount === 0 && membershipsCount === 0;
+}
+
+async function ensureBootstrapOwner() {
+  const existingOwner = await prisma.membership.findFirst({
+    where: { role: 'owner', status: 'active' },
+    include: { user: true, org: true },
+    orderBy: { joinedAt: 'asc' },
+  });
+
+  if (existingOwner) {
+    return existingOwner;
+  }
+
+  if (!(await isEmptyDatabase())) {
+    return null;
+  }
+
+  const passwordHash = await hashPassword(DEMO_OWNER.password);
+
+  return prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        email: DEMO_OWNER.email,
+        phone: DEMO_OWNER.phone,
+        fullName: DEMO_OWNER.fullName,
+        password: passwordHash,
+        status: 'active',
+      },
+    });
+
+    const org = await tx.organization.create({
+      data: {
+        name: DEMO_ORG.name,
+        slug: DEMO_ORG.slug,
+        currency: DEMO_ORG.currency,
+      },
+    });
+
+    const membership = await tx.membership.create({
+      data: {
+        userId: user.id,
+        orgId: org.id,
+        role: 'owner',
+        status: 'active',
+        source: 'company_registration',
+        joinedAt: new Date(),
+        employeeAccountStatus: 'active',
+      },
+    });
+
+    await tx.chapanProfile.create({
+      data: { orgId: org.id },
+    });
+
+    return tx.membership.findUniqueOrThrow({
+      where: { id: membership.id },
+      include: { user: true, org: true },
+    });
+  });
+}
+
 export async function serviceRoutes(app: FastifyInstance) {
-  if (process.env.NODE_ENV === 'production') return;
+  if (process.env.NODE_ENV === 'production' && !config.CONSOLE_SERVICE_PASSWORD) return;
 
   // POST /api/v1/service/access
   app.post('/access', async (request, reply) => {
@@ -31,14 +114,16 @@ export async function serviceRoutes(app: FastifyInstance) {
       throw new UnauthorizedError('Access denied.');
     }
 
-    const membership = await prisma.membership.findFirst({
+    const membership = await ensureBootstrapOwner() ?? await prisma.membership.findFirst({
       where: { role: 'owner', status: 'active' },
       include: { user: true, org: true },
       orderBy: { joinedAt: 'asc' },
     });
 
     if (!membership) {
-      throw new UnauthorizedError('No active owner found. Run the seed script first.');
+      throw new UnauthorizedError(
+        'No active owner found. Seed the database or create the first company before using service access.',
+      );
     }
 
     const { user, org } = membership;
