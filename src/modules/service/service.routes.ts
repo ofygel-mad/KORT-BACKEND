@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
-import type { FastifyInstance } from 'fastify';
+import type { Prisma } from '@prisma/client';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { config } from '../../config.js';
@@ -34,6 +35,9 @@ const DEMO_ORG = {
   currency: 'KZT',
 } as const;
 
+type ServiceAccessBody = z.infer<typeof accessSchema>;
+type ServiceAccessRequest = FastifyRequest<{ Body: ServiceAccessBody }>;
+
 async function isEmptyDatabase() {
   const [usersCount, orgsCount, membershipsCount] = await Promise.all([
     prisma.user.count(),
@@ -61,7 +65,7 @@ async function ensureBootstrapOwner() {
 
   const passwordHash = await hashPassword(DEMO_OWNER.password);
 
-  return prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const user = await tx.user.create({
       data: {
         email: DEMO_OWNER.email,
@@ -104,12 +108,14 @@ async function ensureBootstrapOwner() {
 }
 
 export async function serviceRoutes(app: FastifyInstance) {
-  if (process.env.NODE_ENV === 'production' && !config.CONSOLE_SERVICE_PASSWORD) return;
+  const servicePassword = config.CONSOLE_SERVICE_PASSWORD;
+
+  if (process.env.NODE_ENV === 'production' && !servicePassword) return;
 
   // POST /api/v1/service/access
-  app.post('/access', async (request, reply) => {
+  app.post('/access', async (request: ServiceAccessRequest, reply: FastifyReply) => {
     const body = accessSchema.parse(request.body);
-    const expected = config.CONSOLE_SERVICE_PASSWORD;
+    const expected = servicePassword;
     if (!expected || !safeCompare(body.password, expected)) {
       throw new UnauthorizedError('Access denied.');
     }
