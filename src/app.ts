@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import sensible from '@fastify/sensible';
 import { ZodError } from 'zod';
-import { config } from './config.js';
+import { config, normalizeCorsOrigin } from './config.js';
 import { AppError } from './lib/errors.js';
 
 // Plugins
@@ -33,6 +33,7 @@ import { warehouseRoutes } from './modules/warehouse/warehouse.routes.js';
 
 export async function buildApp() {
   const isProd = process.env.NODE_ENV === 'production';
+  const allowedOrigins = new Set(config.CORS_ORIGINS);
   const app = Fastify({
     routerOptions: {
       ignoreTrailingSlash: true,
@@ -50,7 +51,22 @@ export async function buildApp() {
 
   // ── Global plugins ──────────────────────────────────────
   await app.register(cors, {
-    origin: config.CORS_ORIGIN,
+    origin(origin, callback) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      const normalizedOrigin = normalizeCorsOrigin(origin);
+
+      if (allowedOrigins.has(normalizedOrigin)) {
+        callback(null, true);
+        return;
+      }
+
+      app.log.warn({ origin: normalizedOrigin, allowedOrigins: [...allowedOrigins] }, 'Blocked CORS origin');
+      callback(null, false);
+    },
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'Idempotency-Key', 'X-Org-Id'],
   });

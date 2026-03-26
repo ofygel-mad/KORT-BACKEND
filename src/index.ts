@@ -9,6 +9,7 @@ async function main() {
 
   try {
     await app.listen({ port: config.PORT, host: config.HOST });
+    app.log.info({ origins: config.CORS_ORIGINS }, 'CORS origins configured');
     console.log(`Server running at http://${config.HOST}:${config.PORT}`);
   } catch (error) {
     const err = error as NodeJS.ErrnoException;

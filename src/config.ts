@@ -7,6 +7,19 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 loadEnv({ path: resolve(__dirname, '../.env') });
 
+export function normalizeCorsOrigin(origin: string) {
+  return origin.trim().replace(/\/+$/, '');
+}
+
+function parseCorsOrigins(value: string) {
+  return [...new Set(
+    value
+      .split(',')
+      .map((origin) => normalizeCorsOrigin(origin))
+      .filter(Boolean),
+  )];
+}
+
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(16),
@@ -27,7 +40,17 @@ function loadConfig() {
     process.exit(1);
   }
 
-  return parsed.data;
+  const corsOrigins = parseCorsOrigins(parsed.data.CORS_ORIGIN);
+
+  if (corsOrigins.length === 0) {
+    console.error('Invalid environment variables:', { CORS_ORIGIN: ['Provide at least one allowed origin'] });
+    process.exit(1);
+  }
+
+  return {
+    ...parsed.data,
+    CORS_ORIGINS: corsOrigins,
+  };
 }
 
 export const config = loadConfig();
