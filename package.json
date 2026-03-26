@@ -11,9 +11,11 @@
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
+    "db:status": "prisma migrate status",
     "db:report": "tsx scripts/db-report.ts"
   },
   "dependencies": {

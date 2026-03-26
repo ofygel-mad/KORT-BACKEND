@@ -693,6 +693,37 @@ export async function createLot(
 }
 
 // ─────────────────────────────────────────────────────────────
+//  Finished-goods availability check (Chapan integration)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Checks whether finished products (by name) are available in warehouse.
+ * Used by Chapan to skip production for in-stock items.
+ */
+export async function checkProductNamesAvailability(
+  orgId: string,
+  productNames: string[],
+): Promise<Record<string, { available: boolean; qty: number; itemName: string | null }>> {
+  const unique = [...new Set(productNames.filter(Boolean))];
+  const result: Record<string, { available: boolean; qty: number; itemName: string | null }> = {};
+
+  for (const name of unique) {
+    const items = await prisma.warehouseItem.findMany({
+      where: { orgId, name: { contains: name, mode: 'insensitive' } },
+      select: { id: true, name: true, qty: true, qtyReserved: true },
+    });
+    const totalAvailable = items.reduce((sum, i) => sum + Math.max(0, i.qty - i.qtyReserved), 0);
+    result[name] = {
+      available: totalAvailable > 0,
+      qty: totalAvailable,
+      itemName: items[0]?.name ?? null,
+    };
+  }
+
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────
 //  Dashboard summary
 // ─────────────────────────────────────────────────────────────
 

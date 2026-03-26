@@ -27,18 +27,25 @@ export async function chapanProductionRoutes(app: FastifyInstance) {
   app.patch('/:id/status', async (request, reply) => {
     const { id } = request.params as { id: string };
     const { status } = z.object({
-      status: z.enum(['pending', 'cutting', 'sewing', 'finishing', 'quality_check', 'done']),
+      status: z.enum(['queued', 'in_progress', 'done']),
     }).parse(request.body);
 
     await svc.moveStatus(request.orgId, id, status, request.userId, request.userFullName);
     return reply.send({ ok: true });
   });
 
+  // POST /api/v1/chapan/production/:id/claim
+  app.post('/:id/claim', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    await svc.claimTask(request.orgId, id, request.userId, request.userFullName);
+    return reply.send({ ok: true });
+  });
+
   // PATCH /api/v1/chapan/production/:id/assign
   app.patch('/:id/assign', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { worker } = z.object({ worker: z.string() }).parse(request.body);
-    await svc.assignWorker(request.orgId, id, worker);
+    const { worker } = z.object({ worker: z.string().nullable() }).parse(request.body);
+    await svc.assignWorker(request.orgId, id, worker, request.userId, request.userFullName);
     return reply.send({ ok: true });
   });
 

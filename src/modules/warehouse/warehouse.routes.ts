@@ -1,29 +1,25 @@
-/**
- * warehouse.routes.ts
- * All warehouse REST endpoints — prefixed at /api/v1/warehouse
- */
-
 import type { FastifyPluginAsync } from 'fastify';
 import * as svc from './warehouse.service.js';
 
-export const warehouseRoutes: FastifyPluginAsync = async (app) => {
-  // Auth required on all routes
-  app.addHook('onRequest', app.authenticate);
+function toListResponse<T>(results: T[]) {
+  return { count: results.length, results };
+}
 
-  // ── Summary (for tile preview) ──────────────────────────────
+export const warehouseRoutes: FastifyPluginAsync = async (app) => {
+  app.addHook('preHandler', app.authenticate);
+  app.addHook('preHandler', app.resolveOrg);
+
   app.get('/summary', async (req) => {
-    const orgId = req.orgId!;
-    return svc.getWarehouseSummary(orgId);
+    return svc.getWarehouseSummary(req.orgId!);
   });
 
-  // ── Categories ──────────────────────────────────────────────
   app.get('/categories', async (req) => {
-    return svc.listCategories(req.orgId!);
+    return toListResponse(await svc.listCategories(req.orgId!));
   });
 
   app.post<{ Body: { name: string; color?: string } }>('/categories', async (req, reply) => {
-    const cat = await svc.createCategory(req.orgId!, req.body.name, req.body.color);
-    return reply.status(201).send(cat);
+    const category = await svc.createCategory(req.orgId!, req.body.name, req.body.color);
+    return reply.status(201).send(category);
   });
 
   app.delete<{ Params: { id: string } }>('/categories/:id', async (req, reply) => {
@@ -31,14 +27,13 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(204).send();
   });
 
-  // ── Locations ────────────────────────────────────────────────
   app.get('/locations', async (req) => {
-    return svc.listLocations(req.orgId!);
+    return toListResponse(await svc.listLocations(req.orgId!));
   });
 
   app.post<{ Body: { name: string } }>('/locations', async (req, reply) => {
-    const loc = await svc.createLocation(req.orgId!, req.body.name);
-    return reply.status(201).send(loc);
+    const location = await svc.createLocation(req.orgId!, req.body.name);
+    return reply.status(201).send(location);
   });
 
   app.delete<{ Params: { id: string } }>('/locations/:id', async (req, reply) => {
@@ -46,7 +41,6 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(204).send();
   });
 
-  // ── Items ────────────────────────────────────────────────────
   app.get<{
     Querystring: {
       search?: string;
@@ -55,16 +49,28 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
       lowStock?: string;
       page?: string;
       pageSize?: string;
+      limit?: string;
     };
   }>('/items', async (req) => {
-    return svc.listItems(req.orgId!, {
+    const result = await svc.listItems(req.orgId!, {
       search: req.query.search,
       categoryId: req.query.categoryId,
       locationId: req.query.locationId,
       lowStock: req.query.lowStock === 'true',
-      page: req.query.page ? parseInt(req.query.page) : undefined,
-      pageSize: req.query.pageSize ? parseInt(req.query.pageSize) : undefined,
+      page: req.query.page ? parseInt(req.query.page, 10) : undefined,
+      pageSize: req.query.pageSize
+        ? parseInt(req.query.pageSize, 10)
+        : req.query.limit
+          ? parseInt(req.query.limit, 10)
+          : undefined,
     });
+
+    return {
+      count: result.total,
+      page: result.page,
+      totalPages: Math.max(1, Math.ceil(result.total / result.pageSize)),
+      results: result.items,
+    };
   });
 
   app.get<{ Params: { id: string } }>('/items/:id', async (req) => {
@@ -73,12 +79,27 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
 
   app.post<{ Body: svc.CreateItemDto }>('/items', async (req, reply) => {
     const authorName = req.userFullName ?? 'Неизвестно';
-    const item = await svc.createItem(req.orgId!, req.body, authorName);
+    const body = req.body;
+    const dto: svc.CreateItemDto = {
+      ...body,
+      qty: body.qty !== undefined ? Number(body.qty) : undefined,
+      qtyMin: body.qtyMin !== undefined ? Number(body.qtyMin) : undefined,
+      qtyMax: body.qtyMax !== undefined ? Number(body.qtyMax) : undefined,
+      costPrice: body.costPrice !== undefined ? Number(body.costPrice) : undefined,
+    };
+    const item = await svc.createItem(req.orgId!, dto, authorName);
     return reply.status(201).send(item);
   });
 
   app.patch<{ Params: { id: string }; Body: svc.UpdateItemDto }>('/items/:id', async (req) => {
-    return svc.updateItem(req.orgId!, req.params.id, req.body);
+    const body = req.body;
+    const dto: svc.UpdateItemDto = {
+      ...body,
+      qtyMin: body.qtyMin !== undefined ? Number(body.qtyMin) : undefined,
+      qtyMax: body.qtyMax !== undefined ? Number(body.qtyMax) : undefined,
+      costPrice: body.costPrice !== undefined ? Number(body.costPrice) : undefined,
+    };
+    return svc.updateItem(req.orgId!, req.params.id, dto);
   });
 
   app.delete<{ Params: { id: string } }>('/items/:id', async (req, reply) => {
@@ -86,16 +107,32 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(204).send();
   });
 
-  // ── Movements ─────────────────────────────────────────────────
   app.get<{
-    Querystring: { itemId?: string; type?: string; page?: string; pageSize?: string };
+    Querystring: {
+      itemId?: string;
+      type?: string;
+      page?: string;
+      pageSize?: string;
+      limit?: string;
+    };
   }>('/movements', async (req) => {
-    return svc.listMovements(req.orgId!, {
+    const result = await svc.listMovements(req.orgId!, {
       itemId: req.query.itemId,
       type: req.query.type,
-      page: req.query.page ? parseInt(req.query.page) : undefined,
-      pageSize: req.query.pageSize ? parseInt(req.query.pageSize) : undefined,
+      page: req.query.page ? parseInt(req.query.page, 10) : undefined,
+      pageSize: req.query.pageSize
+        ? parseInt(req.query.pageSize, 10)
+        : req.query.limit
+          ? parseInt(req.query.limit, 10)
+          : undefined,
     });
+
+    return {
+      count: result.total,
+      page: result.page,
+      totalPages: Math.max(1, Math.ceil(result.total / result.pageSize)),
+      results: result.movements,
+    };
   });
 
   app.post<{
@@ -113,7 +150,6 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(204).send();
   });
 
-  // ── BOM ───────────────────────────────────────────────────────
   app.get('/bom/products', async (req) => {
     return svc.listBOMProducts(req.orgId!);
   });
@@ -127,7 +163,13 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(204).send();
   });
 
-  // ── Shortage check (integration with Production) ──────────────
+  // POST /api/v1/warehouse/products-availability
+  // Body: { names: string[] }
+  app.post<{ Body: { names: string[] } }>('/products-availability', async (req) => {
+    const { names } = req.body;
+    return svc.checkProductNamesAvailability(req.orgId!, Array.isArray(names) ? names : []);
+  });
+
   app.post<{ Params: { orderId: string }; Body?: { reserve?: boolean } }>(
     '/check-order/:orderId',
     async (req) => {
@@ -136,26 +178,21 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  app.post<{ Params: { orderId: string } }>(
-    '/release-order/:orderId',
-    async (req, reply) => {
-      await svc.releaseOrderReservations(req.orgId!, req.params.orderId);
-      return reply.status(204).send();
-    },
-  );
+  app.post<{ Params: { orderId: string } }>('/release-order/:orderId', async (req, reply) => {
+    await svc.releaseOrderReservations(req.orgId!, req.params.orderId);
+    return reply.status(204).send();
+  });
 
-  // ── Alerts ────────────────────────────────────────────────────
   app.get<{ Querystring: { status?: string } }>('/alerts', async (req) => {
-    return svc.listAlerts(req.orgId!, req.query.status);
+    return toListResponse(await svc.listAlerts(req.orgId!, req.query.status));
   });
 
   app.patch<{ Params: { id: string } }>('/alerts/:id/resolve', async (req) => {
     return svc.resolveAlert(req.orgId!, req.params.id);
   });
 
-  // ── Lots ──────────────────────────────────────────────────────
   app.get<{ Querystring: { itemId?: string } }>('/lots', async (req) => {
-    return svc.listLots(req.orgId!, req.query.itemId);
+    return toListResponse(await svc.listLots(req.orgId!, req.query.itemId));
   });
 
   app.post<{

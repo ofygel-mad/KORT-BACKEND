@@ -165,6 +165,7 @@ model Organization {
   chapanProducts ChapanCatalogProduct[]
   chapanFabrics  ChapanCatalogFabric[]
   chapanSizes    ChapanCatalogSize[]
+  chapanInvoices ChapanInvoice[]
 
   // Warehouse
   warehouseItems       WarehouseItem[]
@@ -451,6 +452,7 @@ model ChapanProfile {
   descriptor              String  @default("")
   orderPrefix             String  @default("ЧП") @map("order_prefix")
   orderCounter            Int     @default(0) @map("order_counter")
+  invoiceCounter          Int     @default(0) @map("invoice_counter")
   requestCounter          Int     @default(0) @map("request_counter")
   publicIntakeTitle       String  @default("Оставьте заявку на пошив") @map("public_intake_title")
   publicIntakeDescription String  @default("") @map("public_intake_description")
@@ -579,7 +581,10 @@ model ChapanOrder {
   completedAt   DateTime? @map("completed_at")
   cancelledAt   DateTime? @map("cancelled_at")
   cancelReason  String?   @map("cancel_reason")
+  streetAddress String?   @map("street_address")
   internalNote  String?   @map("internal_note")
+  isArchived    Boolean   @default(false) @map("is_archived")
+  archivedAt    DateTime? @map("archived_at")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
@@ -590,6 +595,8 @@ model ChapanOrder {
   payments        ChapanPayment[]
   transfer        ChapanTransfer?
   activities      ChapanActivity[]
+  invoiceOrders   ChapanInvoiceOrder[]
+  unpaidAlerts    ChapanUnpaidAlert[]
 
   @@index([orgId, status])
   @@index([orgId, createdAt])
@@ -679,6 +686,73 @@ model ChapanActivity {
 
   @@index([orderId])
   @@map("chapan_activities")
+}
+
+model ChapanUnpaidAlert {
+  id          String   @id @default(cuid())
+  orgId       String   @map("org_id")
+  orderId     String   @map("order_id")
+  orderNumber String   @map("order_number")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  resolvedAt  DateTime? @map("resolved_at")
+  resolvedBy  String?  @map("resolved_by")
+
+  order ChapanOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([orderId])
+  @@index([resolvedAt])
+  @@map("chapan_unpaid_alerts")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CHAPAN INVOICES (НАКЛАДНЫЕ)
+// ═══════════════════════════════════════════════════════════════
+
+model ChapanInvoice {
+  id                    String    @id @default(cuid())
+  orgId                 String    @map("org_id")
+  invoiceNumber         String    @map("invoice_number")
+  status                String    @default("pending_confirmation") // pending_confirmation | confirmed | rejected
+  createdById           String    @map("created_by_id")
+  createdByName         String    @map("created_by_name")
+
+  seamstressConfirmed   Boolean   @default(false) @map("seamstress_confirmed")
+  seamstressConfirmedAt DateTime? @map("seamstress_confirmed_at")
+  seamstressConfirmedBy String?   @map("seamstress_confirmed_by")
+
+  warehouseConfirmed    Boolean   @default(false) @map("warehouse_confirmed")
+  warehouseConfirmedAt  DateTime? @map("warehouse_confirmed_at")
+  warehouseConfirmedBy  String?   @map("warehouse_confirmed_by")
+
+  rejectedAt            DateTime? @map("rejected_at")
+  rejectedBy            String?   @map("rejected_by")
+  rejectionReason       String?   @map("rejection_reason")
+
+  notes                 String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  org   Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  items ChapanInvoiceOrder[]
+
+  @@index([orgId, status])
+  @@index([orgId, createdAt])
+  @@map("chapan_invoices")
+}
+
+model ChapanInvoiceOrder {
+  id        String @id @default(cuid())
+  invoiceId String @map("invoice_id")
+  orderId   String @map("order_id")
+
+  invoice ChapanInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  order   ChapanOrder   @relation(fields: [orderId], references: [id])
+
+  @@unique([invoiceId, orderId])
+  @@index([orderId])
+  @@map("chapan_invoice_orders")
 }
 
 // ═══════════════════════════════════════════════════════════════

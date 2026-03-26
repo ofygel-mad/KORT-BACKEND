@@ -22,6 +22,9 @@ import { chapanOrdersRoutes } from './modules/chapan/orders.routes.js';
 import { chapanProductionRoutes } from './modules/chapan/production.routes.js';
 import { chapanRequestsRoutes } from './modules/chapan/requests.routes.js';
 import { chapanSettingsRoutes } from './modules/chapan/settings.routes.js';
+import { chapanInvoicesRoutes } from './modules/chapan/invoices.routes.js';
+import { alertsRouter } from './modules/chapan/alerts.routes.js';
+// documents routes moved into orders module as /:id/invoice
 import { frontendCompatRoutes } from './modules/frontend-compat/frontend-compat.routes.js';
 import { employeesRoutes } from './modules/employees/employees.routes.js';
 import { accountingRoutes } from './modules/accounting/accounting.routes.js';
@@ -109,6 +112,9 @@ export async function buildApp() {
   await app.register(chapanProductionRoutes, { prefix: '/api/v1/chapan/production' });
   await app.register(chapanRequestsRoutes, { prefix: '/api/v1/chapan/requests' });
   await app.register(chapanSettingsRoutes, { prefix: '/api/v1/chapan/settings' });
+  await app.register(chapanInvoicesRoutes, { prefix: '/api/v1/chapan/invoices' });
+  await app.register(alertsRouter, { prefix: '/api/v1/chapan/alerts' });
+  // invoice generation is now at GET /api/v1/chapan/orders/:id/invoice
   await app.register(frontendCompatRoutes, { prefix: '/api/v1' });
 
 
@@ -118,6 +124,7 @@ export async function buildApp() {
 
   // ── Health check ────────────────────────────────────────
   app.get('/api/v1/health', async () => ({ status: 'ok', ts: new Date().toISOString() }));
+
 
   return app;
 }

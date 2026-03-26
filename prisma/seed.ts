@@ -44,12 +44,13 @@ async function main() {
   // ── ORGANIZATION ─────────────────────────────────────────────────────────
   const org = await prisma.organization.upsert({
     where: { slug: 'demo-company' },
-    update: {},
+    update: { mode: 'industrial', onboardingCompleted: true },
     create: {
       id: 'org-demo',
       name: 'Demo Company',
       slug: 'demo-company',
-      mode: 'advanced',
+      mode: 'industrial',
+      onboardingCompleted: true,
       currency: 'KZT',
       industry: 'Производство',
       // Extended profile
@@ -354,36 +355,24 @@ async function main() {
   });
 
   // ── CHAPAN: WORKERS ───────────────────────────────────────────────────────
-  for (const name of ['Айгуль М.', 'Нурлан К.', 'Гүлнар А.', 'Бакыт С.']) {
-    await prisma.chapanWorker.upsert({
-      where: { orgId_name: { orgId: org.id, name } },
-      update: {},
-      create: { orgId: org.id, name },
-    });
-  }
+  await prisma.chapanWorker.createMany({
+    data: ['Айгуль М.', 'Нурлан К.', 'Гүлнар А.', 'Бакыт С.'].map(name => ({ orgId: org.id, name })),
+    skipDuplicates: true,
+  });
 
   // ── CHAPAN: CATALOG ───────────────────────────────────────────────────────
-  for (const name of ['Чапан мужской', 'Чапан женский', 'Камзол', 'Белдемше', 'Саукеле']) {
-    await prisma.chapanCatalogProduct.upsert({
-      where: { orgId_name: { orgId: org.id, name } },
-      update: {},
-      create: { orgId: org.id, name },
-    });
-  }
-  for (const name of ['Бархат', 'Атлас', 'Шёлк', 'Парча', 'Трикотаж']) {
-    await prisma.chapanCatalogFabric.upsert({
-      where: { orgId_name: { orgId: org.id, name } },
-      update: {},
-      create: { orgId: org.id, name },
-    });
-  }
-  for (const name of ['XS', 'S', 'M', 'L', 'XL', 'XXL', '44', '46', '48', '50', '52', '54']) {
-    await prisma.chapanCatalogSize.upsert({
-      where: { orgId_name: { orgId: org.id, name } },
-      update: {},
-      create: { orgId: org.id, name },
-    });
-  }
+  await prisma.chapanCatalogProduct.createMany({
+    data: ['Чапан мужской', 'Чапан женский', 'Камзол', 'Белдемше', 'Саукеле'].map(name => ({ orgId: org.id, name })),
+    skipDuplicates: true,
+  });
+  await prisma.chapanCatalogFabric.createMany({
+    data: ['Бархат', 'Атлас', 'Шёлк', 'Парча', 'Трикотаж'].map(name => ({ orgId: org.id, name })),
+    skipDuplicates: true,
+  });
+  await prisma.chapanCatalogSize.createMany({
+    data: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '44', '46', '48', '50', '52', '54'].map(name => ({ orgId: org.id, name })),
+    skipDuplicates: true,
+  });
 
   // ── CHAPAN: CLIENT & ORDER ────────────────────────────────────────────────
   const chapanClient = await prisma.chapanClient.upsert({
