@@ -1,7 +1,15 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { paginationSchema } from '../../lib/pagination.js';
 import * as svc from './tasks.service.js';
+
+const tasksPaginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(300).optional(),
+  page_size: z.coerce.number().int().min(1).max(300).optional(),
+}).transform((value) => ({
+  page: value.page,
+  limit: value.limit ?? value.page_size ?? 25,
+}));
 
 export async function tasksRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate);
@@ -11,7 +19,7 @@ export async function tasksRoutes(app: FastifyInstance) {
   app.get('/', async (request) => {
     const query = request.query as Record<string, string>;
     const params = {
-      ...paginationSchema.parse(query),
+      ...tasksPaginationSchema.parse(query),
       status: query.status,
       priority: query.priority,
       dealId: query.deal_id,

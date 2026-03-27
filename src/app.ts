@@ -109,8 +109,8 @@ export async function buildApp() {
     return reply.status(500).send({
       code: 'INTERNAL',
       error: 'INTERNAL',
-      message: 'Internal server error',
-      detail: 'Internal server error',
+      message: 'внутренняя ошибка сервера',
+      detail: 'внутренняя ошибка сервера',
     });
   });
 

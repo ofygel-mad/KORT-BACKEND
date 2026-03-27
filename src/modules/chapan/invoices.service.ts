@@ -1,6 +1,12 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { AppError, NotFoundError, ValidationError } from '../../lib/errors.js';
+import { getNextInvoiceNumberCandidate } from './invoice-number.js';
+import {
+  buildInvoiceDocumentPayload,
+  normalizeInvoiceDocumentPayload,
+  type InvoiceDocumentPayload,
+} from './invoice-document.js';
 
 const INVOICE_MODULE_NOT_READY_MESSAGE = 'Модуль накладных не инициализирован. Выполните миграции БД.';
 
@@ -18,7 +24,8 @@ function isMissingInvoiceSchemaError(error: unknown) {
     const column = String(error.meta?.column ?? '');
     return column.includes('invoice_')
       || column.includes('warehouse_confirmed')
-      || column.includes('seamstress_confirmed');
+      || column.includes('seamstress_confirmed')
+      || column.includes('document_payload');
   }
 
   return false;
@@ -32,17 +39,73 @@ function wrapInvoiceSchemaError(error: unknown): never {
   throw error;
 }
 
-async function nextInvoiceNumber(orgId: string): Promise<string> {
-  try {
-    const profile = await prisma.chapanProfile.update({
-      where: { orgId },
-      data: { invoiceCounter: { increment: 1 } },
-    });
-    const prefix = profile.orderPrefix || 'ЧП';
-    return `${prefix}-Н${String(profile.invoiceCounter).padStart(3, '0')}`;
-  } catch (error) {
-    wrapInvoiceSchemaError(error);
+function isInvoiceNumberConflict(error: unknown) {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+    return false;
   }
+
+  const target = JSON.stringify(error.meta?.target ?? '');
+  return target.includes('org_id') && target.includes('invoice_number');
+}
+
+async function nextInvoiceNumber(
+  tx: Prisma.TransactionClient,
+  orgId: string,
+  createdAt: Date,
+): Promise<string> {
+  return getNextInvoiceNumberCandidate(tx, orgId, createdAt);
+}
+
+function buildFallbackDocument(invoice: {
+  invoiceNumber: string;
+  createdAt: Date;
+  items: Array<{
+    order: {
+      id: string;
+      orderNumber: string;
+      items: Array<{
+        productName: string;
+        fabric?: string | null;
+        size: string;
+        quantity: number;
+        unitPrice: number;
+        color?: string | null;
+      }>;
+    };
+  }>;
+}): InvoiceDocumentPayload {
+  return buildInvoiceDocumentPayload({
+    invoiceNumber: invoice.invoiceNumber,
+    createdAt: invoice.createdAt,
+    orders: invoice.items.map((item) => ({
+      id: item.order.id,
+      orderNumber: item.order.orderNumber,
+      items: item.order.items,
+    })),
+  });
+}
+
+async function loadInvoiceSourceOrders(
+  db: Prisma.TransactionClient | typeof prisma,
+  orgId: string,
+  orderIds: string[],
+) {
+  return db.chapanOrder.findMany({
+    where: { id: { in: orderIds }, orgId },
+    include: {
+      items: {
+        select: {
+          productName: true,
+          fabric: true,
+          size: true,
+          quantity: true,
+          unitPrice: true,
+          color: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
 }
 
 export async function createInvoice(
@@ -51,6 +114,7 @@ export async function createInvoice(
   createdByName: string,
   orderIds: string[],
   notes?: string,
+  documentPayload?: unknown,
 ) {
   try {
     const orders = await prisma.chapanOrder.findMany({
@@ -85,57 +149,138 @@ export async function createInvoice(
       );
     }
 
-    const invoiceNumber = await nextInvoiceNumber(orgId);
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      try {
+        return await prisma.$transaction(async (tx) => {
+          const existingPending = await tx.chapanInvoiceOrder.findMany({
+            where: {
+              orderId: { in: orderIds },
+              invoice: { status: 'pending_confirmation' },
+            },
+            select: { invoice: { select: { invoiceNumber: true } } },
+          });
 
-    return await prisma.$transaction(async (tx) => {
-      const invoice = await tx.chapanInvoice.create({
-        data: {
-          orgId,
-          invoiceNumber,
-          createdById,
-          createdByName,
-          notes,
-          items: {
-            create: orderIds.map((orderId) => ({ orderId })),
-          },
-        },
-        include: {
-          items: {
-            include: {
-              order: {
-                include: { items: true },
+          if (existingPending.length > 0) {
+            const nums = [...new Set(existingPending.map((row) => row.invoice.invoiceNumber))].join(', ');
+            throw new ValidationError(`Для этих заказов уже существует накладная в ожидании подтверждения: ${nums}`);
+          }
+
+          const createdAt = new Date();
+          const invoiceNumber = await nextInvoiceNumber(tx, orgId, createdAt);
+          const detailedOrders = await loadInvoiceSourceOrders(tx, orgId, orderIds);
+          const fallbackDocument = buildInvoiceDocumentPayload({
+            invoiceNumber,
+            createdAt,
+            orders: detailedOrders.map((order) => ({
+              id: order.id,
+              orderNumber: order.orderNumber,
+              items: order.items,
+            })),
+          });
+          const normalizedDocument = documentPayload
+            ? normalizeInvoiceDocumentPayload(documentPayload, fallbackDocument)
+            : fallbackDocument;
+
+          const invoice = await tx.chapanInvoice.create({
+            data: {
+              orgId,
+              invoiceNumber,
+              createdById,
+              createdByName,
+              notes,
+              createdAt,
+              ...({ documentPayload: normalizedDocument } as Record<string, unknown>),
+              items: {
+                create: orderIds.map((orderId) => ({ orderId })),
               },
             },
-          },
-        },
-      });
+            include: {
+              items: {
+                include: {
+                  order: {
+                    include: { items: true },
+                  },
+                },
+              },
+            },
+          });
 
-      for (const orderId of orderIds) {
-        await tx.chapanActivity.create({
-          data: {
-            orderId,
-            type: 'system',
-            content: `Включён в накладную ${invoiceNumber}`,
-            authorId: createdById,
-            authorName: createdByName,
-          },
+          for (const orderId of orderIds) {
+            await tx.chapanActivity.create({
+              data: {
+                orderId,
+                type: 'system',
+                content: `Включён в накладную ${invoiceNumber}`,
+                authorId: createdById,
+                authorName: createdByName,
+              },
+            });
+          }
+
+          return {
+            ...invoice,
+            documentPayload: normalizedDocument,
+          };
         });
+      } catch (error) {
+        if (isInvoiceNumberConflict(error) && attempt < 4) {
+          continue;
+        }
+        throw error;
       }
+    }
 
-      return invoice;
-    });
+    throw new ValidationError('Не удалось сформировать уникальный номер накладной');
   } catch (error) {
     wrapInvoiceSchemaError(error);
   }
 }
 
+export async function previewInvoiceDocument(orgId: string, orderIds: string[]) {
+  const orders = await prisma.chapanOrder.findMany({
+    where: { id: { in: orderIds }, orgId },
+    select: {
+      id: true,
+      status: true,
+      orderNumber: true,
+    },
+  });
+
+  if (orders.length !== orderIds.length) {
+    throw new ValidationError('Некоторые заказы не найдены');
+  }
+
+  const notReady = orders.filter((order) => order.status !== 'ready');
+  if (notReady.length > 0) {
+    throw new ValidationError(
+      `Для preview все заказы должны быть в статусе "Готово": ${notReady.map((order) => order.orderNumber).join(', ')}`,
+    );
+  }
+
+  const createdAt = new Date();
+  const invoiceNumber = await getNextInvoiceNumberCandidate(prisma, orgId, createdAt);
+  const detailedOrders = await loadInvoiceSourceOrders(prisma, orgId, orderIds);
+  return buildInvoiceDocumentPayload({
+    invoiceNumber,
+    createdAt,
+    orders: detailedOrders.map((order) => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      items: order.items,
+    })),
+  });
+}
+
 export async function listInvoices(
   orgId: string,
-  filters?: { status?: string; limit?: number; offset?: number },
+  filters?: { status?: string; orderId?: string; limit?: number; offset?: number },
 ) {
   try {
-    const where: Record<string, unknown> = { orgId };
+    const where: Prisma.ChapanInvoiceWhereInput = { orgId };
     if (filters?.status) where.status = filters.status;
+    if (filters?.orderId) {
+      where.items = { some: { orderId: filters.orderId } };
+    }
 
     const [results, count] = await Promise.all([
       prisma.chapanInvoice.findMany({
@@ -157,6 +302,7 @@ export async function listInvoices(
                   items: {
                     select: {
                       productName: true,
+                      fabric: true,
                       size: true,
                       quantity: true,
                       unitPrice: true,
@@ -203,7 +349,51 @@ export async function getInvoice(orgId: string, id: string) {
       throw new NotFoundError('ChapanInvoice', id);
     }
 
-    return invoice;
+    const fallbackDocument = buildFallbackDocument(invoice);
+    const storedDocumentPayload = (invoice as typeof invoice & { documentPayload?: unknown }).documentPayload;
+    return {
+      ...invoice,
+      documentPayload: normalizeInvoiceDocumentPayload(storedDocumentPayload, fallbackDocument),
+    };
+  } catch (error) {
+    wrapInvoiceSchemaError(error);
+  }
+}
+
+export async function updateInvoiceDocument(
+  orgId: string,
+  invoiceId: string,
+  documentPayload: unknown,
+) {
+  try {
+    const invoice = await prisma.chapanInvoice.findFirst({
+      where: { id: invoiceId, orgId },
+      include: {
+        items: {
+          include: {
+            order: {
+              include: { items: true, payments: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!invoice) {
+      throw new NotFoundError('ChapanInvoice', invoiceId);
+    }
+
+    const fallbackDocument = buildFallbackDocument(invoice);
+    const normalizedDocument = normalizeInvoiceDocumentPayload(documentPayload, fallbackDocument);
+    await prisma.chapanInvoice.update({
+      where: { id: invoiceId },
+      data: { ...({ documentPayload: normalizedDocument } as Record<string, unknown>) },
+    });
+
+    return {
+      ...invoice,
+      documentPayload: normalizedDocument,
+    };
   } catch (error) {
     wrapInvoiceSchemaError(error);
   }
@@ -352,7 +542,7 @@ export async function rejectInvoice(
 }
 
 async function advanceOrdersToWarehouse(
-  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  tx: Prisma.TransactionClient,
   items: Array<{ orderId: string }>,
   userId: string,
   userName: string,

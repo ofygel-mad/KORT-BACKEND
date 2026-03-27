@@ -142,6 +142,12 @@ model Organization {
   bankName    String? @map("bank_name")
   bankBik     String? @map("bank_bik")
   bankAccount String? @map("bank_account")
+  shipmentResponsibleName     String? @map("shipment_responsible_name")
+  shipmentResponsiblePosition String? @map("shipment_responsible_position")
+  transportOrganization       String? @map("transport_organization")
+  attorneyNumber              String? @map("attorney_number")
+  attorneyDate                String? @map("attorney_date")
+  attorneyIssuedBy            String? @map("attorney_issued_by")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -582,8 +588,9 @@ model ChapanOrder {
   cancelledAt   DateTime? @map("cancelled_at")
   cancelReason  String?   @map("cancel_reason")
   streetAddress String?   @map("street_address")
-  internalNote  String?   @map("internal_note")
-  isArchived    Boolean   @default(false) @map("is_archived")
+  internalNote    String?   @map("internal_note")
+  requiresInvoice Boolean   @default(true) @map("requires_invoice")
+  isArchived      Boolean   @default(false) @map("is_archived")
   archivedAt    DateTime? @map("archived_at")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
@@ -597,6 +604,7 @@ model ChapanOrder {
   activities      ChapanActivity[]
   invoiceOrders   ChapanInvoiceOrder[]
   unpaidAlerts    ChapanUnpaidAlert[]
+  changeRequests  ChapanChangeRequest[]
 
   @@index([orgId, status])
   @@index([orgId, createdAt])
@@ -611,6 +619,7 @@ model ChapanOrderItem {
   size          String
   quantity      Int     @default(1)
   unitPrice     Float   @map("unit_price")
+  fulfillmentMode String @default("unassigned") @map("fulfillment_mode")
   notes         String?
   workshopNotes String? @map("workshop_notes")
   color         String?
@@ -644,6 +653,26 @@ model ChapanProductionTask {
   @@index([orderId])
   @@index([status])
   @@map("chapan_production_tasks")
+}
+
+model ChapanChangeRequest {
+  id            String   @id @default(cuid())
+  orderId       String   @map("order_id")
+  orgId         String   @map("org_id")
+  status        String   @default("pending") // pending | approved | rejected
+  requestedBy   String   @map("requested_by")
+  proposedItems Json     @map("proposed_items")
+  managerNote   String?  @map("manager_note")
+  rejectReason  String?  @map("reject_reason")
+  resolvedBy    String?  @map("resolved_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  order ChapanOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([orgId, status])
+  @@map("chapan_change_requests")
 }
 
 model ChapanPayment {
@@ -730,6 +759,7 @@ model ChapanInvoice {
   rejectedBy            String?   @map("rejected_by")
   rejectionReason       String?   @map("rejection_reason")
 
+  documentPayload       Json?     @map("document_payload")
   notes                 String?
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
@@ -737,6 +767,7 @@ model ChapanInvoice {
   org   Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
   items ChapanInvoiceOrder[]
 
+  @@unique([orgId, invoiceNumber])
   @@index([orgId, status])
   @@index([orgId, createdAt])
   @@map("chapan_invoices")

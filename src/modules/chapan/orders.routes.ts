@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import * as svc from './orders.service.js';
 import { generateInvoiceXlsx, generateBatchInvoiceXlsx } from './invoice.service.js';
+import type { InvoiceDocumentPayload } from './invoice-document.js';
 
 export async function chapanOrdersRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate);
@@ -32,6 +33,7 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       search: query.search,
       sortBy: query.sortBy,
       archived,
+      hasWarehouseItems: query.hasWarehouseItems === 'true',
     });
     return { count: orders.length, results: orders };
   });
@@ -111,6 +113,20 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
     return reply.send({ ok: true });
   });
 
+  // POST /api/v1/chapan/orders/:id/route-items
+  app.post('/:id/route-items', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = z.object({
+      items: z.array(z.object({
+        itemId: z.string().min(1),
+        fulfillmentMode: z.enum(['warehouse', 'production']),
+      })).min(1),
+    }).parse(request.body);
+
+    const order = await svc.routeItems(request.orgId, id, request.userId, request.userFullName, body.items);
+    return reply.send(order);
+  });
+
   // POST /api/v1/chapan/orders/:id/confirm
   app.post('/:id/confirm', async (request, reply) => {
     const { id } = request.params as { id: string };
@@ -185,9 +201,16 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
     const body = z.object({
       orderIds: z.array(z.string()).min(1),
       style: z.enum(['default', 'branded']).default('branded'),
+      documentPayload: z.unknown().optional(),
     }).parse(request.body);
 
-    const buffer = await generateBatchInvoiceXlsx(request.orgId, body.orderIds, body.style);
+    const buffer = await generateBatchInvoiceXlsx(
+      request.orgId,
+      body.orderIds,
+      body.style,
+      undefined,
+      body.documentPayload as InvoiceDocumentPayload | undefined,
+    );
     const filename = `nakladnaya-batch-${Date.now()}.xlsx`;
 
     return reply
@@ -214,5 +237,72 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
 
     const activity = await svc.addActivity(request.orgId, id, request.userId, request.userFullName, body);
     return reply.status(201).send(activity);
+  });
+
+  // PATCH /api/v1/chapan/orders/:id/requires-invoice — toggle invoice requirement
+  app.patch('/:id/requires-invoice', async (request) => {
+    const { id } = request.params as { id: string };
+    const body = z.object({ requiresInvoice: z.boolean() }).parse(request.body);
+    return svc.setRequiresInvoice(request.orgId, id, body.requiresInvoice);
+  });
+
+  // POST /api/v1/chapan/orders/:id/return-to-ready — warehouse returns order to "Готово"
+  app.post('/:id/return-to-ready', async (request) => {
+    const { id } = request.params as { id: string };
+    const body = z.object({ reason: z.string().min(1) }).parse(request.body);
+    return svc.returnToReady(request.orgId, id, request.userId, request.userFullName, body.reason);
+  });
+
+  // POST /api/v1/chapan/orders/:id/items/:itemId/route — route single item immediately
+  app.post('/:id/items/:itemId/route', async (request, reply) => {
+    const { id, itemId } = request.params as { id: string; itemId: string };
+    const body = z.object({
+      fulfillmentMode: z.enum(['warehouse', 'production']),
+    }).parse(request.body);
+
+    await svc.routeSingleItem(request.orgId, id, itemId, body.fulfillmentMode, request.userId, request.userFullName);
+    return reply.send({ ok: true });
+  });
+
+  // POST /api/v1/chapan/orders/:id/change-request — manager submits item change request for in_production order
+  app.post('/:id/change-request', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = z.object({
+      items: z.array(z.object({
+        productName: z.string().min(1),
+        fabric: z.string().optional(),
+        size: z.string().min(1),
+        quantity: z.number().int().min(1),
+        unitPrice: z.number().min(0),
+        notes: z.string().optional(),
+        workshopNotes: z.string().optional(),
+      })).min(1),
+      managerNote: z.string().optional(),
+    }).parse(request.body);
+
+    const result = await svc.requestItemChange(
+      request.orgId, id, request.userId, request.userFullName, body.items, body.managerNote,
+    );
+    return reply.status(201).send(result);
+  });
+
+  // GET /api/v1/chapan/orders/change-requests — list pending change requests (for production page)
+  app.get('/change-requests', async (request) => {
+    return svc.listPendingChangeRequests(request.orgId);
+  });
+
+  // POST /api/v1/chapan/orders/change-requests/:crId/approve — seamstress approves
+  app.post('/change-requests/:crId/approve', async (request, reply) => {
+    const { crId } = request.params as { crId: string };
+    await svc.approveChangeRequest(request.orgId, crId, request.userId, request.userFullName);
+    return reply.send({ ok: true });
+  });
+
+  // POST /api/v1/chapan/orders/change-requests/:crId/reject — seamstress rejects with reason
+  app.post('/change-requests/:crId/reject', async (request, reply) => {
+    const { crId } = request.params as { crId: string };
+    const body = z.object({ rejectReason: z.string().min(1) }).parse(request.body);
+    await svc.rejectChangeRequest(request.orgId, crId, request.userId, request.userFullName, body.rejectReason);
+    return reply.send({ ok: true });
   });
 }

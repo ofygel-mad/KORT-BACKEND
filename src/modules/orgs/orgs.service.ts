@@ -39,6 +39,12 @@ function serializeOrg(org: {
   bankName: string | null;
   bankBik: string | null;
   bankAccount: string | null;
+  shipmentResponsibleName: string | null;
+  shipmentResponsiblePosition: string | null;
+  transportOrganization: string | null;
+  attorneyNumber: string | null;
+  attorneyDate: string | null;
+  attorneyIssuedBy: string | null;
 }) {
   return {
     id: org.id,
@@ -63,6 +69,12 @@ function serializeOrg(org: {
     bank_name: org.bankName,
     bank_bik: org.bankBik,
     bank_account: org.bankAccount,
+    shipment_responsible_name: org.shipmentResponsibleName,
+    shipment_responsible_position: org.shipmentResponsiblePosition,
+    transport_organization: org.transportOrganization,
+    attorney_number: org.attorneyNumber,
+    attorney_date: org.attorneyDate,
+    attorney_issued_by: org.attorneyIssuedBy,
   };
 }
 
@@ -106,6 +118,12 @@ export async function updateOrganization(
       bankName: s(data.bank_name),
       bankBik: s(data.bank_bik),
       bankAccount: s(data.bank_account),
+      shipmentResponsibleName: s(data.shipment_responsible_name),
+      shipmentResponsiblePosition: s(data.shipment_responsible_position),
+      transportOrganization: s(data.transport_organization),
+      attorneyNumber: s(data.attorney_number),
+      attorneyDate: s(data.attorney_date),
+      attorneyIssuedBy: s(data.attorney_issued_by),
     },
   });
 

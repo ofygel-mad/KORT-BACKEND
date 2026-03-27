@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { FastifyInstance } from 'fastify';
 import { UnauthorizedError } from '../../lib/errors.js';
 import { verifyAccessToken } from '../../lib/jwt.js';
+import { config, normalizeCorsOrigin } from '../../config.js';
 import * as svc from './frontend-compat.service.js';
 
 export async function frontendCompatRoutes(app: FastifyInstance) {
@@ -115,12 +116,24 @@ export async function frontendCompatRoutes(app: FastifyInstance) {
       throw new UnauthorizedError('Invalid or expired SSE token');
     }
 
+    const requestOrigin = typeof request.headers.origin === 'string'
+      ? normalizeCorsOrigin(request.headers.origin)
+      : null;
+    const corsHeaders = requestOrigin && config.CORS_ORIGINS.includes(requestOrigin)
+      ? {
+          'Access-Control-Allow-Origin': requestOrigin,
+          'Access-Control-Allow-Credentials': 'true',
+          Vary: 'Origin',
+        }
+      : {};
+
     reply.hijack();
     reply.raw.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
+      ...corsHeaders,
     });
     reply.raw.write('event: connected\n');
     reply.raw.write(`data: ${JSON.stringify({ status: 'ok' })}\n\n`);

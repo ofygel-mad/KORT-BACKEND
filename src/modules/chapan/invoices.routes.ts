@@ -12,6 +12,7 @@ export async function chapanInvoicesRoutes(app: FastifyInstance) {
     const body = z.object({
       orderIds: z.array(z.string()).min(1),
       notes: z.string().optional(),
+      documentPayload: z.unknown().optional(),
     }).parse(request.body);
 
     const invoice = await svc.createInvoice(
@@ -20,9 +21,18 @@ export async function chapanInvoicesRoutes(app: FastifyInstance) {
       request.userFullName,
       body.orderIds,
       body.notes,
+      body.documentPayload,
     );
 
     return reply.code(201).send(invoice);
+  });
+
+  app.post('/preview', async (request) => {
+    const body = z.object({
+      orderIds: z.array(z.string()).min(1),
+    }).parse(request.body);
+
+    return svc.previewInvoiceDocument(request.orgId, body.orderIds);
   });
 
   // GET /api/v1/chapan/invoices — List invoices
@@ -30,6 +40,7 @@ export async function chapanInvoicesRoutes(app: FastifyInstance) {
     const query = request.query as Record<string, string>;
     return svc.listInvoices(request.orgId, {
       status: query.status,
+      orderId: query.orderId,
       limit: query.limit ? parseInt(query.limit, 10) : undefined,
       offset: query.offset ? parseInt(query.offset, 10) : undefined,
     });
@@ -39,6 +50,16 @@ export async function chapanInvoicesRoutes(app: FastifyInstance) {
   app.get('/:id', async (request) => {
     const { id } = request.params as { id: string };
     return svc.getInvoice(request.orgId, id);
+  });
+
+  // PATCH /api/v1/chapan/invoices/:id/document — Save preview/editor changes
+  app.patch('/:id/document', async (request) => {
+    const { id } = request.params as { id: string };
+    const body = z.object({
+      documentPayload: z.unknown(),
+    }).parse(request.body);
+
+    return svc.updateInvoiceDocument(request.orgId, id, body.documentPayload);
   });
 
   // POST /api/v1/chapan/invoices/:id/confirm-seamstress
@@ -73,7 +94,10 @@ export async function chapanInvoicesRoutes(app: FastifyInstance) {
 
     const invoice = await svc.getInvoice(request.orgId, id);
     const orderIds = invoice.items.map((item: { orderId: string }) => item.orderId);
-    const buffer = await generateBatchInvoiceXlsx(request.orgId, orderIds, style);
+    const buffer = await generateBatchInvoiceXlsx(request.orgId, orderIds, style, {
+      invoiceNumber: invoice.invoiceNumber,
+      createdAt: new Date(invoice.createdAt),
+    }, invoice.documentPayload);
     const filename = `nakladnaya-${invoice.invoiceNumber}.xlsx`;
 
     return reply
