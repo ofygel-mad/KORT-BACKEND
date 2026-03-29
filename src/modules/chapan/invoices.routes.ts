@@ -85,6 +85,13 @@ export async function chapanInvoicesRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // POST /api/v1/chapan/invoices/:id/archive — Archive after download
+  app.post('/:id/archive', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    await svc.archiveInvoice(request.orgId, id);
+    return reply.send({ ok: true });
+  });
+
   // GET /api/v1/chapan/invoices/:id/download — Download XLSX
   app.get('/:id/download', async (request, reply) => {
     const { id } = request.params as { id: string };

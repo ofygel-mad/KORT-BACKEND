@@ -541,6 +541,21 @@ export async function rejectInvoice(
   }
 }
 
+export async function archiveInvoice(orgId: string, invoiceId: string) {
+  try {
+    const invoice = await prisma.chapanInvoice.findFirst({ where: { id: invoiceId, orgId } });
+    if (!invoice) throw new NotFoundError('ChapanInvoice', invoiceId);
+    if (invoice.status === 'archived') return;
+
+    await prisma.chapanInvoice.update({
+      where: { id: invoiceId },
+      data: { status: 'archived' },
+    });
+  } catch (error) {
+    wrapInvoiceSchemaError(error);
+  }
+}
+
 async function advanceOrdersToWarehouse(
   tx: Prisma.TransactionClient,
   items: Array<{ orderId: string }>,

@@ -16,6 +16,7 @@ import {
   UnauthorizedError,
   ValidationError,
 } from '../../lib/errors.js';
+import { sendPasswordResetEmail } from '../../lib/email.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -684,4 +685,59 @@ export async function acceptInviteAndBuildSession(
     },
     org,
   );
+}
+
+// ─── requestPasswordReset ─────────────────────────────────────────────────────
+
+export async function requestPasswordReset(email: string) {
+  const normalized = normalizeEmail(email);
+  const user = await prisma.user.findUnique({ where: { email: normalized } });
+
+  // Отвечаем всегда успешно — не раскрываем существование аккаунта
+  if (!user || !user.email) return { ok: true };
+
+  // Удаляем старые неиспользованные токены
+  await prisma.passwordResetToken.deleteMany({
+    where: { userId: user.id, usedAt: null },
+  });
+
+  const token = nanoid(48);
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 час
+
+  await prisma.passwordResetToken.create({
+    data: { userId: user.id, token, expiresAt },
+  });
+
+  await sendPasswordResetEmail(user.email, token);
+
+  return { ok: true };
+}
+
+// ─── confirmPasswordReset ─────────────────────────────────────────────────────
+
+export async function confirmPasswordReset(token: string, newPassword: string) {
+  const record = await prisma.passwordResetToken.findUnique({
+    where: { token },
+    include: { user: true },
+  });
+
+  if (!record) throw new ValidationError('Ссылка для сброса пароля недействительна или уже была использована.');
+  if (record.usedAt) throw new ValidationError('Эта ссылка уже была использована. Запросите новую.');
+  if (record.expiresAt < new Date()) throw new ValidationError('Срок действия ссылки истёк. Запросите новую.');
+
+  const hashedPassword = await hashPassword(newPassword);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: record.userId },
+      data: { password: hashedPassword, status: 'active' },
+    });
+    await tx.passwordResetToken.update({
+      where: { id: record.id },
+      data: { usedAt: new Date() },
+    });
+    await tx.refreshToken.deleteMany({ where: { userId: record.userId } });
+  });
+
+  return { ok: true };
 }

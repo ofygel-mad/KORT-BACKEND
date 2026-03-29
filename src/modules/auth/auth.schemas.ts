@@ -42,6 +42,21 @@ export const refreshSchema = z.object({
   refresh: z.string().min(1),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Некорректный email'),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1),
+    new_password: z.string().min(8, 'Пароль должен содержать минимум 8 символов'),
+    confirm_password: z.string().min(1),
+  })
+  .refine((d) => d.new_password === d.confirm_password, {
+    message: 'Пароли не совпадают',
+    path: ['confirm_password'],
+  });
+
 /**
  * @deprecated Employees are now added exclusively by admins via /company/employees/.
  * This schema remains only for backward compat — the route returns 410 Gone.

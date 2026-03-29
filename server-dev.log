@@ -1,0 +1,210 @@
+
+> kort-server@0.1.0 dev
+> tsx watch src/index.ts
+
+[dotenv@17.3.1] injecting env (9) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+Server running at http://0.0.0.0:8000
+[10:06:49.433] [32mINFO[39m (43384): [36mServer listening at http://127.0.0.1:8000[39m
+[10:06:49.434] [32mINFO[39m (43384): [36mServer listening at http://100.119.60.35:8000[39m
+[10:06:49.434] [32mINFO[39m (43384): [36mServer listening at http://172.19.96.1:8000[39m
+[10:06:49.434] [32mINFO[39m (43384): [36mServer listening at http://172.17.128.1:8000[39m
+[10:06:49.434] [32mINFO[39m (43384): [36mServer listening at http://10.144.216.80:8000[39m
+[10:06:49.434] [32mINFO[39m (43384): [36mCORS origins configured[39m
+    [35morigins[39m: [
+      "http://localhost:5173"
+    ]
+[10:07:16.754] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-1"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/v1/chapan/invoices?limit=100",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53242
+    }
+[10:07:16.759] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-1"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 3.711899995803833
+[10:07:16.760] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-2"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/v1/warehouse/products-availability",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59895
+    }
+[10:07:16.761] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-2"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.5418999940156937
+[10:07:16.761] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-3"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/v1/chapan/settings/catalogs",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51517
+    }
+[10:07:16.764] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-3"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 3.3492000102996826
+[10:07:16.771] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-4"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?limit=100",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59895
+    }
+[10:07:16.803] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-5"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/warehouse/products-availability",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51517
+    }
+[10:07:16.818] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-6"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/settings/catalogs",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53242
+    }
+[10:07:16.915] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-4"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 144.18719999492168
+[10:07:16.936] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-6"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 118.15550000965595
+[10:07:16.939] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-5"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 136.14519999921322
+[10:09:21.845] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-7"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/v1/warehouse/products-availability",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51905
+    }
+[10:09:21.846] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-7"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.6289000064134598
+[10:09:21.846] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-8"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/v1/chapan/invoices?limit=100",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 55859
+    }
+[10:09:21.847] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-8"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.5920000076293945
+[10:09:21.848] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-9"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/v1/chapan/settings/catalogs",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57266
+    }
+[10:09:21.849] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-9"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 1.6372999995946884
+[10:09:23.874] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-a"
+    [35mreq[39m: {
+      "method": "OPTIONS",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57266
+    }
+[10:09:23.875] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-a"
+    [35mres[39m: {
+      "statusCode": 204
+    }
+    [35mresponseTime[39m: 0.6178999990224838
+[10:09:23.879] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-b"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57266
+    }
+[10:09:23.907] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-b"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 27.72199998795986
+[10:09:24.530] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-c"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/settings/catalogs",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57266
+    }
+[10:09:24.532] [32mINFO[39m (43384): [36mincoming request[39m
+    [35mreqId[39m: "req-d"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?limit=100",
+      "host": "localhost:8000",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 55859
+    }
+[10:09:24.545] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-c"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 14.967999994754791
+[10:09:24.595] [32mINFO[39m (43384): [36mrequest completed[39m
+    [35mreqId[39m: "req-d"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 63.36370000243187

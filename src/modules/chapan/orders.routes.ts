@@ -62,6 +62,10 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
         mixedTransfer: z.number().min(0),
       }).optional(),
       streetAddress: z.string().optional(),
+      city: z.string().trim().optional(),
+      deliveryType: z.string().trim().optional(),
+      source: z.string().trim().optional(),
+      expectedPaymentMethod: z.string().trim().optional(),
       managerNote: z.string().optional(),
       sourceRequestId: z.string().optional(),
     }).parse(request.body);
@@ -224,7 +228,14 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
   // POST /api/v1/chapan/orders/:id/ship — Warehouse ships to client
   app.post('/:id/ship', async (request, reply) => {
     const { id } = request.params as { id: string };
-    await svc.shipOrder(request.orgId, id, request.userId, request.userFullName);
+    const body = z.object({
+      courierType:      z.string().trim().optional(),
+      recipientName:    z.string().trim().optional(),
+      recipientAddress: z.string().trim().optional(),
+      shippingNote:     z.string().trim().optional(),
+    }).parse(request.body ?? {});
+
+    await svc.shipOrder(request.orgId, id, request.userId, request.userFullName, body);
     return reply.send({ ok: true });
   });
 

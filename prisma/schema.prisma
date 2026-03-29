@@ -22,10 +22,25 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  refreshTokens RefreshToken[]
-  memberships   Membership[]
+  refreshTokens       RefreshToken[]
+  memberships         Membership[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 model RefreshToken {
@@ -587,9 +602,14 @@ model ChapanOrder {
   completedAt   DateTime? @map("completed_at")
   cancelledAt   DateTime? @map("cancelled_at")
   cancelReason  String?   @map("cancel_reason")
-  streetAddress String?   @map("street_address")
-  internalNote    String?   @map("internal_note")
-  requiresInvoice Boolean   @default(true) @map("requires_invoice")
+  streetAddress         String?   @map("street_address")
+  city                  String?
+  deliveryType          String?   @map("delivery_type")
+  source                String?
+  expectedPaymentMethod String?   @map("expected_payment_method")
+  shippingNote          String?   @map("shipping_note")
+  internalNote          String?   @map("internal_note")
+  requiresInvoice       Boolean   @default(true) @map("requires_invoice")
   isArchived      Boolean   @default(false) @map("is_archived")
   archivedAt    DateTime? @map("archived_at")
   createdAt     DateTime  @default(now()) @map("created_at")

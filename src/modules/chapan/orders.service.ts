@@ -27,6 +27,10 @@ type CreateOrderInput = {
     mixedTransfer: number;
   };
   streetAddress?: string;
+  city?: string;
+  deliveryType?: string;
+  source?: string;
+  expectedPaymentMethod?: string;
   managerNote?: string;
   sourceRequestId?: string;
 };
@@ -487,6 +491,10 @@ export async function create(orgId: string, authorId: string, authorName: string
         paidAmount: prepayment,
         paymentStatus: computePaymentStatus(prepayment, totalAmount),
         streetAddress: data.streetAddress?.trim() || undefined,
+        city: data.city?.trim() || undefined,
+        deliveryType: data.deliveryType?.trim() || undefined,
+        source: data.source?.trim() || undefined,
+        expectedPaymentMethod: data.expectedPaymentMethod?.trim() || undefined,
         internalNote: data.managerNote?.trim() || undefined,
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
         items: {
@@ -730,20 +738,20 @@ export async function updateStatus(orgId: string, id: string, status: string, au
     }
   }
 
-  if (status === 'on_warehouse' && order.paymentStatus !== 'paid') {
+  if (status === 'shipped' && order.paymentStatus !== 'paid') {
     const balance = order.totalAmount - order.paidAmount;
 
     await prisma.chapanActivity.create({
       data: {
         orderId: id,
         type: 'system',
-        content: `⚠ Попытка передать на склад неоплаченный заказ (остаток: ${balance.toLocaleString('ru-KZ')} ₸).`,
+        content: `⚠ Попытка отправить неоплаченный заказ (остаток: ${balance.toLocaleString('ru-KZ')} ₸).`,
         authorId,
         authorName,
       },
     });
 
-    throw new ValidationError('Нельзя передать на склад заказ с неоплаченным остатком.');
+    throw new ValidationError('Нельзя отправить заказ с неоплаченным остатком.');
   }
 
   const now = new Date();
@@ -1115,7 +1123,18 @@ export async function close(orgId: string, id: string, authorId: string, authorN
   }
 }
 
-export async function shipOrder(orgId: string, id: string, authorId: string, authorName: string) {
+export async function shipOrder(
+  orgId: string,
+  id: string,
+  authorId: string,
+  authorName: string,
+  shippingData?: {
+    courierType?: string;
+    recipientName?: string;
+    recipientAddress?: string;
+    shippingNote?: string;
+  },
+) {
   const order = await prisma.chapanOrder.findFirst({ where: { id, orgId } });
   if (!order) throw new NotFoundError('ChapanOrder', id);
   if (order.status !== 'on_warehouse') {
@@ -1137,15 +1156,27 @@ export async function shipOrder(orgId: string, id: string, authorId: string, aut
   }
 
   await prisma.$transaction(async (tx) => {
+    const noteLines: string[] = [];
+    if (shippingData?.courierType) noteLines.push(`Способ: ${shippingData.courierType}`);
+    if (shippingData?.recipientName) noteLines.push(`Получатель: ${shippingData.recipientName}`);
+    if (shippingData?.recipientAddress) noteLines.push(`Адрес: ${shippingData.recipientAddress}`);
+    if (shippingData?.shippingNote) noteLines.push(`Комментарий: ${shippingData.shippingNote}`);
+    const compiledNote = noteLines.length > 0 ? noteLines.join(' | ') : undefined;
+
     await tx.chapanOrder.update({
       where: { id },
-      data: { status: 'shipped' },
+      data: {
+        status: 'shipped',
+        shippingNote: compiledNote ?? undefined,
+      },
     });
     await tx.chapanActivity.create({
       data: {
         orderId: id,
         type: 'system',
-        content: 'Заказ отправлен клиенту',
+        content: compiledNote
+          ? `Заказ отправлен клиенту — ${compiledNote}`
+          : 'Заказ отправлен клиенту',
         authorId,
         authorName,
       },

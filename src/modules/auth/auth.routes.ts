@@ -4,6 +4,8 @@ import {
   registerCompanySchema,
   setPasswordSchema,
   refreshSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from './auth.schemas.js';
 import * as authService from './auth.service.js';
 import { UnauthorizedError } from '../../lib/errors.js';
@@ -67,6 +69,20 @@ export async function authRoutes(app: FastifyInstance) {
         'Самостоятельная регистрация сотрудников отключена. ' +
         'Обратитесь к администратору компании — он добавит вас через раздел настроек.',
     });
+  });
+
+  // ── POST /api/v1/auth/forgot-password ───────────────────────────────────
+  app.post('/forgot-password', async (request, reply) => {
+    const { email } = forgotPasswordSchema.parse(request.body);
+    await authService.requestPasswordReset(email);
+    return reply.send({ ok: true });
+  });
+
+  // ── POST /api/v1/auth/reset-password ─────────────────────────────────────
+  app.post('/reset-password', async (request, reply) => {
+    const { token, new_password } = resetPasswordSchema.parse(request.body);
+    const result = await authService.confirmPasswordReset(token, new_password);
+    return reply.send(result);
   });
 
   // ── POST /api/v1/auth/token/refresh ─────────────────────────────────────
