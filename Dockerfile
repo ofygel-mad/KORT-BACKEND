@@ -16,4 +16,4 @@ ENV NODE_ENV=production
 EXPOSE 8000
 
 # On start: migrate DB, seed demo data (idempotent via upsert), then run server
-CMD ["npm", "run", "start:docker"]
+CMD ["pnpm", "run", "start:docker"]

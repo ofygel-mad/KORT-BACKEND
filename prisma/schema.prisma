@@ -595,7 +595,9 @@ model ChapanOrder {
   clientPhone   String    @map("client_phone")
   status        String    @default("new")
   paymentStatus String    @default("not_paid") @map("payment_status")
-  priority      String    @default("normal")
+  priority      String    @default("normal")   // legacy: kept for backward compat; use urgency + isDemandingClient
+  urgency           String  @default("normal")  @map("urgency")          // normal | urgent
+  isDemandingClient Boolean @default(false)     @map("is_demanding_client")
   totalAmount   Float     @default(0) @map("total_amount")
   paidAmount    Float     @default(0) @map("paid_amount")
   dueDate       DateTime? @map("due_date")
@@ -609,6 +611,12 @@ model ChapanOrder {
   expectedPaymentMethod String?   @map("expected_payment_method")
   shippingNote          String?   @map("shipping_note")
   internalNote          String?   @map("internal_note")
+  postalCode            String?   @map("postal_code")
+  orderDate             DateTime? @map("order_date")
+  orderDiscount         Float     @default(0) @map("order_discount")
+  deliveryFee           Float     @default(0) @map("delivery_fee")
+  bankCommissionPercent Float     @default(0) @map("bank_commission_percent")
+  bankCommissionAmount  Float     @default(0) @map("bank_commission_amount")
   requiresInvoice       Boolean   @default(true) @map("requires_invoice")
   isArchived      Boolean   @default(false) @map("is_archived")
   archivedAt    DateTime? @map("archived_at")
@@ -640,6 +648,8 @@ model ChapanOrderItem {
   quantity      Int     @default(1)
   unitPrice     Float   @map("unit_price")
   fulfillmentMode String @default("unassigned") @map("fulfillment_mode")
+  gender        String?
+  length        String?
   notes         String?
   workshopNotes String? @map("workshop_notes")
   color         String?

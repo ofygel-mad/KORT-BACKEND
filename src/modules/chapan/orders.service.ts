@@ -2,15 +2,30 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { normalizeProductionStatus } from './workflow.js';
+import { syncOrderToSheets } from './sheets.sync.js';
+
+// Async fire-and-forget helper — never throws, never blocks the main flow
+function fireSheetSync(orgId: string, orderId: string) {
+  syncOrderToSheets(orgId, orderId).then(result => {
+    if (!result.ok) console.warn('[sheets.sync] non-blocking error:', result.error);
+  }).catch(err => {
+    console.error('[sheets.sync] unexpected error:', err);
+  });
+}
 
 type CreateOrderInput = {
   clientId?: string;
   clientName: string;
   clientPhone: string;
   priority: string;
+  urgency?: string;
+  isDemandingClient?: boolean;
   items: Array<{
     productName: string;
     fabric?: string;
+    color?: string;
+    gender?: string;
+    length?: string;
     size: string;
     quantity: number;
     unitPrice: number;
@@ -28,9 +43,15 @@ type CreateOrderInput = {
   };
   streetAddress?: string;
   city?: string;
+  postalCode?: string;
   deliveryType?: string;
   source?: string;
   expectedPaymentMethod?: string;
+  orderDate?: string;
+  orderDiscount?: number;
+  deliveryFee?: number;
+  bankCommissionPercent?: number;
+  bankCommissionAmount?: number;
   managerNote?: string;
   sourceRequestId?: string;
 };
@@ -487,20 +508,31 @@ export async function create(orgId: string, authorId: string, authorName: string
         clientName: client.clientName,
         clientPhone: client.clientPhone,
         priority: data.priority,
+        urgency: data.urgency ?? (data.priority === 'urgent' ? 'urgent' : 'normal'),
+        isDemandingClient: data.isDemandingClient ?? (data.priority === 'vip'),
         totalAmount,
         paidAmount: prepayment,
         paymentStatus: computePaymentStatus(prepayment, totalAmount),
         streetAddress: data.streetAddress?.trim() || undefined,
         city: data.city?.trim() || undefined,
+        postalCode: data.postalCode?.trim() || undefined,
         deliveryType: data.deliveryType?.trim() || undefined,
         source: data.source?.trim() || undefined,
         expectedPaymentMethod: data.expectedPaymentMethod?.trim() || undefined,
         internalNote: data.managerNote?.trim() || undefined,
+        orderDate: data.orderDate ? new Date(data.orderDate) : undefined,
+        orderDiscount: data.orderDiscount ?? 0,
+        deliveryFee: data.deliveryFee ?? 0,
+        bankCommissionPercent: data.bankCommissionPercent ?? 0,
+        bankCommissionAmount: data.bankCommissionAmount ?? 0,
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
         items: {
           create: data.items.map((item) => ({
             productName: item.productName,
             fabric: item.fabric?.trim() || '',
+            color: item.color?.trim() || undefined,
+            gender: item.gender?.trim() || undefined,
+            length: item.length?.trim() || undefined,
             size: item.size,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
@@ -549,7 +581,10 @@ export async function create(orgId: string, authorId: string, authorName: string
       });
     }
 
-    return mapOrder(order);
+    const mapped = mapOrder(order);
+    // Sprint 10: async sync to Google Sheets — fire-and-forget, never blocks
+    fireSheetSync(orgId, order.id);
+    return mapped;
   });
 }
 
@@ -723,6 +758,7 @@ export async function fulfillFromStock(orgId: string, id: string, authorId: stri
 
 // Update order status
 
+// Sprint 10: status change triggers Sheets sync
 export async function updateStatus(orgId: string, id: string, status: string, authorId: string, authorName: string, cancelReason?: string) {
   const order = await prisma.chapanOrder.findFirst({ where: { id, orgId } });
   if (!order) throw new NotFoundError('ChapanOrder', id);
@@ -791,6 +827,7 @@ export async function updateStatus(orgId: string, id: string, status: string, au
 
 // Add payment
 
+// Sprint 10: payment also triggers Sheets sync
 export async function addPayment(orgId: string, orderId: string, authorId: string, authorName: string, data: {
   amount: number;
   method: string;
@@ -908,6 +945,8 @@ type UpdateOrderInput = {
   clientPhone?: string;
   dueDate?: string | null;
   priority?: string;
+  urgency?: string;
+  isDemandingClient?: boolean;
   items?: Array<{
     productName: string;
     fabric?: string;
@@ -947,6 +986,8 @@ export async function update(orgId: string, id: string, authorId: string, author
     }
     if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
     if (data.priority) updateData.priority = data.priority;
+    if (data.urgency !== undefined) updateData.urgency = data.urgency;
+    if (data.isDemandingClient !== undefined) updateData.isDemandingClient = data.isDemandingClient;
 
     if (data.items) {
       const totalAmount = data.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);

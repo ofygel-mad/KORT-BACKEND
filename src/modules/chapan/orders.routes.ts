@@ -11,6 +11,9 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
   const orderItemSchema = z.object({
     productName: z.string(),
     fabric: z.string().optional(),
+    color: z.string().optional(),
+    gender: z.string().optional(),
+    length: z.string().optional(),
     size: z.string(),
     quantity: z.number().int().min(1),
     unitPrice: z.number().min(0),
@@ -51,6 +54,8 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       clientName: z.string().min(1),
       clientPhone: z.string().min(1),
       priority: z.enum(['normal', 'urgent', 'vip']).default('normal'),
+      urgency: z.enum(['normal', 'urgent']).optional(),
+      isDemandingClient: z.boolean().optional(),
       items: z.array(orderItemSchema).min(1),
       dueDate: z.string().optional(),
       prepayment: z.number().min(0).optional(),
@@ -63,9 +68,15 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       }).optional(),
       streetAddress: z.string().optional(),
       city: z.string().trim().optional(),
+      postalCode: z.string().trim().optional(),
       deliveryType: z.string().trim().optional(),
       source: z.string().trim().optional(),
       expectedPaymentMethod: z.string().trim().optional(),
+      orderDate: z.string().optional(),
+      orderDiscount: z.number().min(0).optional(),
+      deliveryFee: z.number().min(0).optional(),
+      bankCommissionPercent: z.number().min(0).max(100).optional(),
+      bankCommissionAmount: z.number().min(0).optional(),
       managerNote: z.string().optional(),
       sourceRequestId: z.string().optional(),
     }).parse(request.body);
@@ -82,6 +93,8 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       clientPhone: z.string().min(1).optional(),
       dueDate: z.string().nullable().optional(),
       priority: z.enum(['normal', 'urgent', 'vip']).optional(),
+      urgency: z.enum(['normal', 'urgent']).optional(),
+      isDemandingClient: z.boolean().optional(),
       items: z.array(orderItemSchema).optional(),
     }).parse(request.body);
 

@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "prisma generate && tsc",
     "start": "prisma migrate deploy && node dist/index.js",
-    "start:docker": "prisma migrate deploy && npm run db:seed && node dist/index.js",
+    "start:docker": "prisma migrate deploy && pnpm run db:seed && node dist/index.js",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -16,7 +16,12 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:status": "prisma migrate status",
-    "db:report": "tsx scripts/db-report.ts"
+    "db:report": "tsx scripts/db-report.ts",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest watch"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.0",
@@ -29,6 +34,7 @@
     "exceljs": "^4.4.0",
     "fastify": "^5.2.0",
     "fastify-plugin": "^5.0.0",
+    "googleapis": "^171.4.0",
     "jsonwebtoken": "^9.0.2",
     "nanoid": "^5.1.6",
     "nodemailer": "^8.0.4",
@@ -38,11 +44,14 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/nodemailer": "^6.4.17",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.0.0",
+    "@types/nodemailer": "^6.4.17",
+    "@vitest/ui": "^1.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
     "pino-pretty": "^13.0.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^1.0.0"
   }
 }
