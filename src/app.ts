@@ -1,5 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
+import rateLimit from '@fastify/rate-limit';
 import sensible from '@fastify/sensible';
 import { ZodError } from 'zod';
 import { config, normalizeCorsOrigin } from './config.js';
@@ -23,6 +25,7 @@ import { chapanProductionRoutes } from './modules/chapan/production.routes.js';
 import { chapanRequestsRoutes } from './modules/chapan/requests.routes.js';
 import { chapanSettingsRoutes } from './modules/chapan/settings.routes.js';
 import { chapanInvoicesRoutes } from './modules/chapan/invoices.routes.js';
+import { chapanAttachmentsRoutes } from './modules/chapan/attachments.routes.js';
 import { alertsRouter } from './modules/chapan/alerts.routes.js';
 // documents routes moved into orders module as /:id/invoice
 import { frontendCompatRoutes } from './modules/frontend-compat/frontend-compat.routes.js';
@@ -50,8 +53,7 @@ export async function buildApp() {
   });
 
   // ── Global plugins ──────────────────────────────────────
-  await app.register(cors, {
-    origin(origin, callback) {
+  await app.register(cors, {    origin(origin, callback) {
       if (!origin) {
         callback(null, true);
         return;
@@ -70,7 +72,12 @@ export async function buildApp() {
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'Idempotency-Key', 'X-Org-Id'],
   });
+  await app.register(rateLimit, {
+    max: 100,
+    timeWindow: '1 minute',
+  });
   await app.register(sensible);
+  await app.register(multipart, { attachFieldsToBody: false });
   await app.register(authPlugin);
   await app.register(orgScopePlugin);
 
@@ -125,6 +132,7 @@ export async function buildApp() {
   await app.register(dealsRoutes, { prefix: '/api/v1/deals' });
   await app.register(tasksRoutes, { prefix: '/api/v1/tasks' });
   await app.register(chapanOrdersRoutes, { prefix: '/api/v1/chapan/orders' });
+  await app.register(chapanAttachmentsRoutes, { prefix: '/api/v1/chapan/orders' });
   await app.register(chapanProductionRoutes, { prefix: '/api/v1/chapan/production' });
   await app.register(chapanRequestsRoutes, { prefix: '/api/v1/chapan/requests' });
   await app.register(chapanSettingsRoutes, { prefix: '/api/v1/chapan/settings' });

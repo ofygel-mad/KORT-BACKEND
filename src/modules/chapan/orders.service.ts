@@ -401,6 +401,7 @@ export async function getById(orgId: string, id: string) {
       payments: true,
       transfer: true,
       activities: { orderBy: { createdAt: 'desc' } },
+      attachments: { orderBy: { createdAt: 'desc' } },
       invoiceOrders: {
         include: {
           invoice: {
@@ -947,9 +948,24 @@ type UpdateOrderInput = {
   priority?: string;
   urgency?: string;
   isDemandingClient?: boolean;
+  // Address / delivery
+  city?: string;
+  streetAddress?: string;
+  postalCode?: string;
+  deliveryType?: string;
+  source?: string;
+  orderDate?: string;
+  // Financial
+  orderDiscount?: number;
+  deliveryFee?: number;
+  bankCommissionPercent?: number;
+  bankCommissionAmount?: number;
   items?: Array<{
     productName: string;
     fabric?: string;
+    color?: string;
+    gender?: string;
+    length?: string;
     size: string;
     quantity: number;
     unitPrice: number;
@@ -988,6 +1004,18 @@ export async function update(orgId: string, id: string, authorId: string, author
     if (data.priority) updateData.priority = data.priority;
     if (data.urgency !== undefined) updateData.urgency = data.urgency;
     if (data.isDemandingClient !== undefined) updateData.isDemandingClient = data.isDemandingClient;
+    // Address / delivery
+    if (data.city !== undefined)          updateData.city = data.city || null;
+    if (data.streetAddress !== undefined) updateData.streetAddress = data.streetAddress || null;
+    if (data.postalCode !== undefined)    updateData.postalCode = data.postalCode || null;
+    if (data.deliveryType !== undefined)  updateData.deliveryType = data.deliveryType || null;
+    if (data.source !== undefined)        updateData.source = data.source || null;
+    if (data.orderDate !== undefined)     updateData.orderDate = data.orderDate ? new Date(data.orderDate) : null;
+    // Financial
+    if (data.orderDiscount !== undefined)        updateData.orderDiscount = data.orderDiscount ?? 0;
+    if (data.deliveryFee !== undefined)          updateData.deliveryFee = data.deliveryFee ?? 0;
+    if (data.bankCommissionPercent !== undefined) updateData.bankCommissionPercent = data.bankCommissionPercent ?? 0;
+    if (data.bankCommissionAmount !== undefined)  updateData.bankCommissionAmount = data.bankCommissionAmount ?? 0;
 
     if (data.items) {
       const totalAmount = data.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
@@ -1008,6 +1036,9 @@ export async function update(orgId: string, id: string, authorId: string, author
             orderId: id,
             productName: item.productName,
             fabric: item.fabric?.trim() || '',
+            color: item.color?.trim() || null,
+            gender: item.gender?.trim() || null,
+            length: item.length?.trim() || null,
             size: item.size,
             quantity: item.quantity,
             unitPrice: item.unitPrice,

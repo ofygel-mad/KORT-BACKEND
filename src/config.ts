@@ -8,7 +8,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 loadEnv({ path: resolve(__dirname, '../.env') });
 
 export function normalizeCorsOrigin(origin: string) {
-  return origin.trim().replace(/\/+$/, '');
+  const trimmed = origin.trim();
+  let end = trimmed.length;
+  while (end > 0 && trimmed[end - 1] === '/') {
+    end--;
+  }
+  return trimmed.slice(0, end);
 }
 
 function parseCorsOrigins(value: string) {
@@ -34,6 +39,9 @@ const envSchema = z.object({
   GOOGLE_SHEETS_SPREADSHEET_ID: z.string().optional(),
   GOOGLE_SHEETS_SHEET_NAME: z.string().optional(),
   GOOGLE_SHEETS_API_KEY: z.string().optional(),
+  // Sprint 9: file uploads
+  UPLOAD_DIR: z.string().default('./uploads'),
+  UPLOAD_MAX_FILE_SIZE_MB: z.coerce.number().default(10),
 });
 
 function loadConfig() {

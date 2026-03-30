@@ -322,7 +322,7 @@ async function upsertRow(
     });
     const updatedRange = result.data.updates?.updatedRange ?? '';
     const match = updatedRange.match(/!A(\d+)/);
-    const rowIndex = match ? parseInt(match[1], 10) : -1;
+    const rowIndex = match?.[1] != null ? parseInt(match[1], 10) : -1;
     return { ok: true, rowIndex };
   }
   // ─────────────────────────────────────────────────────────────────────────

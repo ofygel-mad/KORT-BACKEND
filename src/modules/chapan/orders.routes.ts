@@ -95,6 +95,18 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       priority: z.enum(['normal', 'urgent', 'vip']).optional(),
       urgency: z.enum(['normal', 'urgent']).optional(),
       isDemandingClient: z.boolean().optional(),
+      // Address / delivery fields
+      city: z.string().trim().optional(),
+      streetAddress: z.string().optional(),
+      postalCode: z.string().trim().optional(),
+      deliveryType: z.string().trim().optional(),
+      source: z.string().trim().optional(),
+      orderDate: z.string().optional(),
+      // Financial fields
+      orderDiscount: z.number().min(0).optional(),
+      deliveryFee: z.number().min(0).optional(),
+      bankCommissionPercent: z.number().min(0).max(100).optional(),
+      bankCommissionAmount: z.number().min(0).optional(),
       items: z.array(orderItemSchema).optional(),
     }).parse(request.body);
 

@@ -45,9 +45,6 @@ export default defineConfig({
     // Setup files
     setupFiles: ['./vitest.setup.ts'],
 
-    // Globals
-    globals: true,
-
     // API
     api: {
       port: 51204,

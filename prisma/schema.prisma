@@ -186,6 +186,7 @@ model Organization {
   chapanProducts ChapanCatalogProduct[]
   chapanFabrics  ChapanCatalogFabric[]
   chapanSizes    ChapanCatalogSize[]
+  chapanPaymentMethods ChapanCatalogPaymentMethod[]
   chapanInvoices ChapanInvoice[]
 
   // Warehouse
@@ -529,6 +530,18 @@ model ChapanCatalogSize {
   @@map("chapan_catalog_sizes")
 }
 
+model ChapanCatalogPaymentMethod {
+  id    String @id @default(cuid())
+  orgId String @map("org_id")
+  name  String
+  sortOrder Int @default(0) @map("sort_order")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, name])
+  @@map("chapan_catalog_payment_methods")
+}
+
 model ChapanClient {
   id        String   @id @default(cuid())
   orgId     String   @map("org_id")
@@ -633,6 +646,7 @@ model ChapanOrder {
   invoiceOrders   ChapanInvoiceOrder[]
   unpaidAlerts    ChapanUnpaidAlert[]
   changeRequests  ChapanChangeRequest[]
+  attachments     ChapanOrderAttachment[]
 
   @@index([orgId, status])
   @@index([orgId, createdAt])
@@ -703,6 +717,23 @@ model ChapanChangeRequest {
   @@index([orderId])
   @@index([orgId, status])
   @@map("chapan_change_requests")
+}
+
+model ChapanOrderAttachment {
+  id          String   @id @default(cuid())
+  orderId     String   @map("order_id")
+  orgId       String   @map("org_id")
+  fileName    String   @map("file_name")
+  mimeType    String   @map("mime_type")
+  sizeBytes   Int      @map("size_bytes")
+  storagePath String   @map("storage_path")   // relative path inside UPLOAD_DIR
+  uploadedBy  String   @map("uploaded_by")     // user displayName
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  order ChapanOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("chapan_order_attachments")
 }
 
 model ChapanPayment {
