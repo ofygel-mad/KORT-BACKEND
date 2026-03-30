@@ -107,6 +107,14 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       deliveryFee: z.number().min(0).optional(),
       bankCommissionPercent: z.number().min(0).max(100).optional(),
       bankCommissionAmount: z.number().min(0).optional(),
+      // Payment fields
+      prepayment: z.number().min(0).optional(),
+      paymentMethod: z.string().optional(),
+      expectedPaymentMethod: z.string().optional(),
+      mixedCash: z.number().min(0).optional(),
+      mixedKaspiQr: z.number().min(0).optional(),
+      mixedKaspiTerminal: z.number().min(0).optional(),
+      mixedTransfer: z.number().min(0).optional(),
       items: z.array(orderItemSchema).optional(),
     }).parse(request.body);
 
@@ -341,4 +349,41 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
     await svc.rejectChangeRequest(request.orgId, crId, request.userId, request.userFullName, body.rejectReason);
     return reply.send({ ok: true });
   });
+  // ── Trash (soft-delete) routes ────────────────────────────────────────────
+
+  // POST /api/v1/chapan/orders/:id/trash  — manager sends to trash
+  app.post('/:id/trash', {
+    preHandler: [app.authenticate, app.resolveOrg, app.requireRole('manager', 'admin', 'owner')],
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const result = await svc.trashOrder(request.orgId, id, request.userId, request.userFullName);
+    return reply.send(result);
+  });
+
+  // POST /api/v1/chapan/orders/:id/restore-from-trash  — owner/full_access restores
+  app.post('/:id/restore-from-trash', {
+    preHandler: [app.authenticate, app.resolveOrg, app.requireRole('admin', 'owner')],
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const result = await svc.restoreFromTrash(request.orgId, id, request.userId, request.userFullName);
+    return reply.send(result);
+  });
+
+  // DELETE /api/v1/chapan/orders/:id  — permanent delete, owner/full_access only
+  app.delete('/:id', {
+    preHandler: [app.authenticate, app.resolveOrg, app.requireRole('admin', 'owner')],
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const result = await svc.permanentDelete(request.orgId, id);
+    return reply.send(result);
+  });
+
+  // GET /api/v1/chapan/orders/trash  — list trashed orders, owner/full_access only
+  app.get('/trash', {
+    preHandler: [app.authenticate, app.resolveOrg, app.requireRole('admin', 'owner')],
+  }, async (request) => {
+    return svc.listTrashed(request.orgId);
+  });
+
+
 }

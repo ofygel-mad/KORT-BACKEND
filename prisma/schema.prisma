@@ -520,13 +520,15 @@ model ChapanCatalogFabric {
 }
 
 model ChapanCatalogSize {
-  id    String @id @default(cuid())
-  orgId String @map("org_id")
-  name  String
+  id        String @id @default(cuid())
+  orgId     String @map("org_id")
+  name      String
+  sortOrder Int    @default(0) @map("sort_order")
 
   org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   @@unique([orgId, name])
+  @@index([orgId, sortOrder])
   @@map("chapan_catalog_sizes")
 }
 
@@ -633,6 +635,7 @@ model ChapanOrder {
   requiresInvoice       Boolean   @default(true) @map("requires_invoice")
   isArchived      Boolean   @default(false) @map("is_archived")
   archivedAt    DateTime? @map("archived_at")
+  deletedAt     DateTime? @map("deleted_at")   // soft-delete: set by manager, permanent delete by owner
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 

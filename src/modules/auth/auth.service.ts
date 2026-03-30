@@ -399,36 +399,11 @@ export async function setPassword(tempToken: string, newPassword: string) {
     });
   });
 
-  // Build and return a full session
-  const membership = await prisma.membership.findFirst({
-    where: { userId: user.id, status: 'active' },
-    include: { org: true },
-    orderBy: { joinedAt: 'desc' },
-  });
-
-  const updatedUser = await prisma.user.findUniqueOrThrow({
-    where: { id: user.id },
-  });
-
-  const tokens = await createTokenPair(user.id, updatedUser.email ?? '');
-  return buildSessionResponse(
-    updatedUser,
-    tokens,
-    membership
-      ? {
-          orgId: membership.orgId,
-          role: membership.role,
-          status: membership.status,
-          source: membership.source,
-          joinedAt: membership.joinedAt,
-          updatedAt: membership.updatedAt,
-          employeePermissions: membership.employeePermissions,
-          employeeAccountStatus: membership.employeeAccountStatus,
-        }
-      : null,
-    membership?.org ?? null,
-  );
+  // Password set — do NOT auto-login.
+  // Employee must re-login with phone + new password.
+  return { ok: true, requires_login: true };
 }
+
 
 // ─── registerCompany ─────────────────────────────────────────────────────────
 
@@ -738,6 +713,24 @@ export async function confirmPasswordReset(token: string, newPassword: string) {
     });
     await tx.refreshToken.deleteMany({ where: { userId: record.userId } });
   });
+
+  return { ok: true };
+}
+
+// ── changePassword (self-service for all users) ───────────────────────────────
+export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new UnauthorizedError('Пользователь не найден.');
+
+  const valid = await verifyPassword(currentPassword, user.password);
+  if (!valid) throw new ForbiddenError('Неверный текущий пароль.');
+
+  if (newPassword.length < 6) {
+    throw new ValidationError('Новый пароль должен содержать не менее 6 символов.');
+  }
+
+  const hashed = await hashPassword(newPassword);
+  await prisma.user.update({ where: { id: userId }, data: { password: hashed } });
 
   return { ok: true };
 }

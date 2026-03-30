@@ -41,4 +41,17 @@ export async function usersRoutes(app: FastifyInstance) {
     await usersService.deactivateUser(id, request.orgId);
     return reply.send({ ok: true });
   });
+  // POST /api/v1/users/me/change-email
+  app.post('/me/change-email', {
+    preHandler: [app.authenticate],
+  }, async (request, reply) => {
+    const { new_email, current_password } = z.object({
+      new_email: z.string().min(3),
+      current_password: z.string().min(1),
+    }).parse(request.body);
+
+    await usersService.changeEmail(request.userId, new_email, current_password);
+    // Tokens are revoked in service — client must re-login
+    return reply.send({ ok: true, requires_relogin: true });
+  });
 }

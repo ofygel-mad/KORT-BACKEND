@@ -266,29 +266,44 @@ export async function ensureSheetHeader(): Promise<void> {
 function isSheetsConfigured(): boolean {
   return !!(
     process.env.GOOGLE_SHEETS_SPREADSHEET_ID &&
-    process.env.GOOGLE_SHEETS_API_KEY
+    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
+    process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
   );
+}
+
+/**
+ * Build an authenticated Google Sheets client using a Service Account.
+ * The private key can be stored as base64 (recommended for env vars) or
+ * raw with literal \n characters (they are normalised here).
+ */
+async function buildSheetsClient() {
+  const { google } = await import('googleapis');
+
+  const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY ?? '';
+  // Support both base64-encoded keys and raw keys with escaped newlines
+  const privateKey = rawKey.startsWith('-----')
+    ? rawKey.replace(/\\n/g, '\n')
+    : Buffer.from(rawKey, 'base64').toString('utf-8').replace(/\\n/g, '\n');
+
+  const auth = new google.auth.JWT({
+    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    key: privateKey,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+
+  return google.sheets({ version: 'v4', auth });
 }
 
 /**
  * Upsert a row in the sheet.
  * Searches column A for the orderId (idempotency key).
  * Updates the row if found, appends a new row if not.
- *
- * NOTE: Uncomment and install `googleapis` to activate.
  */
 async function upsertRow(
   orderId: string,
   values: string[],
 ): Promise<SyncResult> {
-  // ── Using Google Sheets API with API Key ──────────────────────────────────
-  const { google } = await import('googleapis');
-
-  const sheets = google.sheets({
-    version: 'v4',
-    auth: process.env.GOOGLE_SHEETS_API_KEY,
-  });
-
+  const sheets = await buildSheetsClient();
   const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID!;
   const sheetName = process.env.GOOGLE_SHEETS_SHEET_NAME ?? 'Orders';
 
@@ -325,16 +340,10 @@ async function upsertRow(
     const rowIndex = match?.[1] != null ? parseInt(match[1], 10) : -1;
     return { ok: true, rowIndex };
   }
-  // ─────────────────────────────────────────────────────────────────────────
 }
 
 async function ensureHeaderRow(): Promise<void> {
-  // ── Using Google Sheets API with API Key ──────────────────────────────────
-  const { google } = await import('googleapis');
-  const sheets = google.sheets({
-    version: 'v4',
-    auth: process.env.GOOGLE_SHEETS_API_KEY,
-  });
+  const sheets = await buildSheetsClient();
   const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID!;
   const sheetName = process.env.GOOGLE_SHEETS_SHEET_NAME ?? 'Orders';
 
@@ -351,5 +360,4 @@ async function ensureHeaderRow(): Promise<void> {
       requestBody: { values: [HEADER_ROW] },
     });
   }
-  // ─────────────────────────────────────────────────────────────────────────
 }

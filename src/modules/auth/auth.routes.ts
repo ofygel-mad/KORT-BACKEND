@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import {
   loginSchema,
   registerCompanySchema,
@@ -111,4 +112,18 @@ export async function authRoutes(app: FastifyInstance) {
         : undefined;
     return reply.send(await authService.bootstrap(request.userId, xOrgId));
   });
+  // POST /api/v1/auth/change-password — self-service password change for all users
+  app.post('/change-password', {
+    preHandler: [app.authenticate],
+  }, async (request, reply) => {
+    const { current_password, new_password } = z.object({
+      current_password: z.string().min(1),
+      new_password: z.string().min(6),
+    }).parse(request.body);
+
+    await authService.changePassword(request.userId, current_password, new_password);
+    return reply.send({ ok: true });
+  });
+
+
 }

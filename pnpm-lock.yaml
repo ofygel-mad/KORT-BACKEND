@@ -15,7 +15,7 @@ importers:
         specifier: ^9.0.0
         version: 9.1.0
       '@fastify/multipart':
-        specifier: ^9.4.0
+        specifier: ^9.0.0
         version: 9.4.0
       '@fastify/rate-limit':
         specifier: ^10.0.0

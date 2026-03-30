@@ -960,6 +960,14 @@ type UpdateOrderInput = {
   deliveryFee?: number;
   bankCommissionPercent?: number;
   bankCommissionAmount?: number;
+  // Payment
+  prepayment?: number;
+  paymentMethod?: string;
+  expectedPaymentMethod?: string;
+  mixedCash?: number;
+  mixedKaspiQr?: number;
+  mixedKaspiTerminal?: number;
+  mixedTransfer?: number;
   items?: Array<{
     productName: string;
     fabric?: string;
@@ -1016,6 +1024,17 @@ export async function update(orgId: string, id: string, authorId: string, author
     if (data.deliveryFee !== undefined)          updateData.deliveryFee = data.deliveryFee ?? 0;
     if (data.bankCommissionPercent !== undefined) updateData.bankCommissionPercent = data.bankCommissionPercent ?? 0;
     if (data.bankCommissionAmount !== undefined)  updateData.bankCommissionAmount = data.bankCommissionAmount ?? 0;
+    // Payment update: only replace paidAmount if prepayment is explicitly provided
+    if (data.prepayment !== undefined) {
+      const newPaid = Math.max(0, data.prepayment);
+      updateData.paidAmount = newPaid;
+      // Recalculate paymentStatus against current or incoming totalAmount
+      const totalAmount = typeof updateData.totalAmount === 'number'
+        ? updateData.totalAmount
+        : order.totalAmount;
+      updateData.paymentStatus = computePaymentStatus(newPaid, totalAmount);
+    }
+    if (data.expectedPaymentMethod !== undefined) updateData.expectedPaymentMethod = data.expectedPaymentMethod || null;
 
     if (data.items) {
       const totalAmount = data.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
@@ -1549,5 +1568,77 @@ export async function routeSingleItem(
         authorName,
       },
     });
+  });
+}
+
+
+// ── Trash (soft-delete) ───────────────────────────────────────────────────────
+
+/** Manager moves an order to trash (soft-delete). Owner can permanently delete. */
+export async function trashOrder(orgId: string, id: string, authorId: string, authorName: string) {
+  const order = await prisma.chapanOrder.findFirst({ where: { id, orgId } });
+  if (!order) throw new NotFoundError('ChapanOrder', id);
+  if (order.deletedAt) throw new ValidationError('Заказ уже в корзине.');
+  if (['completed', 'cancelled'].includes(order.status)) {
+    // Allow trashing completed/cancelled orders
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.chapanOrder.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+    await tx.chapanActivity.create({
+      data: { orderId: id, type: 'edit', content: 'Заказ перемещён в корзину', authorId, authorName },
+    });
+  });
+
+  return { ok: true };
+}
+
+/** Restore an order from trash. Owner/full_access only. */
+export async function restoreFromTrash(orgId: string, id: string, authorId: string, authorName: string) {
+  const order = await prisma.chapanOrder.findFirst({ where: { id, orgId } });
+  if (!order) throw new NotFoundError('ChapanOrder', id);
+  if (!order.deletedAt) throw new ValidationError('Заказ не в корзине.');
+
+  await prisma.$transaction(async (tx) => {
+    await tx.chapanOrder.update({
+      where: { id },
+      data: { deletedAt: null },
+    });
+    await tx.chapanActivity.create({
+      data: { orderId: id, type: 'edit', content: 'Заказ восстановлен из корзины', authorId, authorName },
+    });
+  });
+
+  return { ok: true };
+}
+
+/** Permanently delete an order. Owner/full_access only. */
+export async function permanentDelete(orgId: string, id: string) {
+  const order = await prisma.chapanOrder.findFirst({
+    where: { id, orgId },
+    include: { items: true, productionTasks: true, payments: true },
+  });
+  if (!order) throw new NotFoundError('ChapanOrder', id);
+  if (!order.deletedAt) {
+    throw new ValidationError(
+      'Заказ не в корзине. Сначала переместите его в корзину.',
+    );
+  }
+
+  // Hard delete — cascades to items, tasks, payments via Prisma relations
+  await prisma.chapanOrder.delete({ where: { id } });
+
+  return { ok: true };
+}
+
+/** List trashed orders. Owner/full_access only. */
+export async function listTrashed(orgId: string) {
+  return prisma.chapanOrder.findMany({
+    where: { orgId, deletedAt: { not: null } },
+    include: { items: true, payments: true },
+    orderBy: { deletedAt: 'desc' },
   });
 }

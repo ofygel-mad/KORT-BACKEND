@@ -97,3 +97,47 @@ export async function deactivateUser(userId: string, orgId: string) {
     data: { status: 'inactive' },
   });
 }
+
+
+// ── Change email (owner self-service) ─────────────────────────────────────────
+export async function changeEmail(
+  userId: string,
+  newEmail: string,
+  currentPassword: string,
+) {
+  const { verifyPassword } = await import('../../lib/hash.js');
+  const { ConflictError, ValidationError, ForbiddenError } = await import('../../lib/errors.js');
+  const { prisma } = await import('../../lib/prisma.js');
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new ForbiddenError('Пользователь не найден.');
+
+  // Verify current password before allowing email change
+  const valid = await verifyPassword(currentPassword, user.password);
+  if (!valid) throw new ForbiddenError('Неверный текущий пароль.');
+
+  const normalizedEmail = newEmail.trim().toLowerCase();
+  if (!normalizedEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(normalizedEmail)) {
+    throw new ValidationError('Укажите корректный email-адрес.');
+  }
+
+  if (normalizedEmail === user.email?.toLowerCase()) {
+    throw new ValidationError('Новый email совпадает с текущим.');
+  }
+
+  // Check uniqueness
+  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  if (existing) throw new ConflictError('Этот email уже используется другим аккаунтом.');
+
+  // Update email and revoke all sessions (force re-login)
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: userId },
+      data: { email: normalizedEmail },
+    });
+    // Revoke all refresh tokens → user must log in with new email
+    await tx.refreshToken.deleteMany({ where: { userId } });
+  });
+
+  return { ok: true };
+}
