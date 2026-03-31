@@ -35,12 +35,7 @@ type CreateOrderInput = {
   dueDate?: string;
   prepayment?: number;
   paymentMethod?: string;
-  mixedBreakdown?: {
-    mixedCash: number;
-    mixedKaspiQr: number;
-    mixedKaspiTerminal: number;
-    mixedTransfer: number;
-  };
+  paymentBreakdown?: Record<string, number>;
   streetAddress?: string;
   city?: string;
   postalCode?: string;
@@ -164,25 +159,30 @@ function formatPaymentMethod(method: string) {
   return method;
 }
 
-function buildMixedPaymentNote(mixedBreakdown: NonNullable<CreateOrderInput['mixedBreakdown']>) {
-  const parts = [
-    { method: 'cash', amount: mixedBreakdown.mixedCash },
-    { method: 'kaspi_qr', amount: mixedBreakdown.mixedKaspiQr },
-    { method: 'kaspi_terminal', amount: mixedBreakdown.mixedKaspiTerminal },
-    { method: 'transfer', amount: mixedBreakdown.mixedTransfer },
-  ]
-    .filter((part) => part.amount > 0)
-    .map((part) => `${formatPaymentMethod(part.method)}: ${part.amount.toLocaleString('ru-RU')} ₸`);
+function normalizePaymentBreakdown(breakdown: Record<string, number> | undefined): Record<string, number> | undefined {
+  if (!breakdown) return undefined;
+  const filtered: Record<string, number> = {};
+  for (const [key, val] of Object.entries(breakdown)) {
+    const amount = Number(val);
+    if (Number.isFinite(amount) && amount > 0) {
+      filtered[key] = amount;
+    }
+  }
+  return Object.keys(filtered).length > 0 ? filtered : undefined;
+}
 
+function buildMixedPaymentNote(breakdown: Record<string, number>) {
+  const parts = Object.entries(breakdown)
+    .filter(([, amount]) => amount > 0)
+    .map(([method, amount]) => `${formatPaymentMethod(method)}: ${amount.toLocaleString('ru-RU')} ₸`);
   return parts.length > 0 ? parts.join('; ') : undefined;
 }
 
 function buildInitialPaymentNote(data: CreateOrderInput) {
-  if (data.paymentMethod !== 'mixed' || !data.mixedBreakdown) {
+  if (data.paymentMethod !== 'mixed' || !data.paymentBreakdown) {
     return undefined;
   }
-
-  return buildMixedPaymentNote(data.mixedBreakdown);
+  return buildMixedPaymentNote(data.paymentBreakdown);
 }
 
 function normalizeFulfillmentMode(value: string | null | undefined): FulfillmentMode {
@@ -321,7 +321,7 @@ export async function list(orgId: string, filters?: {
   archived?: boolean;
   hasWarehouseItems?: boolean;
 }) {
-  const where: Record<string, unknown> = { orgId };
+  const where: Record<string, unknown> = { orgId, deletedAt: null };
 
   if (filters?.archived === true) {
     where.isArchived = true;
@@ -526,6 +526,9 @@ export async function create(orgId: string, authorId: string, authorName: string
         deliveryFee: data.deliveryFee ?? 0,
         bankCommissionPercent: data.bankCommissionPercent ?? 0,
         bankCommissionAmount: data.bankCommissionAmount ?? 0,
+        paymentBreakdown: data.paymentMethod === 'mixed'
+          ? (normalizePaymentBreakdown(data.paymentBreakdown) ?? undefined)
+          : undefined,
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
         items: {
           create: data.items.map((item) => ({
@@ -964,10 +967,7 @@ type UpdateOrderInput = {
   prepayment?: number;
   paymentMethod?: string;
   expectedPaymentMethod?: string;
-  mixedCash?: number;
-  mixedKaspiQr?: number;
-  mixedKaspiTerminal?: number;
-  mixedTransfer?: number;
+  paymentBreakdown?: Record<string, number>;
   items?: Array<{
     productName: string;
     fabric?: string;
@@ -1035,6 +1035,11 @@ export async function update(orgId: string, id: string, authorId: string, author
       updateData.paymentStatus = computePaymentStatus(newPaid, totalAmount);
     }
     if (data.expectedPaymentMethod !== undefined) updateData.expectedPaymentMethod = data.expectedPaymentMethod || null;
+    if (data.paymentBreakdown !== undefined) {
+      updateData.paymentBreakdown = data.paymentMethod === 'mixed'
+        ? (normalizePaymentBreakdown(data.paymentBreakdown) ?? null)
+        : null;
+    }
 
     if (data.items) {
       const totalAmount = data.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);

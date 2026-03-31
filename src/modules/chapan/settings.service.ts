@@ -15,6 +15,10 @@ export async function getProfile(orgId: string) {
     publicIntakeDescription: profile.publicIntakeDescription,
     publicIntakeEnabled: profile.publicIntakeEnabled,
     supportLabel: profile.supportLabel,
+    kazpostDeliveryFee: profile.kazpostDeliveryFee,
+    railDeliveryFee: profile.railDeliveryFee,
+    airDeliveryFee: profile.airDeliveryFee,
+    bankCommissionPercent: profile.bankCommissionPercent,
   };
 }
 
@@ -30,6 +34,9 @@ export async function updateProfile(orgId: string, data: Record<string, unknown>
       publicIntakeDescription: data.publicIntakeDescription as string | undefined,
       publicIntakeEnabled: data.publicIntakeEnabled as boolean | undefined,
       supportLabel: data.supportLabel as string | undefined,
+      kazpostDeliveryFee: data.kazpostDeliveryFee as number | undefined,
+      railDeliveryFee: data.railDeliveryFee as number | undefined,
+      airDeliveryFee: data.airDeliveryFee as number | undefined,
     },
     update: {
       displayName: data.displayName as string | undefined,
@@ -39,6 +46,9 @@ export async function updateProfile(orgId: string, data: Record<string, unknown>
       publicIntakeDescription: data.publicIntakeDescription as string | undefined,
       publicIntakeEnabled: data.publicIntakeEnabled as boolean | undefined,
       supportLabel: data.supportLabel as string | undefined,
+      kazpostDeliveryFee: data.kazpostDeliveryFee as number | undefined,
+      railDeliveryFee: data.railDeliveryFee as number | undefined,
+      airDeliveryFee: data.airDeliveryFee as number | undefined,
     },
   });
 
@@ -50,7 +60,20 @@ export async function updateProfile(orgId: string, data: Record<string, unknown>
     publicIntakeDescription: profile.publicIntakeDescription,
     publicIntakeEnabled: profile.publicIntakeEnabled,
     supportLabel: profile.supportLabel,
+    kazpostDeliveryFee: profile.kazpostDeliveryFee,
+    railDeliveryFee: profile.railDeliveryFee,
+    airDeliveryFee: profile.airDeliveryFee,
+    bankCommissionPercent: profile.bankCommissionPercent,
   };
+}
+
+export async function updateBankCommission(orgId: string, percent: number) {
+  const profile = await prisma.chapanProfile.upsert({
+    where: { orgId },
+    create: { orgId, bankCommissionPercent: percent },
+    update: { bankCommissionPercent: percent },
+  });
+  return { bankCommissionPercent: profile.bankCommissionPercent };
 }
 
 // ── Catalogs ────────────────────────────────────────────

@@ -15,149 +15,18 @@
  *    GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY (base64-encoded or raw with \n)
  * 4. npm install googleapis
  * 5. Remove the `SHEETS_DISABLED` guard at the bottom of this file
+ *
+ * Row schema is defined in sheets/row-builder.ts (independently testable).
  */
 
 import { prisma } from '../../lib/prisma.js';
-
-// ── Column schema ─────────────────────────────────────────────────────────────
-// Each order maps to one row. Column order matches the header row in the sheet.
-const HEADER_ROW = [
-  'ID заказа',          // A — idempotency key
-  'Номер заказа',       // B
-  'Дата создания',      // C
-  'Дата заказа',        // D (orderDate)
-  'Статус',             // E
-  'Статус оплаты',      // F
-  'Срочность',          // G (urgency)
-  'Требовательный',     // H (isDemandingClient)
-  'Клиент',             // I
-  'Телефон',            // J
-  'Город',              // K
-  'Тип доставки',       // L
-  'Индекс',             // M (postalCode)
-  'Срок готовности',    // N
-  'Позиции',            // O (joined: product · color · size × qty)
-  'Итого по позициям',  // P (before discount)
-  'Доставка',           // Q (deliveryFee)
-  'Скидка',             // R (orderDiscount)
-  'Комиссия банка',     // S (bankCommissionAmount)
-  'Итого к оплате',     // T (totalAmount)
-  'Оплачено',           // U (paidAmount)
-  'Остаток',            // V
-  'Способ оплаты',      // W
-  'Внутренняя заметка', // X (internalNote)
-  'Последнее обновление', // Y
-];
+import { buildSheetRow, SHEET_HEADER } from './sheets/row-builder.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type SyncResult =
   | { ok: true; rowIndex: number }
   | { ok: false; error: string };
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function formatDate(value: Date | null | undefined): string {
-  if (!value) return '';
-  return value.toLocaleDateString('ru-KZ', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-  });
-}
-
-function formatMoney(value: number): string {
-  return value > 0 ? `${value.toLocaleString('ru-KZ')} ₸` : '';
-}
-
-function buildItemsSummary(items: Array<{
-  productName: string;
-  color?: string | null;
-  gender?: string | null;
-  size: string;
-  quantity: number;
-}>): string {
-  return items
-    .map(i => {
-      const parts = [i.productName];
-      if (i.color) parts.push(i.color);
-      if (i.gender) parts.push(`(${i.gender})`);
-      parts.push(i.size);
-      const line = parts.join(' · ');
-      return i.quantity > 1 ? `${line} × ${i.quantity}` : line;
-    })
-    .join('; ');
-}
-
-function buildRowValues(order: {
-  id: string;
-  orderNumber: string;
-  createdAt: Date;
-  orderDate?: Date | null;
-  status: string;
-  paymentStatus: string;
-  urgency?: string;
-  isDemandingClient?: boolean;
-  priority?: string;
-  clientName: string;
-  clientPhone: string;
-  city?: string | null;
-  deliveryType?: string | null;
-  postalCode?: string | null;
-  dueDate?: Date | null;
-  items: Array<{
-    productName: string;
-    color?: string | null;
-    gender?: string | null;
-    size: string;
-    quantity: number;
-    unitPrice: number;
-  }>;
-  deliveryFee?: number;
-  orderDiscount?: number;
-  bankCommissionAmount?: number;
-  totalAmount: number;
-  paidAmount: number;
-  internalNote?: string | null;
-  payments?: Array<{ method: string }>;
-  updatedAt: Date;
-}): string[] {
-  const urgency = order.urgency ?? (order.priority === 'urgent' ? 'urgent' : 'normal');
-  const isDemanding = order.isDemandingClient ?? (order.priority === 'vip');
-
-  const itemsSubtotal = order.items.reduce(
-    (sum, i) => sum + i.quantity * i.unitPrice, 0,
-  );
-  const paymentMethods = [...new Set(
-    (order.payments ?? []).map(p => p.method),
-  )].join(', ');
-
-  return [
-    order.id,                                                      // A
-    order.orderNumber,                                             // B
-    formatDate(order.createdAt),                                   // C
-    formatDate(order.orderDate ?? null),                          // D
-    order.status,                                                  // E
-    order.paymentStatus,                                           // F
-    urgency === 'urgent' ? 'Срочный' : 'Обычный',                // G
-    isDemanding ? 'Да' : '',                                       // H
-    order.clientName,                                              // I
-    order.clientPhone,                                             // J
-    order.city ?? '',                                              // K
-    order.deliveryType ?? '',                                      // L
-    order.postalCode ?? '',                                        // M
-    formatDate(order.dueDate ?? null),                            // N
-    buildItemsSummary(order.items),                                // O
-    formatMoney(itemsSubtotal),                                    // P
-    formatMoney(order.deliveryFee ?? 0),                          // Q
-    formatMoney(order.orderDiscount ?? 0),                        // R
-    formatMoney(order.bankCommissionAmount ?? 0),                 // S
-    formatMoney(order.totalAmount),                                // T
-    formatMoney(order.paidAmount),                                 // U
-    formatMoney(order.totalAmount - order.paidAmount),            // V
-    paymentMethods,                                                // W
-    order.internalNote ?? '',                                      // X
-    formatDate(order.updatedAt),                                   // Y
-  ];
-}
 
 // ── Retry logic ───────────────────────────────────────────────────────────────
 
@@ -190,15 +59,11 @@ async function withRetry<T>(
  * 1. Load full order from DB (ensures we always push source-of-truth data)
  * 2. Find existing row by orderId in column A (idempotency)
  * 3. Update row if found, append if not
- *
- * This function is intentionally kept as a named export so it can be called
- * from any service layer without tight coupling.
  */
 export async function syncOrderToSheets(
   orgId: string,
   orderId: string,
 ): Promise<SyncResult> {
-  // Guard: disabled until googleapis is installed and credentials are set
   if (!isSheetsConfigured()) {
     return { ok: false, error: 'Google Sheets not configured (see sheets.sync.ts)' };
   }
@@ -210,6 +75,12 @@ export async function syncOrderToSheets(
       include: {
         items: true,
         payments: true,
+        attachments: {
+          select: {
+            id: true,
+            fileName: true,
+          },
+        },
       },
     });
 
@@ -217,23 +88,55 @@ export async function syncOrderToSheets(
       return { ok: false, error: `Order ${orderId} not found` };
     }
 
-    // 2. Build row values
-    const rowValues = buildRowValues({
-      ...order,
-      items: order.items.map(i => ({
-        productName: i.productName,
-        color: i.color,
-        gender: i.gender,
-        size: i.size,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
+    // 2. Build row values using the versioned row-builder
+    const rowValues = buildSheetRow({
+      id:            order.id,
+      orderNumber:   order.orderNumber,
+      createdAt:     order.createdAt,
+      updatedAt:     order.updatedAt,
+      orderDate:     (order as any).orderDate     ?? null,
+      status:        order.status,
+      paymentStatus: order.paymentStatus,
+      urgency:               (order as any).urgency               ?? null,
+      isDemandingClient:     (order as any).isDemandingClient     ?? null,
+      clientName:    order.clientName,
+      clientPhone:   order.clientPhone,
+      city:                  (order as any).city                  ?? null,
+      streetAddress:         (order as any).streetAddress         ?? null,
+      postalCode:            (order as any).postalCode            ?? null,
+      deliveryType:          (order as any).deliveryType          ?? null,
+      source:                (order as any).source                ?? null,
+      dueDate:       order.dueDate ?? null,
+      expectedPaymentMethod: (order as any).expectedPaymentMethod ?? null,
+      totalAmount:   order.totalAmount,
+      paidAmount:    order.paidAmount,
+      orderDiscount:         (order as any).orderDiscount         ?? 0,
+      deliveryFee:           (order as any).deliveryFee           ?? 0,
+      bankCommissionPercent: (order as any).bankCommissionPercent ?? 0,
+      bankCommissionAmount:  (order as any).bankCommissionAmount  ?? 0,
+      internalNote:          (order as any).internalNote          ?? null,
+      shippingNote:          (order as any).shippingNote          ?? null,
+      sourceRequestId:       (order as any).sourceRequestId       ?? null,
+      items: order.items.map(item => ({
+        productName:   item.productName,
+        fabric:        item.fabric,
+        color:         item.color,
+        gender:        item.gender,
+        length:        item.length,
+        size:          item.size,
+        quantity:      item.quantity,
+        unitPrice:     item.unitPrice,
+        itemDiscount:  (item as any).itemDiscount ?? 0,
+        workshopNotes: item.workshopNotes,
       })),
-      payments: order.payments,
-      orderDate: (order as any).orderDate ?? null,
-      postalCode: (order as any).postalCode ?? null,
-      deliveryFee: (order as any).deliveryFee ?? 0,
-      orderDiscount: (order as any).orderDiscount ?? 0,
-      bankCommissionAmount: (order as any).bankCommissionAmount ?? 0,
+      payments: order.payments.map(p => ({
+        method: p.method,
+        amount: (p as any).amount ?? 0,
+      })),
+      attachments: order.attachments.map(a => ({
+        originalName: a.fileName ?? null,
+        filename:     a.fileName ?? null,
+      })),
     });
 
     // 3. Upsert to sheet
@@ -260,15 +163,29 @@ export async function ensureSheetHeader(): Promise<void> {
 }
 
 // ── Google Sheets API integration ─────────────────────────────────────────────
-// This section is the only part that touches the googleapis SDK.
-// Everything above is pure TypeScript — no external dependencies.
 
 function isSheetsConfigured(): boolean {
-  return !!(
-    process.env.GOOGLE_SHEETS_SPREADSHEET_ID &&
-    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
-    process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
-  );
+  const missing: string[] = [];
+  if (!process.env.GOOGLE_SHEETS_SPREADSHEET_ID) missing.push('GOOGLE_SHEETS_SPREADSHEET_ID');
+  if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL)  missing.push('GOOGLE_SERVICE_ACCOUNT_EMAIL');
+  if (!process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY) missing.push('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY');
+
+  // Warn once per process start if partially configured
+  if (missing.length > 0 && missing.length < 3) {
+    console.warn('[sheets.sync] Partially configured — missing:', missing.join(', '));
+  }
+  // Detect common mistake: SPREADSHEET_ID looks like an OAuth Client ID
+  const sid = process.env.GOOGLE_SHEETS_SPREADSHEET_ID ?? '';
+  if (sid && sid.endsWith('.apps.googleusercontent.com')) {
+    console.error(
+      '[sheets.sync] GOOGLE_SHEETS_SPREADSHEET_ID looks like an OAuth Client ID, not a spreadsheet ID.\n' +
+      '  Expected format: the alphanumeric ID from the Google Sheets URL, e.g.\n' +
+      '  https://docs.google.com/spreadsheets/d/<SPREADSHEET_ID>/edit'
+    );
+    return false;
+  }
+
+  return missing.length === 0;
 }
 
 /**
@@ -280,7 +197,6 @@ async function buildSheetsClient() {
   const { google } = await import('googleapis');
 
   const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY ?? '';
-  // Support both base64-encoded keys and raw keys with escaped newlines
   const privateKey = rawKey.startsWith('-----')
     ? rawKey.replace(/\\n/g, '\n')
     : Buffer.from(rawKey, 'base64').toString('utf-8').replace(/\\n/g, '\n');
@@ -357,7 +273,7 @@ async function ensureHeaderRow(): Promise<void> {
       spreadsheetId,
       range: `${sheetName}!A1`,
       valueInputOption: 'USER_ENTERED',
-      requestBody: { values: [HEADER_ROW] },
+      requestBody: { values: [[...SHEET_HEADER]] },
     });
   }
 }

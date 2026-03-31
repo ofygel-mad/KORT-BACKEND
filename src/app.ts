@@ -33,6 +33,7 @@ import { employeesRoutes } from './modules/employees/employees.routes.js';
 import { accountingRoutes } from './modules/accounting/accounting.routes.js';
 import { serviceRoutes } from './modules/service/service.routes.js';
 import { warehouseRoutes } from './modules/warehouse/warehouse.routes.js';
+import { warehouseCatalogRoutes } from './modules/warehouse/warehouse-catalog.routes.js';
 
 export async function buildApp() {
   const isProd = process.env.NODE_ENV === 'production';
@@ -144,6 +145,7 @@ export async function buildApp() {
 
   await app.register(serviceRoutes, { prefix: '/api/v1/service' });
   await app.register(warehouseRoutes, { prefix: '/api/v1/warehouse' });
+  await app.register(warehouseCatalogRoutes, { prefix: '/api/v1/warehouse' });
   await app.register(accountingRoutes, { prefix: '/api/v1/accounting' });
 
   // ── Health check ────────────────────────────────────────

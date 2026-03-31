@@ -16,6 +16,12 @@ export async function chapanSettingsRoutes(app: FastifyInstance) {
     return svc.updateProfile(request.orgId, request.body as Record<string, unknown>);
   });
 
+  // PATCH /api/v1/chapan/settings/bank-commission  (any authenticated member)
+  app.patch('/bank-commission', { preHandler: [app.authenticate, app.resolveOrg] }, async (request) => {
+    const body = z.object({ bankCommissionPercent: z.number().min(0).max(100) }).parse(request.body);
+    return svc.updateBankCommission(request.orgId, body.bankCommissionPercent);
+  });
+
   // ── Catalogs ──────────────────────────────────────────
   // GET /api/v1/chapan/settings/catalogs
   app.get('/catalogs', { preHandler: [app.authenticate, app.resolveOrg] }, async (request) => {

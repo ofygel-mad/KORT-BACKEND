@@ -54,7 +54,7 @@ function paymentMethodToAccount(method: string): string {
   const m = method.toLowerCase();
   if (m.includes('каспи') || m.includes('kaspi')) return 'Каспи';
   if (m.includes('нал') || m.includes('cash') || m.includes('наличн')) return 'Касса';
-  if (m.includes('перевод') || m.includes('банк') || m.includes('bank')) return 'Банк';
+  if (m.includes('перевод') || m.includes('банк') || m.includes('bank') || m === 'halyk' || m.includes('халык')) return 'Банк';
   if (m.includes('карт') || m.includes('card')) return 'Банк';
   return 'Касса';
 }

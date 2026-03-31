@@ -21,6 +21,7 @@ function safeCompare(provided: string, expected: string): boolean {
 }
 
 const accessSchema = z.object({ password: z.string().min(1) });
+const cleanOrgSchema = z.object({ password: z.string().min(1), orgId: z.string().min(1) });
 
 const DEMO_OWNER = {
   email: 'admin@kort.local',
@@ -183,6 +184,55 @@ export async function serviceRoutes(app: FastifyInstance) {
         inviteToken: null,
         joinedAt: membership.joinedAt?.toISOString() ?? new Date().toISOString(),
         updatedAt: membership.updatedAt.toISOString(),
+      },
+    });
+  });
+
+  // POST /api/v1/service/clean-org
+  app.post('/clean-org', async (request: FastifyRequest, reply: FastifyReply) => {
+    const body = cleanOrgSchema.parse(request.body);
+    if (!servicePassword || !safeCompare(body.password, servicePassword)) {
+      throw new UnauthorizedError('Access denied.');
+    }
+
+    const org = await prisma.organization.findUnique({
+      where: { id: body.orgId },
+      select: { id: true, name: true },
+    });
+    if (!org) {
+      return reply.status(404).send({ error: 'Org not found' });
+    }
+
+    // Delete in FK-safe order:
+    // 1. chapanInvoice → cascades chapanInvoiceOrder (junction has no cascade from order side)
+    // 2. chapanOrder → cascades items, payments, activities, productionTasks, unpaidAlerts, changeRequests
+    // 3. leads, deals, tasks (have orgId directly)
+    // 4. customers
+    // 5. accounting
+    const [invoices, orders, leads, deals, tasks, customers, entries, gaps] =
+      await prisma.$transaction([
+        prisma.chapanInvoice.deleteMany({ where: { orgId: body.orgId } }),
+        prisma.chapanOrder.deleteMany({ where: { orgId: body.orgId } }),
+        prisma.lead.deleteMany({ where: { orgId: body.orgId } }),
+        prisma.deal.deleteMany({ where: { orgId: body.orgId } }),
+        prisma.task.deleteMany({ where: { orgId: body.orgId } }),
+        prisma.customer.deleteMany({ where: { orgId: body.orgId } }),
+        prisma.accountingEntry.deleteMany({ where: { orgId: body.orgId } }),
+        prisma.accountingGap.deleteMany({ where: { orgId: body.orgId } }),
+      ]);
+
+    return reply.send({
+      ok: true,
+      org: org.name,
+      deleted: {
+        invoices: invoices.count,
+        orders: orders.count,
+        leads: leads.count,
+        deals: deals.count,
+        tasks: tasks.count,
+        customers: customers.count,
+        accountingEntries: entries.count,
+        accountingGaps: gaps.count,
       },
     });
   });

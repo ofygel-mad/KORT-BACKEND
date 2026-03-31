@@ -60,12 +60,7 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       dueDate: z.string().optional(),
       prepayment: z.number().min(0).optional(),
       paymentMethod: z.string().trim().min(1).optional(),
-      mixedBreakdown: z.object({
-        mixedCash: z.number().min(0),
-        mixedKaspiQr: z.number().min(0),
-        mixedKaspiTerminal: z.number().min(0),
-        mixedTransfer: z.number().min(0),
-      }).optional(),
+      paymentBreakdown: z.record(z.string(), z.number().min(0)).optional(),
       streetAddress: z.string().optional(),
       city: z.string().trim().optional(),
       postalCode: z.string().trim().optional(),
@@ -111,10 +106,7 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       prepayment: z.number().min(0).optional(),
       paymentMethod: z.string().optional(),
       expectedPaymentMethod: z.string().optional(),
-      mixedCash: z.number().min(0).optional(),
-      mixedKaspiQr: z.number().min(0).optional(),
-      mixedKaspiTerminal: z.number().min(0).optional(),
-      mixedTransfer: z.number().min(0).optional(),
+      paymentBreakdown: z.record(z.string(), z.number().min(0)).optional(),
       items: z.array(orderItemSchema).optional(),
     }).parse(request.body);
 

@@ -190,14 +190,16 @@ model Organization {
   chapanInvoices ChapanInvoice[]
 
   // Warehouse
-  warehouseItems       WarehouseItem[]
-  warehouseCategories  WarehouseCategory[]
-  warehouseMovements   WarehouseMovement[]
-  warehouseReservations WarehouseReservation[]
-  warehouseBomLines    WarehouseBOMLine[]
-  warehouseAlerts      WarehouseAlert[]
-  warehouseLots        WarehouseLot[]
-  warehouseLocations   WarehouseLocation[]
+  warehouseItems            WarehouseItem[]
+  warehouseCategories       WarehouseCategory[]
+  warehouseMovements        WarehouseMovement[]
+  warehouseReservations     WarehouseReservation[]
+  warehouseBomLines         WarehouseBOMLine[]
+  warehouseAlerts           WarehouseAlert[]
+  warehouseLots             WarehouseLot[]
+  warehouseLocations        WarehouseLocation[]
+  warehouseFieldDefinitions WarehouseFieldDefinition[]
+  warehouseProductCatalog   WarehouseProductCatalog[]
   accountingEntries    AccountingEntry[]
   accountingGaps       AccountingGap[]
   importTemplates      ImportTemplate[]
@@ -480,6 +482,10 @@ model ChapanProfile {
   publicIntakeDescription String  @default("") @map("public_intake_description")
   publicIntakeEnabled     Boolean @default(true) @map("public_intake_enabled")
   supportLabel            String  @default("") @map("support_label")
+  kazpostDeliveryFee      Int     @default(2000) @map("kazpost_delivery_fee")
+  railDeliveryFee         Int     @default(3000) @map("rail_delivery_fee")
+  airDeliveryFee          Int     @default(5000) @map("air_delivery_fee")
+  bankCommissionPercent   Float   @default(0) @map("bank_commission_percent")
 
   org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
@@ -632,6 +638,7 @@ model ChapanOrder {
   deliveryFee           Float     @default(0) @map("delivery_fee")
   bankCommissionPercent Float     @default(0) @map("bank_commission_percent")
   bankCommissionAmount  Float     @default(0) @map("bank_commission_amount")
+  paymentBreakdown      Json?     @map("payment_breakdown")
   requiresInvoice       Boolean   @default(true) @map("requires_invoice")
   isArchived      Boolean   @default(false) @map("is_archived")
   archivedAt    DateTime? @map("archived_at")
@@ -657,19 +664,23 @@ model ChapanOrder {
 }
 
 model ChapanOrderItem {
-  id            String  @id @default(cuid())
-  orderId       String  @map("order_id")
-  productName   String  @map("product_name")
-  fabric        String
-  size          String
-  quantity      Int     @default(1)
-  unitPrice     Float   @map("unit_price")
-  fulfillmentMode String @default("unassigned") @map("fulfillment_mode")
-  gender        String?
-  length        String?
-  notes         String?
-  workshopNotes String? @map("workshop_notes")
-  color         String?
+  id                String  @id @default(cuid())
+  orderId           String  @map("order_id")
+  productName       String  @map("product_name")
+  fabric            String
+  size              String
+  quantity          Int     @default(1)
+  unitPrice         Float   @map("unit_price")
+  fulfillmentMode   String  @default("unassigned") @map("fulfillment_mode")
+  gender            String?
+  length            String?
+  notes             String?
+  workshopNotes     String? @map("workshop_notes")
+  color             String?
+  // Smart catalog fields
+  variantKey        String? @map("variant_key")
+  attributesJson    Json?   @map("attributes_json")
+  attributesSummary String? @map("attributes_summary")
 
   order          ChapanOrder           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productionTask ChapanProductionTask?
@@ -883,35 +894,42 @@ model WarehouseLocation {
 }
 
 model WarehouseItem {
-  id           String   @id @default(cuid())
-  orgId        String   @map("org_id")
-  categoryId   String?  @map("category_id")
-  locationId   String?  @map("location_id")
-  sku          String?
-  name         String
-  unit         String   @default("шт")   // шт | кг | м | л | пар | рулон | лист
-  qty          Float    @default(0)
-  qtyReserved  Float    @default(0)       @map("qty_reserved")
-  qtyMin       Float    @default(0)       @map("qty_min")   // порог низкого остатка
-  qtyMax       Float?   @map("qty_max")
-  costPrice    Float?   @map("cost_price")
-  tags         String[] @default([])
-  notes        String?
-  qrCode       String?  @unique           @map("qr_code")
-  createdAt    DateTime @default(now())   @map("created_at")
-  updatedAt    DateTime @updatedAt        @map("updated_at")
+  id                String   @id @default(cuid())
+  orgId             String   @map("org_id")
+  categoryId        String?  @map("category_id")
+  locationId        String?  @map("location_id")
+  sku               String?
+  name              String
+  unit              String   @default("шт")   // шт | кг | м | л | пар | рулон | лист
+  qty               Float    @default(0)
+  qtyReserved       Float    @default(0)      @map("qty_reserved")
+  qtyMin            Float    @default(0)      @map("qty_min")
+  qtyMax            Float?   @map("qty_max")
+  costPrice         Float?   @map("cost_price")
+  tags              String[] @default([])
+  notes             String?
+  qrCode            String?  @unique          @map("qr_code")
+  // Smart catalog fields
+  productCatalogId  String?  @map("product_catalog_id")
+  variantKey        String?  @map("variant_key")
+  attributesJson    Json?    @map("attributes_json")
+  attributesSummary String?  @map("attributes_summary")
+  createdAt         DateTime @default(now())  @map("created_at")
+  updatedAt         DateTime @updatedAt       @map("updated_at")
 
-  org          Organization          @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  category     WarehouseCategory?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  location     WarehouseLocation?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  movements    WarehouseMovement[]
-  reservations WarehouseReservation[]
-  bomLines     WarehouseBOMLine[]
-  lots         WarehouseLot[]
-  alerts       WarehouseAlert[]
+  org            Organization              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  category       WarehouseCategory?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  location       WarehouseLocation?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  productCatalog WarehouseProductCatalog?  @relation(fields: [productCatalogId], references: [id], onDelete: SetNull)
+  movements      WarehouseMovement[]
+  reservations   WarehouseReservation[]
+  bomLines       WarehouseBOMLine[]
+  lots           WarehouseLot[]
+  alerts         WarehouseAlert[]
 
   @@index([orgId])
   @@index([orgId, categoryId])
+  @@index([orgId, variantKey])
   @@map("warehouse_items")
 }
 
@@ -1015,4 +1033,84 @@ model WarehouseLot {
 
   @@index([orgId, itemId])
   @@map("warehouse_lots")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WAREHOUSE SMART CATALOG
+// ═══════════════════════════════════════════════════════════════
+
+model WarehouseFieldDefinition {
+  id                  String   @id @default(cuid())
+  orgId               String   @map("org_id")
+  code                String
+  label               String
+  entityScope         String   @default("both")  @map("entity_scope")    // warehouse_item | order_item | both
+  inputType           String   @map("input_type")                         // select | multiselect | text | number | boolean
+  isRequired          Boolean  @default(false)    @map("is_required")
+  isVariantAxis       Boolean  @default(false)    @map("is_variant_axis")
+  showInWarehouseForm Boolean  @default(true)     @map("show_in_warehouse_form")
+  showInOrderForm     Boolean  @default(true)     @map("show_in_order_form")
+  showInDocuments     Boolean  @default(true)     @map("show_in_documents")
+  affectsAvailability Boolean  @default(true)     @map("affects_availability")
+  sortOrder           Int      @default(0)        @map("sort_order")
+  isSystem            Boolean  @default(false)    @map("is_system")
+  createdAt           DateTime @default(now())    @map("created_at")
+  updatedAt           DateTime @updatedAt         @map("updated_at")
+
+  org          Organization           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  options      WarehouseFieldOption[]
+  productLinks WarehouseProductField[]
+
+  @@unique([orgId, code])
+  @@index([orgId, sortOrder])
+  @@map("warehouse_field_definitions")
+}
+
+model WarehouseFieldOption {
+  id           String   @id @default(cuid())
+  definitionId String   @map("definition_id")
+  value        String
+  label        String
+  sortOrder    Int      @default(0) @map("sort_order")
+  colorHex     String?  @map("color_hex")
+  isActive     Boolean  @default(true) @map("is_active")
+
+  definition WarehouseFieldDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@unique([definitionId, value])
+  @@index([definitionId, sortOrder])
+  @@map("warehouse_field_options")
+}
+
+model WarehouseProductCatalog {
+  id             String   @id @default(cuid())
+  orgId          String   @map("org_id")
+  name           String
+  normalizedName String   @map("normalized_name")
+  isActive       Boolean  @default(true) @map("is_active")
+  source         String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt      @map("updated_at")
+
+  org            Organization           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  fieldLinks     WarehouseProductField[]
+  warehouseItems WarehouseItem[]
+
+  @@unique([orgId, normalizedName])
+  @@index([orgId])
+  @@map("warehouse_product_catalog")
+}
+
+model WarehouseProductField {
+  id           String  @id @default(cuid())
+  productId    String  @map("product_id")
+  definitionId String  @map("definition_id")
+  isRequired   Boolean @default(false) @map("is_required")
+  sortOrder    Int     @default(0)     @map("sort_order")
+
+  product    WarehouseProductCatalog  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  definition WarehouseFieldDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, definitionId])
+  @@map("warehouse_product_fields")
 }

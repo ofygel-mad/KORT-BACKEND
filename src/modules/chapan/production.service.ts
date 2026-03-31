@@ -90,6 +90,7 @@ export async function list(orgId: string, filters?: { status?: string; assignedT
       order: {
         orgId,
         isArchived: false,
+        deletedAt: null,
         status: { notIn: ['cancelled', 'completed'] },
       },
     },
@@ -138,6 +139,7 @@ export async function listForWorkshop(orgId: string) {
       order: {
         orgId,
         isArchived: false,
+        deletedAt: null,
         status: { notIn: ['cancelled', 'completed'] },
       },
     },
