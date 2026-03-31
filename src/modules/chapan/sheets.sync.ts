@@ -210,6 +210,47 @@ async function buildSheetsClient() {
   return google.sheets({ version: 'v4', auth });
 }
 
+function toSheetRange(sheetName: string, range: string): string {
+  const escapedSheetName = sheetName.replace(/'/g, "''");
+  return `'${escapedSheetName}'!${range}`;
+}
+
+async function ensureWorksheetExists(
+  sheets: Awaited<ReturnType<typeof buildSheetsClient>>,
+  spreadsheetId: string,
+  sheetName: string,
+) {
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: 'sheets.properties.title',
+  });
+
+  const existingTitles = new Set(
+    (meta.data.sheets ?? [])
+      .map(sheet => sheet.properties?.title)
+      .filter((title): title is string => Boolean(title)),
+  );
+
+  if (existingTitles.has(sheetName)) {
+    return;
+  }
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          addSheet: {
+            properties: {
+              title: sheetName,
+            },
+          },
+        },
+      ],
+    },
+  });
+}
+
 /**
  * Upsert a row in the sheet.
  * Searches column A for the orderId (idempotency key).
@@ -222,11 +263,15 @@ async function upsertRow(
   const sheets = await buildSheetsClient();
   const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID!;
   const sheetName = process.env.GOOGLE_SHEETS_SHEET_NAME ?? 'Orders';
+  const columnARange = toSheetRange(sheetName, 'A:A');
+  const appendRange = toSheetRange(sheetName, 'A1');
+
+  await ensureWorksheetExists(sheets, spreadsheetId, sheetName);
 
   // Find existing row
   const existing = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${sheetName}!A:A`,
+    range: columnARange,
   });
 
   const rows = existing.data.values ?? [];
@@ -237,7 +282,7 @@ async function upsertRow(
     const rowNumber = existingRowIndex + 1;
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `${sheetName}!A${rowNumber}`,
+      range: toSheetRange(sheetName, `A${rowNumber}`),
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [values] },
     });
@@ -246,7 +291,7 @@ async function upsertRow(
     // Append new row
     const result = await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: `${sheetName}!A1`,
+      range: appendRange,
       valueInputOption: 'USER_ENTERED',
       insertDataOption: 'INSERT_ROWS',
       requestBody: { values: [values] },
@@ -262,16 +307,19 @@ async function ensureHeaderRow(): Promise<void> {
   const sheets = await buildSheetsClient();
   const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID!;
   const sheetName = process.env.GOOGLE_SHEETS_SHEET_NAME ?? 'Orders';
+  const headerRange = toSheetRange(sheetName, 'A1:A1');
+
+  await ensureWorksheetExists(sheets, spreadsheetId, sheetName);
 
   const existing = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${sheetName}!A1:A1`,
+    range: headerRange,
   });
 
   if (!existing.data.values?.[0]?.[0]) {
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `${sheetName}!A1`,
+      range: toSheetRange(sheetName, 'A1'),
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [[...SHEET_HEADER]] },
     });

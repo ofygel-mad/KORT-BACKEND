@@ -35,10 +35,12 @@ const envSchema = z.object({
   HOST: z.string().default('0.0.0.0'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   CONSOLE_SERVICE_PASSWORD: z.string().optional(),
-  // Sprint 10-11: Google Sheets integration (optional, API Key method)
+  // Sprint 10-11: Google Sheets integration (optional)
   GOOGLE_SHEETS_SPREADSHEET_ID: z.string().optional(),
   GOOGLE_SHEETS_SHEET_NAME: z.string().optional(),
   GOOGLE_SHEETS_API_KEY: z.string().optional(),
+  GOOGLE_SERVICE_ACCOUNT_EMAIL: z.string().optional(),
+  GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: z.string().optional(),
   // Sprint 9: file uploads
   UPLOAD_DIR: z.string().default('./uploads'),
   UPLOAD_MAX_FILE_SIZE_MB: z.coerce.number().default(10),

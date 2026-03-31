@@ -827,6 +827,8 @@ export async function updateStatus(orgId: string, id: string, status: string, au
       // Warehouse module may not have reservations, which is not fatal.
     }
   }
+
+  fireSheetSync(orgId, id);
 }
 
 // Add payment
@@ -876,6 +878,8 @@ export async function addPayment(orgId: string, orderId: string, authorId: strin
     }
     return created;
   });
+
+  fireSheetSync(orgId, orderId);
 
   return {
     ...payment,
