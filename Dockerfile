@@ -1,7 +1,8 @@
 FROM node:20-alpine
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@10.13.1 --activate
+# Avoid Corepack network fetch flakiness in CI/build by installing pnpm directly.
+RUN npm install -g pnpm@10.13.1
 
 # Install deps (frozen lockfile — reproducible)
 COPY package.json pnpm-lock.yaml ./
