@@ -158,7 +158,10 @@ export async function buildApp() {
   await app.register(chatRoutes, { prefix: '/api/v1/chat' });
 
   // ── Health check ────────────────────────────────────────
-  app.get('/api/v1/health', async () => ({ status: 'ok', ts: new Date().toISOString() }));
+  const healthHandler = async () => ({ status: 'ok', ts: new Date().toISOString() });
+  app.get('/api/v1/health', healthHandler);
+  app.get('/health', healthHandler);
+  app.get('/healthz', healthHandler);
 
 
   return app;
