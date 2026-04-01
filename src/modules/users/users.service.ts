@@ -99,6 +99,51 @@ export async function deactivateUser(userId: string, orgId: string) {
 }
 
 
+// ── Update own profile (name, phone) ──────────────────────────────────────────
+export async function updateMe(
+  userId: string,
+  data: { full_name?: string; phone?: string | null },
+) {
+  const { ConflictError } = await import('../../lib/errors.js');
+  const { prisma } = await import('../../lib/prisma.js');
+
+  const updates: Record<string, unknown> = {};
+
+  if (data.full_name !== undefined) {
+    const trimmed = data.full_name.trim();
+    if (trimmed.length > 0) updates.fullName = trimmed;
+  }
+
+  if (data.phone !== undefined) {
+    if (data.phone === null || data.phone === '') {
+      updates.phone = null;
+    } else {
+      const trimmed = data.phone.trim();
+      // Check uniqueness only if changing to a non-null value
+      const existing = await prisma.user.findUnique({ where: { phone: trimmed } });
+      if (existing && existing.id !== userId) {
+        throw new ConflictError('Этот номер телефона уже привязан к другому аккаунту.');
+      }
+      updates.phone = trimmed;
+    }
+  }
+
+  if (Object.keys(updates).length === 0) return { ok: true };
+
+  const updated = await prisma.user.update({ where: { id: userId }, data: updates });
+
+  return {
+    ok: true,
+    user: {
+      id: updated.id,
+      full_name: updated.fullName,
+      email: updated.email,
+      phone: updated.phone,
+      avatar_url: updated.avatarUrl,
+    },
+  };
+}
+
 // ── Change email (owner self-service) ─────────────────────────────────────────
 export async function changeEmail(
   userId: string,

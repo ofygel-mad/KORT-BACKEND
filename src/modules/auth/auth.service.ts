@@ -730,7 +730,43 @@ export async function changePassword(userId: string, currentPassword: string, ne
   }
 
   const hashed = await hashPassword(newPassword);
-  await prisma.user.update({ where: { id: userId }, data: { password: hashed } });
+  // Revoke only this user's own refresh tokens — employee sessions are untouched
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: userId }, data: { password: hashed } });
+    await tx.refreshToken.deleteMany({ where: { userId } });
+  });
 
-  return { ok: true };
+  return { ok: true, requires_relogin: true };
+}
+
+// ── lookupEmployee (pre-auth phone lookup for employee login flow) ─────────────
+export async function lookupEmployee(phone: string) {
+  const user = await prisma.user.findUnique({ where: { phone } });
+  if (!user) return { found: false as const };
+
+  const membership = await prisma.membership.findFirst({
+    where: { userId: user.id, status: 'active' },
+  });
+
+  if (!membership || membership.employeeAccountStatus === 'dismissed') {
+    return { found: false as const };
+  }
+
+  if (membership.employeeAccountStatus === 'pending_first_login') {
+    const tempToken = signFirstLoginToken(user.id);
+    return {
+      found: true as const,
+      account_status: 'pending_first_login' as const,
+      requires_password: false,
+      full_name: user.fullName,
+      temp_token: tempToken,
+    };
+  }
+
+  return {
+    found: true as const,
+    account_status: 'active' as const,
+    requires_password: true,
+    full_name: user.fullName,
+  };
 }

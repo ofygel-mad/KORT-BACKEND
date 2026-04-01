@@ -1,9 +1,9 @@
-import { createWriteStream, existsSync } from 'node:fs';
-import { mkdir, unlink } from 'node:fs/promises';
-import { join, extname, resolve } from 'node:path';
-import { pipeline } from 'node:stream/promises';
+import { extname } from 'node:path';
 import type { Readable } from 'node:stream';
 import { nanoid } from 'nanoid';
+import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { r2, R2_BUCKET } from '../../lib/r2.js';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { config } from '../../config.js';
@@ -26,16 +26,8 @@ export const MAX_BYTES = config.UPLOAD_MAX_FILE_SIZE_MB * 1024 * 1024;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function getUploadRoot() {
-  return resolve(config.UPLOAD_DIR);
-}
-
-function buildStoragePath(orgId: string, orderId: string, filename: string): string {
-  return join('chapan', orgId, orderId, filename);
-}
-
-async function ensureDir(dir: string) {
-  if (!existsSync(dir)) await mkdir(dir, { recursive: true });
+function buildStorageKey(orgId: string, orderId: string, filename: string): string {
+  return `chapan/${orgId}/${orderId}/${filename}`;
 }
 
 // ── Service ───────────────────────────────────────────────────────────────────
@@ -65,32 +57,32 @@ export async function uploadAttachment(
     throw new ValidationError('MIME-тип файла не разрешён');
   }
 
-  // Build safe storage path with unique name
+  // Build unique R2 key
   const uniqueName = `${nanoid(10)}${ext}`;
-  const relativePath = buildStoragePath(orgId, orderId, uniqueName);
-  const absolutePath = join(getUploadRoot(), relativePath);
+  const storageKey = buildStorageKey(orgId, orderId, uniqueName);
 
-  await ensureDir(join(getUploadRoot(), 'chapan', orgId, orderId));
-
-  // Stream to disk, track bytes
+  // Buffer stream, count bytes, enforce size limit
+  const chunks: Buffer[] = [];
   let sizeBytes = 0;
-  const dest = createWriteStream(absolutePath);
 
-  const countingStream = file.stream.on('data', (chunk: Buffer) => {
-    sizeBytes += chunk.length;
+  for await (const chunk of file.stream) {
+    sizeBytes += (chunk as Buffer).length;
     if (sizeBytes > MAX_BYTES) {
-      dest.destroy();
-      countingStream.destroy(new ValidationError(`Файл превышает ${config.UPLOAD_MAX_FILE_SIZE_MB} МБ`));
+      throw new ValidationError(`Файл превышает ${config.UPLOAD_MAX_FILE_SIZE_MB} МБ`);
     }
-  });
-
-  try {
-    await pipeline(countingStream, dest);
-  } catch (err) {
-    // Clean up partial file
-    try { await unlink(absolutePath); } catch {}
-    throw err;
+    chunks.push(chunk as Buffer);
   }
+
+  const body = Buffer.concat(chunks);
+
+  // Upload to R2
+  await r2.send(new PutObjectCommand({
+    Bucket: R2_BUCKET,
+    Key: storageKey,
+    Body: body,
+    ContentType: file.mimetype,
+    ContentLength: sizeBytes,
+  }));
 
   // Persist record
   const attachment = await prisma.chapanOrderAttachment.create({
@@ -100,7 +92,7 @@ export async function uploadAttachment(
       fileName: file.filename,
       mimeType: file.mimetype,
       sizeBytes,
-      storagePath: relativePath,
+      storagePath: storageKey,
       uploadedBy,
     },
   });
@@ -109,7 +101,6 @@ export async function uploadAttachment(
 }
 
 export async function listAttachments(orgId: string, orderId: string) {
-  // Verify order belongs to org
   const order = await prisma.chapanOrder.findFirst({ where: { id: orderId, orgId } });
   if (!order) throw new NotFoundError('ChapanOrder', orderId);
 
@@ -119,14 +110,24 @@ export async function listAttachments(orgId: string, orderId: string) {
   });
 }
 
-export async function getAttachmentFile(orgId: string, attachmentId: string) {
+export async function getAttachmentDownloadUrl(orgId: string, attachmentId: string): Promise<{ att: { fileName: string; mimeType: string }; url: string }> {
   const att = await prisma.chapanOrderAttachment.findFirst({
     where: { id: attachmentId, orgId },
   });
   if (!att) throw new NotFoundError('ChapanOrderAttachment', attachmentId);
 
-  const absolutePath = join(getUploadRoot(), att.storagePath);
-  return { att, absolutePath };
+  const url = await getSignedUrl(
+    r2,
+    new GetObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: att.storagePath,
+      ResponseContentDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(att.fileName)}`,
+      ResponseContentType: att.mimeType,
+    }),
+    { expiresIn: 3600 },
+  );
+
+  return { att, url };
 }
 
 export async function deleteAttachment(orgId: string, attachmentId: string) {
@@ -135,10 +136,11 @@ export async function deleteAttachment(orgId: string, attachmentId: string) {
   });
   if (!att) throw new NotFoundError('ChapanOrderAttachment', attachmentId);
 
-  const absolutePath = join(getUploadRoot(), att.storagePath);
   await prisma.chapanOrderAttachment.delete({ where: { id: attachmentId } });
 
-  try { await unlink(absolutePath); } catch {}
+  try {
+    await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: att.storagePath }));
+  } catch {}
 
   return { ok: true };
 }

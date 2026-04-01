@@ -121,8 +121,22 @@ export async function authRoutes(app: FastifyInstance) {
       new_password: z.string().min(6),
     }).parse(request.body);
 
-    await authService.changePassword(request.userId, current_password, new_password);
-    return reply.send({ ok: true });
+    const result = await authService.changePassword(request.userId, current_password, new_password);
+    return reply.send(result);
+  });
+
+  // ── POST /api/v1/auth/employee/lookup ────────────────────────────────────────
+  // Pre-auth endpoint: accepts a phone and returns employee status.
+  // Used by the "Войти как сотрудник" flow in the login form.
+  // Returns { found: false } or { found: true, account_status, requires_password, ... }
+  // For pending_first_login includes a short-lived temp_token.
+  app.post('/employee/lookup', async (request, reply) => {
+    const { phone } = z.object({
+      phone: z.string().min(7, 'Укажите номер телефона'),
+    }).parse(request.body);
+
+    const result = await authService.lookupEmployee(phone);
+    return reply.send(result);
   });
 
 

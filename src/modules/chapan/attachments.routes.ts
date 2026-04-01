@@ -1,5 +1,3 @@
-import { createReadStream } from 'node:fs';
-import { existsSync } from 'node:fs';
 import type { FastifyInstance } from 'fastify';
 import * as svc from './attachments.service.js';
 
@@ -49,24 +47,14 @@ export async function chapanAttachmentsRoutes(app: FastifyInstance) {
 
   /**
    * GET /api/v1/chapan/orders/:orderId/attachments/:attachmentId/file
-   * Download attachment file.
+   * Redirect to a presigned R2 download URL (valid 1 hour).
    */
   app.get<{ Params: { orderId: string; attachmentId: string } }>(
     '/:orderId/attachments/:attachmentId/file',
     async (request, reply) => {
       const { attachmentId } = request.params;
-      const { att, absolutePath } = await svc.getAttachmentFile(request.orgId, attachmentId);
-
-      if (!existsSync(absolutePath)) {
-        return reply.status(404).send({ code: 'FILE_NOT_FOUND', message: 'Файл не найден на сервере' });
-      }
-
-      const encoded = encodeURIComponent(att.fileName);
-      return reply
-        .header('Content-Type', att.mimeType)
-        .header('Content-Disposition', `attachment; filename*=UTF-8''${encoded}`)
-        .header('Cache-Control', 'private, max-age=3600')
-        .send(createReadStream(absolutePath));
+      const { url } = await svc.getAttachmentDownloadUrl(request.orgId, attachmentId);
+      return reply.redirect(url, 302);
     },
   );
 

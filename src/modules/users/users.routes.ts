@@ -8,6 +8,17 @@ export async function usersRoutes(app: FastifyInstance) {
     return usersService.getMe(request.userId);
   });
 
+  // PATCH /api/v1/users/me — self-service profile update (name, phone)
+  app.patch('/me', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const { full_name, phone } = z.object({
+      full_name: z.string().min(1).max(120).optional(),
+      phone: z.string().min(7).optional().nullable(),
+    }).parse(request.body);
+
+    const result = await usersService.updateMe(request.userId, { full_name, phone });
+    return reply.send(result);
+  });
+
   // GET /api/v1/users/team
   app.get('/team', { preHandler: [app.authenticate, app.resolveOrg] }, async (request) => {
     const team = await usersService.getTeam(request.orgId);

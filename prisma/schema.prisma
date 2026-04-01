@@ -25,6 +25,8 @@ model User {
   refreshTokens       RefreshToken[]
   memberships         Membership[]
   passwordResetTokens PasswordResetToken[]
+  conversations       ConversationParticipant[]
+  sentMessages        Message[]
 
   @@map("users")
 }
@@ -203,6 +205,7 @@ model Organization {
   accountingEntries    AccountingEntry[]
   accountingGaps       AccountingGap[]
   importTemplates      ImportTemplate[]
+  conversations        Conversation[]
 
   @@map("organizations")
 }
@@ -1113,4 +1116,53 @@ model WarehouseProductField {
 
   @@unique([productId, definitionId])
   @@map("warehouse_product_fields")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CHAT / MESSAGING
+// ═══════════════════════════════════════════════════════════════
+
+model Conversation {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
+  org          Organization              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([orgId])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String    @id @default(cuid())
+  conversationId String    @map("conversation_id")
+  userId         String    @map("user_id")
+  unreadCount    Int       @default(0) @map("unread_count")
+  lastReadAt     DateTime? @map("last_read_at")
+  joinedAt       DateTime  @default(now()) @map("joined_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  conversationId String    @map("conversation_id")
+  senderId       String    @map("sender_id")
+  body           String    @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at")
+  readAt         DateTime? @map("read_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
 }

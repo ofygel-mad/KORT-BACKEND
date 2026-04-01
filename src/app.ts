@@ -34,6 +34,7 @@ import { accountingRoutes } from './modules/accounting/accounting.routes.js';
 import { serviceRoutes } from './modules/service/service.routes.js';
 import { warehouseRoutes } from './modules/warehouse/warehouse.routes.js';
 import { warehouseCatalogRoutes } from './modules/warehouse/warehouse-catalog.routes.js';
+import { chatRoutes } from './modules/chat/chat.routes.js';
 
 export async function buildApp() {
   const isProd = process.env.NODE_ENV === 'production';
@@ -147,6 +148,7 @@ export async function buildApp() {
   await app.register(warehouseRoutes, { prefix: '/api/v1/warehouse' });
   await app.register(warehouseCatalogRoutes, { prefix: '/api/v1/warehouse' });
   await app.register(accountingRoutes, { prefix: '/api/v1/accounting' });
+  await app.register(chatRoutes, { prefix: '/api/v1/chat' });
 
   // ── Health check ────────────────────────────────────────
   app.get('/api/v1/health', async () => ({ status: 'ok', ts: new Date().toISOString() }));
