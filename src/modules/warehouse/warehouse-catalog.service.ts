@@ -465,13 +465,12 @@ export async function smartImportProducts(
         });
       }),
     );
-    for (let j = 0; j < results.length; j++) {
-      const r = results[j];
+    for (const [j, r] of results.entries()) {
       if (r.status === 'fulfilled') {
         productIds.push(r.value.id);
         created++;
       } else {
-        errors.push(`"${chunk[j]}": ${(r.reason as any)?.message ?? 'unknown error'}`);
+        errors.push(`"${chunk[j] ?? ''}": ${(r.reason as any)?.message ?? 'unknown error'}`);
       }
     }
   }
