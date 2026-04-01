@@ -99,6 +99,32 @@ export function buildCapabilities(
       caps.add('tasks:write');
     }
 
+    if (employeePermissions.includes('warehouse_manager')) {
+      caps.add('chapan:read');
+      caps.add('chapan:write');
+      caps.add('tasks:read');
+      caps.add('tasks:write');
+    }
+
+    // Chapan-specific granular permissions
+    if (employeePermissions.includes('chapan_full_access')) {
+      caps.add('chapan:read');
+      caps.add('chapan:write');
+    }
+    if (
+      employeePermissions.includes('chapan_access_orders') ||
+      employeePermissions.includes('chapan_access_production') ||
+      employeePermissions.includes('chapan_access_ready') ||
+      employeePermissions.includes('chapan_access_archive') ||
+      employeePermissions.includes('chapan_access_warehouse_nav') ||
+      employeePermissions.includes('chapan_manage_production') ||
+      employeePermissions.includes('chapan_confirm_invoice') ||
+      employeePermissions.includes('chapan_manage_settings')
+    ) {
+      caps.add('chapan:read');
+      caps.add('chapan:write');
+    }
+
     if (employeePermissions.includes('observer')) {
       // Read-only access to everything they have permission for
       // Observer is additive: if they also have sales, they can read+write sales

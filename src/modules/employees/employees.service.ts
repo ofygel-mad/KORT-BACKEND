@@ -15,7 +15,18 @@ const VALID_PERMISSIONS = [
   'financial_report',
   'sales',
   'production',
+  'warehouse_manager',
   'observer',
+  // ─── Chapan module ───
+  'chapan_full_access',
+  'chapan_access_orders',
+  'chapan_access_production',
+  'chapan_access_ready',
+  'chapan_access_archive',
+  'chapan_access_warehouse_nav',
+  'chapan_manage_production',
+  'chapan_confirm_invoice',
+  'chapan_manage_settings',
 ] as const;
 
 export const createEmployeeSchema = z.object({
