@@ -49,4 +49,11 @@ export async function employeesRoutes(app: FastifyInstance) {
     const result = await svc.dismissEmployee(request.orgId, id);
     return reply.send(result);
   });
+
+  // ── DELETE /api/v1/company/employees/:id ─────────────────────────────────
+  app.delete('/employees/:id', adminOnly, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const result = await svc.removeEmployee(request.orgId, id);
+    return reply.send(result);
+  });
 }

@@ -61,10 +61,11 @@ function serializeEmployee(
     phone: membership.user.phone ?? '',
     department: membership.department,
     permissions: membership.employeePermissions,
-    account_status: membership.employeeAccountStatus,
-    added_by_id: membership.addedById ?? '',
-    added_by_name: membership.addedByName ?? '',
-    created_at: membership.createdAt.toISOString(),
+    // 'pending_first_login' counts as active for display purposes
+    status: membership.employeeAccountStatus === 'dismissed' ? 'dismissed' : 'active',
+    isPendingFirstLogin: membership.employeeAccountStatus === 'pending_first_login',
+    addedByName: membership.addedByName ?? '',
+    joinedAt: membership.createdAt.toISOString(),
   };
 }
 
@@ -291,6 +292,26 @@ export async function resetEmployeePassword(orgId: string, userId: string) {
   });
 
   return { ok: true, message: 'Пароль сброшен. Сотрудник должен войти через номер телефона.' };
+}
+
+// ─── Remove employee (permanent — deletes membership) ────────────────────────
+
+export async function removeEmployee(orgId: string, userId: string) {
+  const membership = await prisma.membership.findUnique({
+    where: { userId_orgId: { userId, orgId } },
+  });
+
+  if (!membership) throw new NotFoundError('Employee');
+  if (membership.role === 'owner') {
+    throw new ForbiddenError('Нельзя удалить руководителя.');
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.membership.delete({ where: { userId_orgId: { userId, orgId } } });
+    await tx.refreshToken.deleteMany({ where: { userId } });
+  });
+
+  return { ok: true };
 }
 
 // ─── Dismiss employee ─────────────────────────────────────────────────────────

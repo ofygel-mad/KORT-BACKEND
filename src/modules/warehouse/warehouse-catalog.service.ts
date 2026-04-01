@@ -442,37 +442,54 @@ export async function smartImportProducts(
     orderBy: { sortOrder: 'asc' },
   });
 
-  // Step 3: import products and link ALL fields to each
+  // Step 3: import products in parallel batches (avoid N×M sequential queries on remote DB)
+  const BATCH = 50;
   let created = 0;
   let skipped = 0;
   const errors: string[] = [];
+  const productIds: string[] = [];
 
-  for (const raw of rows) {
-    const name = raw.trim();
-    if (!name) { skipped++; continue; }
-    const normalizedName = normalizeName(name);
-    try {
-      const product = await prisma.warehouseProductCatalog.upsert({
-        where: { orgId_normalizedName: { orgId, normalizedName } },
-        create: { orgId, name, normalizedName, source: 'excel_import' },
-        update: { name, isActive: true },
-      });
+  const validRows = rows.map((r) => r.trim()).filter(Boolean);
+  skipped += rows.length - validRows.length;
 
-      // Link all field definitions to this product (upsert each)
-      let fieldIdx = 0;
-      for (const def of allDefs) {
-        await prisma.warehouseProductField.upsert({
-          where: { productId_definitionId: { productId: product.id, definitionId: def.id } },
-          create: { productId: product.id, definitionId: def.id, isRequired: false, sortOrder: fieldIdx },
-          update: {},
+  for (let i = 0; i < validRows.length; i += BATCH) {
+    const chunk = validRows.slice(i, i + BATCH);
+    const results = await Promise.allSettled(
+      chunk.map((name) => {
+        const normalizedName = normalizeName(name);
+        return prisma.warehouseProductCatalog.upsert({
+          where: { orgId_normalizedName: { orgId, normalizedName } },
+          create: { orgId, name, normalizedName, source: 'excel_import' },
+          update: { name, isActive: true },
+          select: { id: true },
         });
-        fieldIdx++;
+      }),
+    );
+    for (let j = 0; j < results.length; j++) {
+      const r = results[j];
+      if (r.status === 'fulfilled') {
+        productIds.push(r.value.id);
+        created++;
+      } else {
+        errors.push(`"${chunk[j]}": ${(r.reason as any)?.message ?? 'unknown error'}`);
       }
-
-      created++;
-    } catch (e: any) {
-      errors.push(`"${name}": ${e?.message ?? 'unknown error'}`);
     }
+  }
+
+  // Step 4: link all field definitions to every product in one batch query
+  if (productIds.length > 0 && allDefs.length > 0) {
+    const fieldLinks = productIds.flatMap((productId) =>
+      allDefs.map((def, fieldIdx) => ({
+        productId,
+        definitionId: def.id,
+        isRequired: false,
+        sortOrder: fieldIdx,
+      })),
+    );
+    await prisma.warehouseProductField.createMany({
+      data: fieldLinks,
+      skipDuplicates: true,
+    });
   }
 
   return { fields, products: { created, skipped, errors } };
@@ -529,28 +546,31 @@ export async function importFieldOptionsFromRows(
     throw new Error(`Поле с кодом "${definitionCode}" не найдено. Сначала создайте поле.`);
   }
 
-  let created = 0;
-  let skipped = 0;
-  const errors: string[] = [];
+  const values = rows.map((r) => r.trim()).filter(Boolean);
+  const skipped = rows.length - values.length;
 
-  let sortIdx = 0;
-  for (const raw of rows) {
-    const value = raw.trim();
-    if (!value) { skipped++; continue; }
-    try {
-      const existing = await prisma.warehouseFieldOption.findUnique({
-        where: { definitionId_value: { definitionId: definition.id, value } },
-      });
-      if (existing) { skipped++; sortIdx++; continue; }
-      await prisma.warehouseFieldOption.create({
-        data: { definitionId: definition.id, value, label: value, sortOrder: sortIdx },
-      });
-      created++;
-    } catch (e: any) {
-      errors.push(`"${value}": ${e?.message ?? 'unknown error'}`);
-    }
-    sortIdx++;
-  }
+  // Fetch existing values in one query to count skips accurately
+  const existing = await prisma.warehouseFieldOption.findMany({
+    where: { definitionId: definition.id, value: { in: values } },
+    select: { value: true },
+  });
+  const existingSet = new Set(existing.map((e) => e.value));
 
-  return { created, skipped, errors };
+  const newValues = values.filter((v) => !existingSet.has(v));
+
+  const result = await prisma.warehouseFieldOption.createMany({
+    data: newValues.map((value, idx) => ({
+      definitionId: definition.id,
+      value,
+      label: value,
+      sortOrder: idx,
+    })),
+    skipDuplicates: true,
+  });
+
+  return {
+    created: result.count,
+    skipped: skipped + existingSet.size,
+    errors: [],
+  };
 }
