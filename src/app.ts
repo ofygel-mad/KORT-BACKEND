@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import compress from '@fastify/compress';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
@@ -55,6 +56,12 @@ export async function buildApp() {
   });
 
   // ── Global plugins ──────────────────────────────────────
+  await app.register(compress, {
+    global: true,                // compress all routes by default
+    encodings: ['br', 'gzip'],  // prefer brotli, fallback to gzip
+    threshold: 1024,             // skip compression for responses < 1 KB
+  });
+
   await app.register(cors, {    origin(origin, callback) {
       if (!origin) {
         callback(null, true);
@@ -75,7 +82,7 @@ export async function buildApp() {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'Idempotency-Key', 'X-Org-Id'],
   });
   await app.register(rateLimit, {
-    max: 100,
+    max: 300,          // SPA easily fires 5-10 parallel requests per page load
     timeWindow: '1 minute',
   });
   await app.register(sensible);

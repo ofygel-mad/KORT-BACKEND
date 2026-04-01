@@ -663,6 +663,9 @@ model ChapanOrder {
 
   @@index([orgId, status])
   @@index([orgId, createdAt])
+  @@index([orgId, paymentStatus])
+  @@index([orgId, archived])
+  @@index([clientId])
   @@map("chapan_orders")
 }
 
@@ -713,6 +716,7 @@ model ChapanProductionTask {
 
   @@index([orderId])
   @@index([status])
+  @@index([orderId, status])
   @@map("chapan_production_tasks")
 }
 
@@ -792,6 +796,7 @@ model ChapanActivity {
   order ChapanOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
+  @@index([orderId, createdAt])
   @@map("chapan_activities")
 }
 

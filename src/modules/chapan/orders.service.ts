@@ -117,17 +117,20 @@ function formatKazakhPhone(value: string) {
   return `+7 (${national.slice(0, 3)})-${national.slice(3, 6)}-${national.slice(6, 8)}-${national.slice(8, 10)}`;
 }
 
-async function nextOrderNumber(orgId: string): Promise<string> {
-  const profile = await prisma.chapanProfile.findUnique({ where: { orgId } });
-  const prefix = (profile?.orderPrefix ?? 'ЧП').trim().slice(0, 6).toUpperCase();
-  const counter = (profile?.orderCounter ?? 0) + 1;
-
-  await prisma.chapanProfile.update({
-    where: { orgId },
-    data: { orderCounter: counter },
-  });
-
-  return `${prefix}-${String(counter).padStart(3, '0')}`;
+// Atomic counter increment via raw SQL so concurrent requests never collide.
+// Must be called inside a Prisma interactive transaction (tx).
+async function nextOrderNumber(orgId: string, tx: Prisma.TransactionClient): Promise<string> {
+  const rows = await tx.$queryRaw<Array<{ order_counter: number; order_prefix: string }>>`
+    UPDATE chapan_profiles
+    SET    order_counter = order_counter + 1
+    WHERE  org_id = ${orgId}
+    RETURNING order_counter, order_prefix
+  `;
+  const row = rows[0];
+  if (!row) throw new Error(`Chapan profile not found for org ${orgId}`);
+  const { order_counter, order_prefix } = row;
+  const prefix = (order_prefix ?? 'ЧП').trim().slice(0, 6).toUpperCase();
+  return `${prefix}-${String(order_counter).padStart(3, '0')}`;
 }
 
 function computePaymentStatus(paidAmount: number, totalAmount: number): string {
@@ -466,13 +469,15 @@ export async function returnToReady(
 // Create order
 
 export async function create(orgId: string, authorId: string, authorName: string, data: CreateOrderInput) {
-  const orderNumber = await nextOrderNumber(orgId);
   const totalAmount = data.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const prepayment = Math.max(0, data.prepayment ?? 0);
   const paymentMethod = data.paymentMethod?.trim() || 'cash';
   const paymentNote = buildInitialPaymentNote(data);
 
   return prisma.$transaction(async (tx) => {
+    // Order number is incremented atomically inside the transaction so that
+    // a rollback also rolls back the counter — no skipped numbers, no races.
+    const orderNumber = await nextOrderNumber(orgId, tx);
     const client = await resolveOrderClient(tx, orgId, data);
     const activityEntries: Prisma.ChapanActivityCreateWithoutOrderInput[] = [
       {

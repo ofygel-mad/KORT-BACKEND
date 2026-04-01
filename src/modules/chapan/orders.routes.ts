@@ -4,6 +4,22 @@ import * as svc from './orders.service.js';
 import { generateInvoiceXlsx, generateBatchInvoiceXlsx } from './invoice.service.js';
 import type { InvoiceDocumentPayload } from './invoice-document.js';
 
+// ── Idempotency cache for POST /chapan/orders ──────────────────────────────
+// Prevents duplicate orders when a client retries due to network latency.
+// Key: `${orgId}:${idempotencyKey}` — scoped per org so keys can't leak.
+const idempotencyCache = new Map<string, { status: number; body: unknown; expiresAt: number }>();
+const IDEMPOTENCY_TTL_MS = 5 * 60 * 1000; // 5 minutes
+let idempSweepCounter = 0;
+
+function sweepIdempotencyCache() {
+  if (++idempSweepCounter % 50 !== 0) return;
+  const now = Date.now();
+  for (const [key, entry] of idempotencyCache) {
+    if (entry.expiresAt <= now) idempotencyCache.delete(key);
+  }
+}
+// ──────────────────────────────────────────────────────────────────────────
+
 export async function chapanOrdersRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate);
   app.addHook('preHandler', app.resolveOrg);
@@ -76,7 +92,25 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       sourceRequestId: z.string().optional(),
     }).parse(request.body);
 
+    // Idempotency check — return the original response if the client retries the same request
+    const rawIdemKey = request.headers['idempotency-key'];
+    const idemKey = typeof rawIdemKey === 'string' ? rawIdemKey.slice(0, 256) : undefined;
+    if (idemKey) {
+      const cacheKey = `${request.orgId}:${idemKey}`;
+      const cached = idempotencyCache.get(cacheKey);
+      if (cached && cached.expiresAt > Date.now()) {
+        return reply.status(cached.status).send(cached.body);
+      }
+    }
+
     const order = await svc.create(request.orgId, request.userId, request.userFullName, body);
+
+    if (idemKey) {
+      const cacheKey = `${request.orgId}:${idemKey}`;
+      idempotencyCache.set(cacheKey, { status: 201, body: order, expiresAt: Date.now() + IDEMPOTENCY_TTL_MS });
+      sweepIdempotencyCache();
+    }
+
     return reply.status(201).send(order);
   });
 
