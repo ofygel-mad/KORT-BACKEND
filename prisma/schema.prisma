@@ -664,7 +664,7 @@ model ChapanOrder {
   @@index([orgId, status])
   @@index([orgId, createdAt])
   @@index([orgId, paymentStatus])
-  @@index([orgId, archived])
+  @@index([orgId, isArchived])
   @@index([clientId])
   @@map("chapan_orders")
 }
