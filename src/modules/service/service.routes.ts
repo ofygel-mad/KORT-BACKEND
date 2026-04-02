@@ -9,6 +9,7 @@ import { hashPassword } from '../../lib/hash.js';
 import { signAccessToken, signRefreshToken } from '../../lib/jwt.js';
 import { prisma } from '../../lib/prisma.js';
 import { buildCapabilities } from '../auth/auth.service.js';
+import { DEMO_ORG, DEMO_OWNER } from './demo-access.js';
 
 function safeCompare(provided: string, expected: string): boolean {
   const pa = Buffer.allocUnsafe(128);
@@ -22,19 +23,6 @@ function safeCompare(provided: string, expected: string): boolean {
 
 const accessSchema = z.object({ password: z.string().min(1) });
 const cleanOrgSchema = z.object({ password: z.string().min(1), orgId: z.string().min(1) });
-
-const DEMO_OWNER = {
-  email: 'admin@kort.local',
-  phone: '+77010000001',
-  fullName: 'Arman Kaliev',
-  password: 'demo1234',
-} as const;
-
-const DEMO_ORG = {
-  name: 'Demo Company',
-  slug: 'demo-company',
-  currency: 'KZT',
-} as const;
 
 type ServiceAccessBody = z.infer<typeof accessSchema>;
 type ServiceAccessRequest = FastifyRequest<{ Body: ServiceAccessBody }>;

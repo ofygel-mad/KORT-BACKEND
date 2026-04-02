@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 const OWNER_EMAIL = 'admin@kort.local';
 const OWNER_PHONE = '+77010000001';
 const OWNER_ID = 'u-owner';
-const ORG_ID = 'org-demo';
-const ORG_SLUG = 'demo-company';
+const ORG_ID = 'org-workspace';
+const ORG_SLUG = 'workspace';
 
 const OWNER_PASSWORD = await bcrypt.hash('demo1234', 10);
 
@@ -62,16 +62,16 @@ async function upsertSeedOrganization() {
   });
 
   const data = {
-    name: 'Demo Company',
+    name: 'Workspace',
     slug: ORG_SLUG,
     mode: 'industrial',
     onboardingCompleted: true,
     currency: 'KZT',
-    industry: 'Производство',
-    legalForm: 'ТОО',
-    legalName: 'Товарищество с ограниченной ответственностью «Demo Company»',
-    city: 'Алматы',
-    director: 'Арман Калиев',
+    industry: 'Operations',
+    legalForm: 'Workspace',
+    legalName: 'Workspace',
+    city: 'Remote',
+    director: 'Owner',
   } as const;
 
   if (existing) {
@@ -96,7 +96,7 @@ async function main() {
     id: OWNER_ID,
     email: OWNER_EMAIL,
     phone: OWNER_PHONE,
-    fullName: 'Арман Калиев',
+    fullName: 'Owner',
     password: OWNER_PASSWORD,
     status: 'active',
   });
@@ -128,20 +128,20 @@ async function main() {
   await prisma.chapanProfile.upsert({
     where: { orgId: org.id },
     update: {
-      displayName: 'Чапан Цех',
-      descriptor: 'Ателье национальной одежды',
-      orderPrefix: 'ЧП',
+      displayName: 'Workspace',
+      descriptor: 'Operations',
+      orderPrefix: 'ORD',
     },
     create: {
       orgId: org.id,
-      displayName: 'Чапан Цех',
-      descriptor: 'Ателье национальной одежды',
-      orderPrefix: 'ЧП',
+      displayName: 'Workspace',
+      descriptor: 'Operations',
+      orderPrefix: 'ORD',
     },
   });
 
   await prisma.chapanCatalogProduct.createMany({
-    data: ['Чапан мужской', 'Чапан женский', 'Камзол', 'Белдемше', 'Саукеле'].map((name) => ({
+    data: ['Product A', 'Product B', 'Product C', 'Product D', 'Product E'].map((name) => ({
       orgId: org.id,
       name,
     })),
@@ -149,7 +149,7 @@ async function main() {
   });
 
   await prisma.chapanCatalogFabric.createMany({
-    data: ['Бархат', 'Атлас', 'Шелк', 'Парча', 'Трикотаж'].map((name) => ({
+    data: ['Fabric A', 'Fabric B', 'Fabric C', 'Fabric D', 'Fabric E'].map((name) => ({
       orgId: org.id,
       name,
     })),
