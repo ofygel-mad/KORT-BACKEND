@@ -3,7 +3,15 @@ import { spawnSync } from 'node:child_process';
 
 const prisma = new PrismaClient();
 const RECOVERABLE_MIGRATION = '20260401000000_add_chat';
+const PERF_INDEXES_MIGRATION = '20260402000000_add_performance_indexes';
 const REQUIRED_CHAT_TABLES = ['conversations', 'conversation_participants', 'messages'];
+const REQUIRED_PERF_INDEXES = [
+  'chapan_orders_org_id_payment_status_idx',
+  'chapan_orders_org_id_is_archived_idx',
+  'chapan_orders_client_id_idx',
+  'chapan_production_tasks_order_id_status_idx',
+  'chapan_activities_order_id_created_at_idx',
+];
 
 function run(command, args) {
   const result = spawnSync(command, args, {
@@ -41,6 +49,22 @@ async function hasFailedChatMigration() {
   return Array.isArray(rows) && rows.length > 0;
 }
 
+async function hasFailedMigration(name) {
+  const rows = await prisma.$queryRawUnsafe(
+    `
+      SELECT 1
+      FROM "_prisma_migrations"
+      WHERE migration_name = $1
+        AND finished_at IS NULL
+        AND rolled_back_at IS NULL
+      LIMIT 1
+    `,
+    name,
+  );
+
+  return Array.isArray(rows) && rows.length > 0;
+}
+
 async function hasChatTables() {
   const rows = await prisma.$queryRawUnsafe(
     `
@@ -54,21 +78,43 @@ async function hasChatTables() {
   return Array.isArray(rows) && rows.length === REQUIRED_CHAT_TABLES.length;
 }
 
+async function hasPerformanceIndexes() {
+  const rows = await prisma.$queryRawUnsafe(
+    `
+      SELECT indexname
+      FROM pg_indexes
+      WHERE schemaname = 'public'
+        AND indexname = ANY ($1)
+    `,
+    REQUIRED_PERF_INDEXES,
+  );
+
+  return Array.isArray(rows) && rows.length === REQUIRED_PERF_INDEXES.length;
+}
+
 async function recoverKnownFailedMigration() {
   if (!(await hasMigrationsTable())) {
     return;
   }
 
-  if (!(await hasFailedChatMigration())) {
-    return;
+  if (await hasFailedChatMigration()) {
+    if (!(await hasChatTables())) {
+      return;
+    }
+
+    console.log(`Recovering failed migration ${RECOVERABLE_MIGRATION} before deploy.`);
+    run('pnpm', ['exec', 'prisma', 'migrate', 'resolve', '--rolled-back', RECOVERABLE_MIGRATION]);
   }
 
-  if (!(await hasChatTables())) {
-    return;
+  if (await hasFailedMigration(PERF_INDEXES_MIGRATION)) {
+    if (await hasPerformanceIndexes()) {
+      console.log(`Marking ${PERF_INDEXES_MIGRATION} as applied (indexes already exist).`);
+      run('pnpm', ['exec', 'prisma', 'migrate', 'resolve', '--applied', PERF_INDEXES_MIGRATION]);
+    } else {
+      console.log(`Rolling back failed ${PERF_INDEXES_MIGRATION} so it can re-run.`);
+      run('pnpm', ['exec', 'prisma', 'migrate', 'resolve', '--rolled-back', PERF_INDEXES_MIGRATION]);
+    }
   }
-
-  console.log(`Recovering failed migration ${RECOVERABLE_MIGRATION} before deploy.`);
-  run('pnpm', ['exec', 'prisma', 'migrate', 'resolve', '--rolled-back', RECOVERABLE_MIGRATION]);
 }
 
 async function main() {
