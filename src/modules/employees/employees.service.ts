@@ -43,7 +43,10 @@ export const createEmployeeSchema = z.object({
 
 export const updateEmployeeSchema = z.object({
   department: z.string().min(1).max(80).optional(),
-  permissions: z.array(z.enum(VALID_PERMISSIONS)).optional(),
+  permissions: z
+    .array(z.enum(VALID_PERMISSIONS))
+    .min(1, 'Назначьте хотя бы одно право доступа')
+    .optional(),
 });
 
 export type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>;
@@ -233,6 +236,12 @@ export async function updateEmployee(
   if (membership.role === 'owner') {
     throw new ForbiddenError(
       'Права руководителя не редактируются через интерфейс управления сотрудниками.',
+    );
+  }
+
+  if (membership.employeeAccountStatus === 'dismissed') {
+    throw new ForbiddenError(
+      'Нельзя изменить данные уволенного сотрудника.',
     );
   }
 
