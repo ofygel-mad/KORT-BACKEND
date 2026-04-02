@@ -19,7 +19,7 @@ export const loginSchema = z
 export const registerCompanySchema = z.object({
   full_name: z.string().min(1).max(120),
   email: z.string().email(),
-  password: z.string().min(8, 'Пароль должен содержать минимум 8 символов'),
+  password: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
   phone: z.string().optional(),
   company_name: z.string().min(1).max(200),
 });
@@ -30,7 +30,7 @@ export const registerCompanySchema = z.object({
  */
 export const setPasswordSchema = z
   .object({
-    new_password: z.string().min(8, 'Пароль должен содержать минимум 8 символов'),
+    new_password: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
     confirm_password: z.string().min(1),
   })
   .refine((d) => d.new_password === d.confirm_password, {
@@ -49,7 +49,7 @@ export const forgotPasswordSchema = z.object({
 export const resetPasswordSchema = z
   .object({
     token: z.string().min(1),
-    new_password: z.string().min(8, 'Пароль должен содержать минимум 8 символов'),
+    new_password: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
     confirm_password: z.string().min(1),
   })
   .refine((d) => d.new_password === d.confirm_password, {
