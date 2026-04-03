@@ -68,7 +68,8 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
     const body = z.object({
       clientId: z.string().optional(),
       clientName: z.string().min(1),
-      clientPhone: z.string().min(1),
+      clientPhone: z.string().optional().default(''),
+      clientPhoneForeign: z.string().optional(),
       priority: z.enum(['normal', 'urgent', 'vip']).default('normal'),
       urgency: z.enum(['normal', 'urgent']).optional(),
       isDemandingClient: z.boolean().optional(),
@@ -90,7 +91,10 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       bankCommissionAmount: z.number().min(0).optional(),
       managerNote: z.string().optional(),
       sourceRequestId: z.string().optional(),
-    }).parse(request.body);
+    }).refine(
+      (d) => !!(d.clientPhone?.trim()) || !!(d.clientPhoneForeign?.trim()),
+      { message: 'Укажите казахстанский или иностранный номер телефона', path: ['clientPhone'] },
+    ).parse(request.body);
 
     // Idempotency check — return the original response if the client retries the same request
     const rawIdemKey = request.headers['idempotency-key'];
@@ -119,7 +123,8 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const body = z.object({
       clientName: z.string().min(1).optional(),
-      clientPhone: z.string().min(1).optional(),
+      clientPhone: z.string().optional(),
+      clientPhoneForeign: z.string().optional(),
       dueDate: z.string().nullable().optional(),
       priority: z.enum(['normal', 'urgent', 'vip']).optional(),
       urgency: z.enum(['normal', 'urgent']).optional(),

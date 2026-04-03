@@ -17,6 +17,7 @@ type CreateOrderInput = {
   clientId?: string;
   clientName: string;
   clientPhone: string;
+  clientPhoneForeign?: string;
   priority: string;
   urgency?: string;
   isDemandingClient?: boolean;
@@ -255,18 +256,23 @@ function mapOrder(order: OrderRecord) {
 async function resolveOrderClient(
   tx: Prisma.TransactionClient,
   orgId: string,
-  data: Pick<CreateOrderInput, 'clientId' | 'clientName' | 'clientPhone'>,
+  data: Pick<CreateOrderInput, 'clientId' | 'clientName' | 'clientPhone' | 'clientPhoneForeign'>,
 ) {
   const clientId = data.clientId?.trim();
   const clientName = normalizeClientName(data.clientName);
-  const clientPhone = formatKazakhPhone(data.clientPhone);
+  const rawKzPhone = data.clientPhone?.trim() ?? '';
+  const clientPhone = rawKzPhone ? formatKazakhPhone(rawKzPhone) : '';
+  const clientPhoneForeign = data.clientPhoneForeign?.trim() || undefined;
 
   if (!clientName) {
     throw new ValidationError('Укажите имя клиента');
   }
-  if (!clientPhone) {
+  if (!clientPhone && !clientPhoneForeign) {
     throw new ValidationError('Укажите телефон клиента');
   }
+
+  // For client lookup use KZ phone if available, otherwise the foreign phone
+  const lookupPhone = clientPhone || clientPhoneForeign!;
 
   if (clientId) {
     const client = await tx.chapanClient.findFirst({
@@ -281,11 +287,12 @@ async function resolveOrderClient(
       clientId: client.id,
       clientName,
       clientPhone,
+      clientPhoneForeign,
     };
   }
 
   const existingClient = await tx.chapanClient.findFirst({
-    where: { orgId, phone: clientPhone },
+    where: { orgId, phone: lookupPhone },
     orderBy: { createdAt: 'desc' },
   });
 
@@ -294,6 +301,7 @@ async function resolveOrderClient(
       clientId: existingClient.id,
       clientName,
       clientPhone,
+      clientPhoneForeign,
     };
   }
 
@@ -301,7 +309,7 @@ async function resolveOrderClient(
     data: {
       orgId,
       fullName: clientName,
-      phone: clientPhone,
+      phone: lookupPhone,
     },
   });
 
@@ -309,6 +317,7 @@ async function resolveOrderClient(
     clientId: createdClient.id,
     clientName,
     clientPhone,
+    clientPhoneForeign,
   };
 }
 
@@ -513,6 +522,7 @@ export async function create(orgId: string, authorId: string, authorName: string
         clientId: client.clientId,
         clientName: client.clientName,
         clientPhone: client.clientPhone,
+        clientPhoneForeign: client.clientPhoneForeign ?? null,
         priority: data.priority,
         urgency: data.urgency ?? (data.priority === 'urgent' ? 'urgent' : 'normal'),
         isDemandingClient: data.isDemandingClient ?? (data.priority === 'vip'),
@@ -956,6 +966,7 @@ export async function confirmTransfer(orgId: string, orderId: string, by: 'manag
 type UpdateOrderInput = {
   clientName?: string;
   clientPhone?: string;
+  clientPhoneForeign?: string;
   dueDate?: string | null;
   priority?: string;
   urgency?: string;
@@ -1010,12 +1021,16 @@ export async function update(orgId: string, id: string, authorId: string, author
       }
       updateData.clientName = clientName;
     }
-    if (data.clientPhone) {
-      const clientPhone = formatKazakhPhone(data.clientPhone);
-      if (!clientPhone) {
-        throw new ValidationError('Укажите телефон клиента');
+    if (data.clientPhone !== undefined) {
+      const trimmed = data.clientPhone.trim();
+      if (trimmed) {
+        updateData.clientPhone = formatKazakhPhone(trimmed);
+      } else {
+        updateData.clientPhone = '';
       }
-      updateData.clientPhone = clientPhone;
+    }
+    if (data.clientPhoneForeign !== undefined) {
+      updateData.clientPhoneForeign = data.clientPhoneForeign?.trim() || null;
     }
     if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
     if (data.priority) updateData.priority = data.priority;

@@ -616,7 +616,8 @@ model ChapanOrder {
   orderNumber   String    @map("order_number")
   clientId      String    @map("client_id")
   clientName    String    @map("client_name")
-  clientPhone   String    @map("client_phone")
+  clientPhone        String    @map("client_phone")
+  clientPhoneForeign String?   @map("client_phone_foreign")
   status        String    @default("new")
   paymentStatus String    @default("not_paid") @map("payment_status")
   priority      String    @default("normal")   // legacy: kept for backward compat; use urgency + isDemandingClient

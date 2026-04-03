@@ -8,6 +8,7 @@ type TemplateOrder = {
   orderNumber: string;
   clientName: string;
   clientPhone: string;
+  clientPhoneForeign: string | null;
   createdAt: Date;
   items: Array<{
     productName: string;
@@ -120,7 +121,9 @@ function buildAttorneyReference(org: TemplateOrg): string {
 
 function chooseRecipientName(orders: TemplateOrder[]): string {
   const uniqueNames = [...new Set(orders.map((order) => order.clientName.trim()).filter(Boolean))];
-  const uniquePhones = [...new Set(orders.map((order) => order.clientPhone.trim()).filter(Boolean))];
+  const uniquePhones = [...new Set(
+    orders.map((order) => (order.clientPhone?.trim() || order.clientPhoneForeign?.trim() || '')).filter(Boolean),
+  )];
 
   if (uniqueNames.length === 0) return '';
   if (uniqueNames.length === 1) {
