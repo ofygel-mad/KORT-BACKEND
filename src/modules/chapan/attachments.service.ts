@@ -3,7 +3,7 @@ import type { Readable } from 'node:stream';
 import { nanoid } from 'nanoid';
 import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { r2, R2_BUCKET } from '../../lib/r2.js';
+import { r2, R2_BUCKET, isR2Configured } from '../../lib/r2.js';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { config } from '../../config.js';
@@ -30,6 +30,22 @@ function buildStorageKey(orgId: string, orderId: string, filename: string): stri
   return `chapan/${orgId}/${orderId}/${filename}`;
 }
 
+function ensureR2Configured() {
+  if (!isR2Configured || !r2 || !R2_BUCKET) {
+    throw new ValidationError('Файловое хранилище не настроено. Заполните переменные R2_*');
+  }
+}
+
+function getR2Bucket(): string {
+  ensureR2Configured();
+  return R2_BUCKET!;
+}
+
+function getR2Client() {
+  ensureR2Configured();
+  return r2!;
+}
+
 // ── Service ───────────────────────────────────────────────────────────────────
 
 export async function uploadAttachment(
@@ -42,6 +58,9 @@ export async function uploadAttachment(
     stream: Readable;
   },
 ) {
+  const bucket = getR2Bucket();
+  const r2Client = getR2Client();
+
   // Validate order belongs to org
   const order = await prisma.chapanOrder.findFirst({ where: { id: orderId, orgId } });
   if (!order) throw new NotFoundError('ChapanOrder', orderId);
@@ -76,8 +95,8 @@ export async function uploadAttachment(
   const body = Buffer.concat(chunks);
 
   // Upload to R2
-  await r2.send(new PutObjectCommand({
-    Bucket: R2_BUCKET,
+  await r2Client.send(new PutObjectCommand({
+    Bucket: bucket,
     Key: storageKey,
     Body: body,
     ContentType: file.mimetype,
@@ -111,15 +130,18 @@ export async function listAttachments(orgId: string, orderId: string) {
 }
 
 export async function getAttachmentDownloadUrl(orgId: string, attachmentId: string): Promise<{ att: { fileName: string; mimeType: string }; url: string }> {
+  const bucket = getR2Bucket();
+  const r2Client = getR2Client();
+
   const att = await prisma.chapanOrderAttachment.findFirst({
     where: { id: attachmentId, orgId },
   });
   if (!att) throw new NotFoundError('ChapanOrderAttachment', attachmentId);
 
   const url = await getSignedUrl(
-    r2,
+    r2Client,
     new GetObjectCommand({
-      Bucket: R2_BUCKET,
+      Bucket: bucket,
       Key: att.storagePath,
       ResponseContentDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(att.fileName)}`,
       ResponseContentType: att.mimeType,
@@ -131,6 +153,9 @@ export async function getAttachmentDownloadUrl(orgId: string, attachmentId: stri
 }
 
 export async function deleteAttachment(orgId: string, attachmentId: string) {
+  const bucket = getR2Bucket();
+  const r2Client = getR2Client();
+
   const att = await prisma.chapanOrderAttachment.findFirst({
     where: { id: attachmentId, orgId },
   });
@@ -139,7 +164,7 @@ export async function deleteAttachment(orgId: string, attachmentId: string) {
   await prisma.chapanOrderAttachment.delete({ where: { id: attachmentId } });
 
   try {
-    await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: att.storagePath }));
+    await r2Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: att.storagePath }));
   } catch {}
 
   return { ok: true };

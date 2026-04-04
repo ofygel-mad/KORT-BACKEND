@@ -43,11 +43,12 @@ const envSchema = z.object({
   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: z.string().optional(),
   // Sprint 9: file uploads
   UPLOAD_MAX_FILE_SIZE_MB: z.coerce.number().default(10),
-  // Cloudflare R2 storage
-  R2_ACCOUNT_ID: z.string().min(1),
-  R2_ACCESS_KEY_ID: z.string().min(1),
-  R2_SECRET_ACCESS_KEY: z.string().min(1),
-  R2_BUCKET: z.string().min(1),
+  // Cloudflare R2 storage (optional at boot; required for attachments runtime)
+  // Docker Compose injects unset vars as empty strings, so treat "" as undefined.
+  R2_ACCOUNT_ID: z.preprocess((value) => value === '' ? undefined : value, z.string().min(1).optional()),
+  R2_ACCESS_KEY_ID: z.preprocess((value) => value === '' ? undefined : value, z.string().min(1).optional()),
+  R2_SECRET_ACCESS_KEY: z.preprocess((value) => value === '' ? undefined : value, z.string().min(1).optional()),
+  R2_BUCKET: z.preprocess((value) => value === '' ? undefined : value, z.string().min(1).optional()),
 });
 
 function loadConfig() {
