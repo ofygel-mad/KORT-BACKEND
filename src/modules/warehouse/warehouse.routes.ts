@@ -77,6 +77,12 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
     return svc.getItem(req.orgId!, req.params.id);
   });
 
+  // POST /api/v1/warehouse/items/import-opening-balance — bulk opening balance import
+  app.post<{ Body: { rows: svc.ImportOpeningBalanceRow[] } }>('/items/import-opening-balance', async (req) => {
+    const authorName = req.userFullName ?? 'Неизвестно';
+    return svc.bulkImportOpeningBalance(req.orgId!, req.body.rows ?? [], authorName);
+  });
+
   app.post<{ Body: svc.CreateItemDto }>('/items', async (req, reply) => {
     const authorName = req.userFullName ?? 'Неизвестно';
     const body = req.body;
@@ -168,6 +174,14 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
   app.post<{ Body: { names: string[] } }>('/products-availability', async (req) => {
     const { names } = req.body;
     return svc.checkProductNamesAvailability(req.orgId!, Array.isArray(names) ? names : []);
+  });
+
+  // POST /api/v1/warehouse/items/variant-availability
+  // Body: { variants: Array<{ name, color?, size?, gender? }> }
+  app.post<{
+    Body: { variants: Array<{ name: string; color?: string; size?: string; gender?: string }> };
+  }>('/items/variant-availability', async (req) => {
+    return svc.checkVariantAvailability(req.orgId!, req.body.variants ?? []);
   });
 
   app.post<{ Params: { orderId: string }; Body?: { reserve?: boolean } }>(

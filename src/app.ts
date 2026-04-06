@@ -35,6 +35,10 @@ import { accountingRoutes } from './modules/accounting/accounting.routes.js';
 import { serviceRoutes } from './modules/service/service.routes.js';
 import { warehouseRoutes } from './modules/warehouse/warehouse.routes.js';
 import { warehouseCatalogRoutes } from './modules/warehouse/warehouse-catalog.routes.js';
+import { warehouseFoundationRoutes } from './modules/warehouse/warehouse-foundation.routes.js';
+import { warehouseInventoryCoreRoutes } from './modules/warehouse/warehouse-inventory-core.routes.js';
+import { warehouseLiveRoutes } from './modules/warehouse/warehouse-live.routes.js';
+import { warehouseRuntimeRoutes } from './modules/warehouse/warehouse-runtime.routes.js';
 import { chatRoutes } from './modules/chat/chat.routes.js';
 
 export async function buildApp() {
@@ -154,6 +158,10 @@ export async function buildApp() {
   await app.register(serviceRoutes, { prefix: '/api/v1/service' });
   await app.register(warehouseRoutes, { prefix: '/api/v1/warehouse' });
   await app.register(warehouseCatalogRoutes, { prefix: '/api/v1/warehouse' });
+  await app.register(warehouseFoundationRoutes, { prefix: '/api/v1/warehouse' });
+  await app.register(warehouseInventoryCoreRoutes, { prefix: '/api/v1/warehouse' });
+  await app.register(warehouseRuntimeRoutes, { prefix: '/api/v1/warehouse' });
+  await app.register(warehouseLiveRoutes, { prefix: '/api/v1/warehouse-live' });
   await app.register(accountingRoutes, { prefix: '/api/v1/accounting' });
   await app.register(chatRoutes, { prefix: '/api/v1/chat' });
 

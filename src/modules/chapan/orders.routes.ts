@@ -3,6 +3,7 @@ import { z } from 'zod';
 import * as svc from './orders.service.js';
 import { generateInvoiceXlsx, generateBatchInvoiceXlsx } from './invoice.service.js';
 import type { InvoiceDocumentPayload } from './invoice-document.js';
+import { getWarehouseOrderState, getWarehouseOrderStates } from '../warehouse/warehouse-projections.service.js';
 
 // ── Idempotency cache for POST /chapan/orders ──────────────────────────────
 // Prevents duplicate orders when a client retries due to network latency.
@@ -57,10 +58,29 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
     return { count: orders.length, results: orders };
   });
 
+  app.get('/warehouse-states', async (request) => {
+    const query = z.object({
+      ids: z.string().min(1),
+    }).parse(request.query);
+
+    const ids = query.ids
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    const results = await getWarehouseOrderStates(request.orgId, ids);
+    return { count: results.length, results };
+  });
+
   // GET /api/v1/chapan/orders/:id
   app.get('/:id', async (request) => {
     const { id } = request.params as { id: string };
     return svc.getById(request.orgId, id);
+  });
+
+  app.get('/:id/warehouse-state', async (request) => {
+    const { id } = request.params as { id: string };
+    return getWarehouseOrderState(request.orgId, id);
   });
 
   // POST /api/v1/chapan/orders

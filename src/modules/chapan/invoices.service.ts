@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { AppError, NotFoundError, ValidationError } from '../../lib/errors.js';
 import { getNextInvoiceNumberCandidate } from './invoice-number.js';
+import { postWarehouseOperationDocument } from '../warehouse/warehouse-operations.service.js';
 import {
   buildInvoiceDocumentPayload,
   normalizeInvoiceDocumentPayload,
@@ -436,7 +437,7 @@ export async function confirmBySeamstress(
       });
 
       if (bothConfirmed) {
-        await advanceOrdersToWarehouse(tx, invoice.items, userId, userName, invoice.invoiceNumber);
+        await advanceOrdersToWarehouse(orgId, tx, invoice.items, userId, userName, invoice.invoiceNumber);
       }
     });
 
@@ -483,7 +484,7 @@ export async function confirmByWarehouse(
       });
 
       if (bothConfirmed) {
-        await advanceOrdersToWarehouse(tx, invoice.items, userId, userName, invoice.invoiceNumber);
+        await advanceOrdersToWarehouse(orgId, tx, invoice.items, userId, userName, invoice.invoiceNumber);
       }
     });
 
@@ -557,6 +558,7 @@ export async function archiveInvoice(orgId: string, invoiceId: string) {
 }
 
 async function advanceOrdersToWarehouse(
+  orgId: string,
   tx: Prisma.TransactionClient,
   items: Array<{ orderId: string }>,
   userId: string,
@@ -578,5 +580,18 @@ async function advanceOrdersToWarehouse(
         authorName: userName,
       },
     });
+
+    await postWarehouseOperationDocument(orgId, {
+      orderId: item.orderId,
+      documentType: 'handoff_to_warehouse',
+      idempotencyKey: `handoff:${item.orderId}`,
+      referenceNo: invoiceNumber,
+      payload: {
+        trigger: 'invoice_confirmed',
+        invoiceNumber,
+        toStatus: 'on_warehouse',
+      },
+      createdBy: userName,
+    }, tx);
   }
 }

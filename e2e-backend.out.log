@@ -1,0 +1,117 @@
+[dotenv@17.3.1] injecting env (11) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+Server running at http://127.0.0.1:8001
+[20:17:01.200] [32mINFO[39m (28836): [36mServer listening at http://127.0.0.1:8001[39m
+[20:17:01.201] [32mINFO[39m (28836): [36mCORS origins configured[39m
+    [35morigins[39m: [
+      "http://127.0.0.1:4173",
+      "http://localhost:4173",
+      "http://127.0.0.1:3000",
+      "http://localhost:3000"
+    ]
+[20:17:01.203] [32mINFO[39m (28836): [36mChat WebSocket attached at /api/v1/ws/chat[39m
+[20:17:01.205] [32mINFO[39m (28836): [36mWarehouse outbox worker started[39m
+[20:17:01.284] [32mINFO[39m (28836): [36mincoming request[39m
+    [35mreqId[39m: "req-1"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/health",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51433
+    }
+[20:17:01.297] [32mINFO[39m (28836): [36mrequest completed[39m
+    [35mreqId[39m: "req-1"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 11.103999987244606
+[20:18:27.014] [32mINFO[39m (28836): [36mincoming request[39m
+    [35mreqId[39m: "req-2"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50582
+    }
+[20:18:27.808] [32mINFO[39m (28836): [36mrequest completed[39m
+    [35mreqId[39m: "req-2"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 790.1237000077963
+[20:18:27.865] [32mINFO[39m (28836): [36mincoming request[39m
+    [35mreqId[39m: "req-3"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50582
+    }
+[20:18:27.969] [32mINFO[39m (28836): [36mrequest completed[39m
+    [35mreqId[39m: "req-3"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 102.9615000039339
+[20:18:32.549] [32mINFO[39m (28836): [36mincoming request[39m
+    [35mreqId[39m: "req-4"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/register/company/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50582
+    }
+[20:18:32.802] [32mINFO[39m (28836): [36mrequest completed[39m
+    [35mreqId[39m: "req-4"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 253.00530000030994
+[20:18:32.820] [32mINFO[39m (28836): [36mincoming request[39m
+    [35mreqId[39m: "req-5"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50582
+    }
+[20:18:32.836] [32mINFO[39m (28836): [36mrequest completed[39m
+    [35mreqId[39m: "req-5"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 15.205699995160103
+[20:18:33.272] [32mINFO[39m (28836): [36mincoming request[39m
+    [35mreqId[39m: "req-6"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50582
+    }
+[20:18:33.504] [32mINFO[39m (28836): [36mrequest completed[39m
+    [35mreqId[39m: "req-6"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 231.86969999969006
+[20:18:33.516] [32mINFO[39m (28836): [36mincoming request[39m
+    [35mreqId[39m: "req-7"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50582
+    }
+[20:18:33.534] [32mINFO[39m (28836): [36mrequest completed[39m
+    [35mreqId[39m: "req-7"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 17.705699995160103

@@ -297,12 +297,52 @@ export async function checkVariantAvailability(orgId: string, data: {
 
   const variantKey = buildVariantKey(data.productName, attributesForKey);
 
+  const canonicalVariant = await prisma.warehouseVariant.findFirst({
+    where: { orgId, variantKey },
+    select: { id: true },
+  });
+
+  if (canonicalVariant) {
+    const [canonicalBalances, compatibilityItem] = await Promise.all([
+      prisma.warehouseStockBalance.aggregate({
+        where: {
+          orgId,
+          variantId: canonicalVariant.id,
+          stockStatus: 'available',
+        },
+        _sum: {
+          qtyAvailable: true,
+        },
+      }),
+      prisma.warehouseItem.findFirst({
+        where: { orgId, variantKey },
+        select: { id: true, qtyMin: true },
+      }),
+    ]);
+
+    const available = canonicalBalances._sum.qtyAvailable ?? 0;
+    const status: 'in_stock' | 'low' | 'out_of_stock' =
+      available <= 0
+        ? 'out_of_stock'
+        : compatibilityItem && available <= compatibilityItem.qtyMin
+          ? 'low'
+          : 'in_stock';
+
+    return {
+      status,
+      variantKey,
+      qty: available,
+      itemId: compatibilityItem?.id,
+    };
+  }
+
   const item = await prisma.warehouseItem.findFirst({
     where: { orgId, variantKey },
     select: { id: true, qty: true, qtyReserved: true, qtyMin: true, name: true },
   });
 
   if (!item) {
+
     // Fallback: search by product name only (no variant match)
     const byName = await prisma.warehouseItem.findFirst({
       where: {

@@ -3,6 +3,10 @@ import { prisma } from '../../lib/prisma.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { normalizeProductionStatus } from './workflow.js';
 import { syncOrderToSheets } from './sheets.sync.js';
+import {
+  applyWarehouseOrderTransitionSideEffectsTx as applyWarehouseOrderTransitionSideEffectsTxV2,
+  consumeCanonicalWarehouseReservationsForOrder as consumeCanonicalWarehouseReservationsForOrderV2,
+} from '../warehouse/warehouse-order-orchestration.service.js';
 
 // Async fire-and-forget helper — never throws, never blocks the main flow
 function fireSheetSync(orgId: string, orderId: string) {
@@ -116,6 +120,117 @@ function formatKazakhPhone(value: string) {
 
   const national = digits.slice(1);
   return `+7 (${national.slice(0, 3)})-${national.slice(3, 6)}-${national.slice(6, 8)}-${national.slice(8, 10)}`;
+}
+
+function normalizeWarehouseName(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function buildWarehouseVariantKey(productName: string, attributes: Record<string, string>) {
+  const base = normalizeWarehouseName(productName);
+  const parts = Object.entries(attributes)
+    .filter(([, value]) => value.trim())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}:${normalizeWarehouseName(value)}`);
+  return [base, ...parts].join('|');
+}
+
+async function buildOrderItemVariantSnapshot(
+  tx: Prisma.TransactionClient,
+  orgId: string,
+  item: {
+    productName: string;
+    fabric?: string | null;
+    color?: string | null;
+    gender?: string | null;
+    length?: string | null;
+    size: string;
+  },
+) {
+  const normalizedName = normalizeWarehouseName(item.productName);
+  const product = await tx.warehouseProductCatalog.findFirst({
+    where: { orgId, normalizedName },
+    include: {
+      fieldLinks: {
+        include: { definition: true },
+      },
+    },
+  });
+
+  const rawAttributes = Object.fromEntries(
+    Object.entries({
+      fabric: item.fabric?.trim() || '',
+      color: item.color?.trim() || '',
+      gender: item.gender?.trim() || '',
+      length: item.length?.trim() || '',
+      size: item.size?.trim() || '',
+    }).filter(([, value]) => value),
+  );
+
+  const availabilityFields = new Set(
+    product?.fieldLinks
+      .filter((link) => link.definition.affectsAvailability)
+      .map((link) => link.definition.code) ?? [],
+  );
+
+  const attributesForKey =
+    availabilityFields.size > 0
+      ? Object.fromEntries(Object.entries(rawAttributes).filter(([key]) => availabilityFields.has(key)))
+      : rawAttributes;
+
+  const attributesSummary = Object.entries(rawAttributes)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(', ');
+
+  return {
+    variantKey: buildWarehouseVariantKey(product?.name ?? item.productName, attributesForKey),
+    attributesJson: Object.keys(rawAttributes).length > 0 ? rawAttributes : undefined,
+    attributesSummary: attributesSummary || undefined,
+  };
+}
+
+function buildCanonicalReservationActivityContent(summary: {
+  mode: 'canonical' | 'skipped' | 'simple';
+  reason?: string;
+  reservedCount: number;
+  replayedCount: number;
+  failedCount: number;
+  skippedCount: number;
+  items: Array<{ itemId: string; status: string; reason?: string }>;
+}) {
+  const details = summary.items
+    .filter((item) => item.status === 'failed' || item.status === 'skipped')
+    .slice(0, 3)
+    .map((item) => `${item.itemId}: ${item.reason ?? item.status}`)
+    .join('; ');
+
+  if (summary.mode === 'skipped') {
+    return `Canonical резерв склада пропущен: ${summary.reason ?? 'unknown_reason'}.`;
+  }
+
+  return `Canonical резерв склада: создано ${summary.reservedCount}, повторно использовано ${summary.replayedCount}, пропущено ${summary.skippedCount}, ошибок ${summary.failedCount}${details ? `. Детали: ${details}` : ''}`;
+}
+
+function hasWarehouseFulfillmentItems(items: Array<{ fulfillmentMode: string }>) {
+  return items.some((item) => item.fulfillmentMode === 'warehouse');
+}
+
+export async function consumeCanonicalWarehouseReservationsForOrder(
+  orgId: string,
+  orderId: string,
+  authorId: string,
+  authorName: string,
+) {
+  return consumeCanonicalWarehouseReservationsForOrderV2(orgId, orderId, authorId, authorName);
+}
+
+export async function applyWarehouseOrderTransitionSideEffectsTx(
+  tx: Prisma.TransactionClient,
+  orgId: string,
+  input: Parameters<typeof applyWarehouseOrderTransitionSideEffectsTxV2>[2],
+) {
+  return applyWarehouseOrderTransitionSideEffectsTxV2(tx, orgId, input);
 }
 
 // Atomic counter increment via raw SQL so concurrent requests never collide.
@@ -458,7 +573,6 @@ export async function returnToReady(
   if (order.status !== 'on_warehouse') {
     throw new ValidationError('Заказ не находится на складе');
   }
-
   await prisma.$transaction(async (tx) => {
     await tx.chapanOrder.update({ where: { id }, data: { status: 'ready' } });
     await tx.chapanActivity.create({
@@ -471,6 +585,12 @@ export async function returnToReady(
       },
     });
   });
+
+  // P3: Release simple warehouse reservations on return-to-ready
+  try {
+    const { releaseOrderReservations } = await import('../warehouse/warehouse.service.js');
+    await releaseOrderReservations(orgId, id);
+  } catch { /* non-fatal */ }
 
   return { ok: true };
 }
@@ -515,6 +635,26 @@ export async function create(orgId: string, authorId: string, authorName: string
       });
     }
 
+    const orderItemCreates = await Promise.all(
+      data.items.map(async (item) => {
+        const variantSnapshot = await buildOrderItemVariantSnapshot(tx, orgId, item);
+        return {
+          productName: item.productName,
+          fabric: item.fabric?.trim() || '',
+          color: item.color?.trim() || undefined,
+          gender: item.gender?.trim() || undefined,
+          length: item.length?.trim() || undefined,
+          size: item.size,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          fulfillmentMode: 'unassigned' as const,
+          notes: item.notes,
+          workshopNotes: item.workshopNotes,
+          ...variantSnapshot,
+        };
+      }),
+    );
+
     const order = await tx.chapanOrder.create({
       data: {
         orgId,
@@ -546,19 +686,7 @@ export async function create(orgId: string, authorId: string, authorName: string
           : undefined,
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
         items: {
-          create: data.items.map((item) => ({
-            productName: item.productName,
-            fabric: item.fabric?.trim() || '',
-            color: item.color?.trim() || undefined,
-            gender: item.gender?.trim() || undefined,
-            length: item.length?.trim() || undefined,
-            size: item.size,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            fulfillmentMode: 'unassigned',
-            notes: item.notes,
-            workshopNotes: item.workshopNotes,
-          })),
+          create: orderItemCreates,
         },
         payments: prepayment > 0 ? {
           create: {
@@ -729,6 +857,33 @@ async function applyItemRouting(
     }
   }
 
+  if (warehouseItems.length > 0) {
+    try {
+      const { reserveOrderWarehouseItems } = await import('../warehouse/warehouse.service.js');
+      const summary = await reserveOrderWarehouseItems(orgId, id, authorName || 'system');
+
+      await prisma.chapanActivity.create({
+        data: {
+          orderId: id,
+          type: 'system',
+          content: buildCanonicalReservationActivityContent(summary),
+          authorId,
+          authorName,
+        },
+      });
+    } catch {
+      await prisma.chapanActivity.create({
+        data: {
+          orderId: id,
+          type: 'system',
+          content: 'Canonical резерв склада не выполнен из-за ошибки интеграции.',
+          authorId,
+          authorName,
+        },
+      });
+    }
+  }
+
   return getById(orgId, id);
 }
 export async function confirm(orgId: string, id: string, authorId: string, authorName: string) {
@@ -779,7 +934,16 @@ export async function fulfillFromStock(orgId: string, id: string, authorId: stri
 
 // Sprint 10: status change triggers Sheets sync
 export async function updateStatus(orgId: string, id: string, status: string, authorId: string, authorName: string, cancelReason?: string) {
-  const order = await prisma.chapanOrder.findFirst({ where: { id, orgId } });
+  const order = await prisma.chapanOrder.findFirst({
+    where: { id, orgId },
+    include: {
+      items: {
+        select: {
+          fulfillmentMode: true,
+        },
+      },
+    },
+  });
   if (!order) throw new NotFoundError('ChapanOrder', id);
   if (order.isArchived) throw new ValidationError('Сначала восстановите заказ из архива');
 
@@ -790,6 +954,17 @@ export async function updateStatus(orgId: string, id: string, status: string, au
     });
     if (tasks.length > 0 && !tasks.every((t) => t.status === 'done')) {
       throw new ValidationError('Нельзя перевести заказ в статус «Готово», пока не завершены все производственные задачи');
+    }
+  }
+
+  // P3 guard: если накладная обязательна, нельзя принять на склад без подтверждённой накладной
+  if (status === 'on_warehouse' && order.requiresInvoice) {
+    const confirmedInvoice = await prisma.chapanInvoice.findFirst({
+      where: { orgId, status: 'confirmed', items: { some: { orderId: id } } },
+      select: { id: true },
+    });
+    if (!confirmedInvoice) {
+      throw new ValidationError('Для этого заказа обязательна накладная. Сначала создайте и подтвердите накладную с обеих сторон.');
     }
   }
 
@@ -810,8 +985,48 @@ export async function updateStatus(orgId: string, id: string, status: string, au
   }
 
   const now = new Date();
+  const shouldConsumeWarehouseStock =
+    hasWarehouseFulfillmentItems(order.items) && (status === 'shipped' || status === 'completed');
+  const shouldPostHandoffDocument = status === 'on_warehouse';
+  const shouldPostShipmentDocument =
+    hasWarehouseFulfillmentItems(order.items) && (status === 'shipped' || status === 'completed');
 
   await prisma.$transaction(async (tx) => {
+    const operationDocument =
+      shouldPostHandoffDocument
+        ? {
+            documentType: 'handoff_to_warehouse' as const,
+            idempotencyKey: `handoff:${id}`,
+            payload: {
+              trigger: 'order_status_change',
+              fromStatus: order.status,
+              toStatus: status,
+            },
+          }
+        : shouldPostShipmentDocument
+          ? {
+              documentType: 'shipment' as const,
+              idempotencyKey: `shipment:${id}`,
+              payload: {
+                trigger: 'order_status_change',
+                fromStatus: order.status,
+                toStatus: status,
+              },
+            }
+          : undefined;
+
+    await applyWarehouseOrderTransitionSideEffectsTxV2(tx, orgId, {
+      orderId: id,
+      fromStatus: order.status,
+      toStatus: status,
+      hasWarehouseItems: hasWarehouseFulfillmentItems(order.items),
+      authorId,
+      authorName,
+      consumeReservations: shouldConsumeWarehouseStock,
+      releaseReservations: status === 'cancelled',
+      operationDocument,
+    });
+
     await tx.chapanOrder.update({
       where: { id },
       data: {
@@ -833,14 +1048,12 @@ export async function updateStatus(orgId: string, id: string, status: string, au
     });
   });
 
-  // Release warehouse reservations on terminal statuses
-  if (status === 'cancelled' || status === 'completed') {
+  // P3: Release simple warehouse reservations on cancellation
+  if (status === 'cancelled') {
     try {
       const { releaseOrderReservations } = await import('../warehouse/warehouse.service.js');
       await releaseOrderReservations(orgId, id);
-    } catch {
-      // Warehouse module may not have reservations, which is not fatal.
-    }
+    } catch { /* non-fatal */ }
   }
 
   fireSheetSync(orgId, id);
@@ -1079,6 +1292,7 @@ export async function update(orgId: string, id: string, authorId: string, author
 
       await tx.chapanOrderItem.deleteMany({ where: { orderId: id } });
       for (const item of data.items) {
+        const variantSnapshot = await buildOrderItemVariantSnapshot(tx, orgId, item);
         await tx.chapanOrderItem.create({
           data: {
             orderId: id,
@@ -1093,6 +1307,7 @@ export async function update(orgId: string, id: string, authorId: string, author
             fulfillmentMode: 'unassigned',
             notes: item.notes,
             workshopNotes: item.workshopNotes,
+            ...variantSnapshot,
           },
         });
       }
@@ -1191,7 +1406,16 @@ export async function archive(orgId: string, id: string, authorId: string, autho
 // Close order
 
 export async function close(orgId: string, id: string, authorId: string, authorName: string) {
-  const order = await prisma.chapanOrder.findFirst({ where: { id, orgId } });
+  const order = await prisma.chapanOrder.findFirst({
+    where: { id, orgId },
+    include: {
+      items: {
+        select: {
+          fulfillmentMode: true,
+        },
+      },
+    },
+  });
   if (!order) throw new NotFoundError('ChapanOrder', id);
   if (order.isArchived) throw new ValidationError('Заказ уже находится в архиве');
   if (!['ready', 'transferred', 'on_warehouse', 'shipped', 'completed'].includes(order.status)) {
@@ -1199,8 +1423,28 @@ export async function close(orgId: string, id: string, authorId: string, authorN
   }
 
   const now = new Date();
+  const hasWarehouseItems = hasWarehouseFulfillmentItems(order.items);
 
   await prisma.$transaction(async (tx) => {
+    await applyWarehouseOrderTransitionSideEffectsTxV2(tx, orgId, {
+      orderId: id,
+      fromStatus: order.status,
+      toStatus: 'completed',
+      hasWarehouseItems,
+      authorId,
+      authorName,
+      consumeReservations: hasWarehouseItems,
+      operationDocument: {
+        documentType: 'shipment',
+        idempotencyKey: `shipment:${id}`,
+        payload: {
+          trigger: 'order_close',
+          fromStatus: order.status,
+          toStatus: 'completed',
+        },
+      },
+    });
+
     await tx.chapanOrder.update({
       where: { id },
       data: {
@@ -1235,12 +1479,13 @@ export async function close(orgId: string, id: string, authorId: string, authorN
     }
   });
 
+  // P3: Consume simple warehouse reservations on close (order completed)
   try {
-    const { releaseOrderReservations } = await import('../warehouse/warehouse.service.js');
-    await releaseOrderReservations(orgId, id);
-  } catch {
-    // Warehouse module may not have reservations, which is not fatal.
-  }
+    const { consumeSimpleOrderReservations } = await import('../warehouse/warehouse.service.js');
+    await consumeSimpleOrderReservations(orgId, id, authorName);
+  } catch { /* non-fatal */ }
+
+  fireSheetSync(orgId, id);
 }
 
 export async function shipOrder(
@@ -1255,7 +1500,16 @@ export async function shipOrder(
     shippingNote?: string;
   },
 ) {
-  const order = await prisma.chapanOrder.findFirst({ where: { id, orgId } });
+  const order = await prisma.chapanOrder.findFirst({
+    where: { id, orgId },
+    include: {
+      items: {
+        select: {
+          fulfillmentMode: true,
+        },
+      },
+    },
+  });
   if (!order) throw new NotFoundError('ChapanOrder', id);
   if (order.status !== 'on_warehouse') {
     throw new ValidationError('Отправить можно только заказ со статусом «На складе»');
@@ -1283,6 +1537,26 @@ export async function shipOrder(
     if (shippingData?.shippingNote) noteLines.push(`Комментарий: ${shippingData.shippingNote}`);
     const compiledNote = noteLines.length > 0 ? noteLines.join(' | ') : undefined;
 
+    await applyWarehouseOrderTransitionSideEffectsTxV2(tx, orgId, {
+      orderId: id,
+      fromStatus: order.status,
+      toStatus: 'shipped',
+      hasWarehouseItems: hasWarehouseFulfillmentItems(order.items),
+      authorId,
+      authorName,
+      consumeReservations: hasWarehouseFulfillmentItems(order.items),
+      operationDocument: {
+        documentType: 'shipment',
+        idempotencyKey: `shipment:${id}`,
+        payload: {
+          trigger: 'ship_order',
+          fromStatus: order.status,
+          toStatus: 'shipped',
+          courierType: shippingData?.courierType ?? null,
+        },
+      },
+    });
+
     await tx.chapanOrder.update({
       where: { id },
       data: {
@@ -1302,6 +1576,14 @@ export async function shipOrder(
       },
     });
   });
+
+  // P3: Consume simple (non-canonical) warehouse reservations on shipment
+  try {
+    const { consumeSimpleOrderReservations } = await import('../warehouse/warehouse.service.js');
+    await consumeSimpleOrderReservations(orgId, id, authorName);
+  } catch { /* non-fatal */ }
+
+  fireSheetSync(orgId, id);
 }
 
 export async function addActivity(orgId: string, orderId: string, authorId: string, authorName: string, data: {
@@ -1443,12 +1725,14 @@ export async function approveChangeRequest(
       const key = itemKey(proposed.productName, proposed.size, proposed.fabric);
       const existing = currentItems.find((i) => itemKey(i.productName, i.size, i.fabric) === key);
       if (existing) {
+        const variantSnapshot = await buildOrderItemVariantSnapshot(tx, orgId, proposed);
         await tx.chapanOrderItem.update({
           where: { id: existing.id },
           data: {
             unitPrice: proposed.unitPrice,
             quantity: proposed.quantity,
             workshopNotes: proposed.workshopNotes ?? existing.workshopNotes,
+            ...variantSnapshot,
           },
         });
       }
@@ -1456,6 +1740,7 @@ export async function approveChangeRequest(
 
     // Create new items and their production tasks (queued)
     for (const item of addedItems) {
+      const variantSnapshot = await buildOrderItemVariantSnapshot(tx, orgId, item);
       const newItem = await tx.chapanOrderItem.create({
         data: {
           orderId: order.id,
@@ -1466,6 +1751,7 @@ export async function approveChangeRequest(
           unitPrice: item.unitPrice,
           fulfillmentMode: 'production',
           workshopNotes: item.workshopNotes,
+          ...variantSnapshot,
         },
       });
 
@@ -1671,3 +1957,4 @@ export async function listTrashed(orgId: string) {
     orderBy: { deletedAt: 'desc' },
   });
 }
+
