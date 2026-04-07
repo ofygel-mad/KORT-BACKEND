@@ -13,7 +13,6 @@
  *   execution.engine     — tasks managed by this engine
  */
 
-import { randomUUID } from 'node:crypto';
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../lib/errors.js';
