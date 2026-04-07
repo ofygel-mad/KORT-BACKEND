@@ -8,8 +8,11 @@ const OWNER_PHONE = '+77010000001';
 const OWNER_ID = 'u-owner';
 const ORG_ID = 'org-workspace';
 const ORG_SLUG = 'workspace';
+const EMPLOYEE_ID = 'u-employee-pending';
+const EMPLOYEE_PHONE = '+77010000003';
 
 const OWNER_PASSWORD = await bcrypt.hash('demo1234', 10);
+const EMPLOYEE_PASSWORD = await bcrypt.hash(EMPLOYEE_PHONE, 10);
 
 function ago(days: number, hours = 0): Date {
   return new Date(Date.now() - days * 86_400_000 - hours * 3_600_000);
@@ -125,6 +128,42 @@ async function main() {
     },
   });
 
+  const employee = await upsertSeedUser({
+    id: EMPLOYEE_ID,
+    phone: EMPLOYEE_PHONE,
+    fullName: 'Demo Employee',
+    password: EMPLOYEE_PASSWORD,
+    status: 'active',
+  });
+
+  await prisma.membership.upsert({
+    where: { userId_orgId: { userId: employee.id, orgId: org.id } },
+    update: {
+      role: 'manager',
+      status: 'active',
+      source: 'admin_added',
+      joinedAt: ago(15),
+      department: 'Склад',
+      employeePermissions: ['warehouse_manager'],
+      employeeAccountStatus: 'pending_first_login',
+      addedById: owner.id,
+      addedByName: owner.fullName,
+    },
+    create: {
+      userId: employee.id,
+      orgId: org.id,
+      role: 'manager',
+      status: 'active',
+      source: 'admin_added',
+      joinedAt: ago(15),
+      department: 'Склад',
+      employeePermissions: ['warehouse_manager'],
+      employeeAccountStatus: 'pending_first_login',
+      addedById: owner.id,
+      addedByName: owner.fullName,
+    },
+  });
+
   await prisma.chapanProfile.upsert({
     where: { orgId: org.id },
     update: {
@@ -163,6 +202,36 @@ async function main() {
     })),
     skipDuplicates: true,
   });
+
+  const existingCustomer = await prisma.customer.findFirst({
+    where: {
+      orgId: org.id,
+      email: 'aidana@example.kz',
+    },
+  });
+
+  if (existingCustomer) {
+    await prisma.customer.update({
+      where: { id: existingCustomer.id },
+      data: {
+        fullName: 'Aidana Demo',
+        phone: '+77015554433',
+        companyName: 'Workspace',
+        source: 'seed',
+      },
+    });
+  } else {
+    await prisma.customer.create({
+      data: {
+        orgId: org.id,
+        fullName: 'Aidana Demo',
+        phone: '+77015554433',
+        email: 'aidana@example.kz',
+        companyName: 'Workspace',
+        source: 'seed',
+      },
+    });
+  }
 
   console.log('Seed complete.');
   console.log('');

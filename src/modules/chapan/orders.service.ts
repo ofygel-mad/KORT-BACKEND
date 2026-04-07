@@ -685,6 +685,8 @@ export async function create(orgId: string, authorId: string, authorName: string
           ? (normalizePaymentBreakdown(data.paymentBreakdown) ?? undefined)
           : undefined,
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+        managerId: authorId,
+        managerName: authorName,
         items: {
           create: orderItemCreates,
         },
@@ -1956,5 +1958,66 @@ export async function listTrashed(orgId: string) {
     include: { items: true, payments: true },
     orderBy: { deletedAt: 'desc' },
   });
+}
+
+// ── Manager reassignment ───────────────────────────────────────────────────────
+
+/**
+ * Reassign an order to a different manager.
+ * Caller must have already verified that actorId has permission to perform this action.
+ */
+export async function reassignManager(
+  orgId: string,
+  orderId: string,
+  newManagerId: string,
+  newManagerName: string,
+  actorId: string,
+  actorName: string,
+) {
+  const order = await prisma.chapanOrder.findFirst({ where: { id: orderId, orgId } });
+  if (!order) throw new NotFoundError('ChapanOrder', orderId);
+
+  const prevManagerName = order.managerName ?? 'Не назначен';
+
+  await prisma.$transaction(async (tx) => {
+    await tx.chapanOrder.update({
+      where: { id: orderId },
+      data: { managerId: newManagerId, managerName: newManagerName },
+    });
+
+    await tx.chapanActivity.create({
+      data: {
+        orderId,
+        type: 'manager_reassign',
+        content: `Менеджер изменён: ${prevManagerName} → ${newManagerName}`,
+        authorId: actorId,
+        authorName: actorName,
+      },
+    });
+  });
+
+  return getById(orgId, orderId);
+}
+
+/**
+ * List all active org members available for selection as order manager.
+ * Returns minimal shape: id + name (+ role for display hint).
+ */
+export async function listOrgManagers(orgId: string) {
+  const memberships = await prisma.membership.findMany({
+    where: {
+      orgId,
+      status: 'active',
+      NOT: { employeeAccountStatus: 'dismissed' },
+    },
+    include: { user: { select: { id: true, fullName: true } } },
+    orderBy: { joinedAt: 'asc' },
+  });
+
+  return memberships.map((m) => ({
+    id: m.userId,
+    name: m.user.fullName,
+    role: m.role,
+  }));
 }
 

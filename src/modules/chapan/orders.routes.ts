@@ -4,6 +4,8 @@ import * as svc from './orders.service.js';
 import { generateInvoiceXlsx, generateBatchInvoiceXlsx } from './invoice.service.js';
 import type { InvoiceDocumentPayload } from './invoice-document.js';
 import { getWarehouseOrderState, getWarehouseOrderStates } from '../warehouse/warehouse-projections.service.js';
+import { prisma } from '../../lib/prisma.js';
+import { ForbiddenError } from '../../lib/errors.js';
 
 // ── Idempotency cache for POST /chapan/orders ──────────────────────────────
 // Prevents duplicate orders when a client retries due to network latency.
@@ -436,5 +438,55 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
     return svc.listTrashed(request.orgId);
   });
 
+  // GET /api/v1/chapan/orders/managers — list all active org members (for reassign dropdown)
+  app.get('/managers', async (request) => {
+    return svc.listOrgManagers(request.orgId);
+  });
+
+  // PATCH /api/v1/chapan/orders/:id/manager — reassign order to another manager
+  // Access: owner | admin | employee with chapan_full_access | full_access
+  app.patch('/:id/manager', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { managerId } = z.object({
+      managerId: z.string().min(1),
+    }).parse(request.body);
+
+    // Permission check: role-based OR permission-based
+    const membership = await prisma.membership.findUnique({
+      where: { userId_orgId: { userId: request.userId, orgId: request.orgId } },
+    });
+
+    const role = membership?.role ?? '';
+    const perms: string[] = membership?.employeePermissions ?? [];
+    const canReassign =
+      role === 'owner' ||
+      role === 'admin' ||
+      perms.includes('full_access') ||
+      perms.includes('chapan_full_access');
+
+    if (!canReassign) {
+      throw new ForbiddenError('Недостаточно прав для переназначения менеджера');
+    }
+
+    // Resolve new manager's name from org membership
+    const newMembership = await prisma.membership.findUnique({
+      where: { userId_orgId: { userId: managerId, orgId: request.orgId } },
+      include: { user: { select: { fullName: true } } },
+    });
+    if (!newMembership || newMembership.status !== 'active' || newMembership.employeeAccountStatus === 'dismissed') {
+      throw new ForbiddenError('Выбранный менеджер недоступен в данной организации');
+    }
+
+    const newManagerName = newMembership.user.fullName;
+    const order = await svc.reassignManager(
+      request.orgId,
+      id,
+      managerId,
+      newManagerName,
+      request.userId,
+      request.userFullName,
+    );
+    return reply.send(order);
+  });
 
 }

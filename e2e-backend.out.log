@@ -1,117 +1,4464 @@
-[dotenv@17.3.1] injecting env (11) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[dotenv@17.3.1] injecting env (11) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
 Server running at http://127.0.0.1:8001
-[20:17:01.200] [32mINFO[39m (28836): [36mServer listening at http://127.0.0.1:8001[39m
-[20:17:01.201] [32mINFO[39m (28836): [36mCORS origins configured[39m
+[22:26:33.212] [32mINFO[39m (10952): [36mServer listening at http://127.0.0.1:8001[39m
+[22:26:33.214] [32mINFO[39m (10952): [36mCORS origins configured[39m
     [35morigins[39m: [
       "http://127.0.0.1:4173",
       "http://localhost:4173",
       "http://127.0.0.1:3000",
       "http://localhost:3000"
     ]
-[20:17:01.203] [32mINFO[39m (28836): [36mChat WebSocket attached at /api/v1/ws/chat[39m
-[20:17:01.205] [32mINFO[39m (28836): [36mWarehouse outbox worker started[39m
-[20:17:01.284] [32mINFO[39m (28836): [36mincoming request[39m
+[22:26:33.225] [32mINFO[39m (10952): [36mChat WebSocket attached at /api/v1/ws/chat[39m
+[22:26:33.228] [32mINFO[39m (10952): [36mWarehouse outbox worker started[39m
+[22:26:33.825] [32mINFO[39m (10952): [36mincoming request[39m
     [35mreqId[39m: "req-1"
     [35mreq[39m: {
       "method": "GET",
       "url": "/api/v1/health",
       "host": "127.0.0.1:8001",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 51433
+      "remotePort": 65508
     }
-[20:17:01.297] [32mINFO[39m (28836): [36mrequest completed[39m
+[22:26:33.855] [32mINFO[39m (10952): [36mrequest completed[39m
     [35mreqId[39m: "req-1"
     [35mres[39m: {
       "statusCode": 200
     }
-    [35mresponseTime[39m: 11.103999987244606
-[20:18:27.014] [32mINFO[39m (28836): [36mincoming request[39m
+    [35mresponseTime[39m: 25.47899999981746
+[22:28:15.961] [32mINFO[39m (10952): [36mincoming request[39m
     [35mreqId[39m: "req-2"
     [35mreq[39m: {
       "method": "POST",
       "url": "/api/v1/auth/login/",
       "host": "127.0.0.1:8001",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 50582
+      "remotePort": 55657
     }
-[20:18:27.808] [32mINFO[39m (28836): [36mrequest completed[39m
+[22:28:16.602] [32mINFO[39m (10952): [36mrequest completed[39m
     [35mreqId[39m: "req-2"
     [35mres[39m: {
       "statusCode": 200
     }
-    [35mresponseTime[39m: 790.1237000077963
-[20:18:27.865] [32mINFO[39m (28836): [36mincoming request[39m
+    [35mresponseTime[39m: 638.4385000001639
+[22:28:16.682] [32mINFO[39m (10952): [36mincoming request[39m
     [35mreqId[39m: "req-3"
     [35mreq[39m: {
       "method": "GET",
       "url": "/api/v1/auth/bootstrap/",
       "host": "127.0.0.1:8001",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 50582
+      "remotePort": 55657
     }
-[20:18:27.969] [32mINFO[39m (28836): [36mrequest completed[39m
+[22:28:16.741] [32mINFO[39m (10952): [36mrequest completed[39m
     [35mreqId[39m: "req-3"
     [35mres[39m: {
       "statusCode": 200
     }
-    [35mresponseTime[39m: 102.9615000039339
-[20:18:32.549] [32mINFO[39m (28836): [36mincoming request[39m
+    [35mresponseTime[39m: 58.289199999999255
+[22:28:16.945] [32mINFO[39m (10952): [36mincoming request[39m
     [35mreqId[39m: "req-4"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 55657
+    }
+[22:28:24.880] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5"
     [35mreq[39m: {
       "method": "POST",
       "url": "/api/v1/auth/register/company/",
       "host": "127.0.0.1:8001",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 50582
+      "remotePort": 50261
     }
-[20:18:32.802] [32mINFO[39m (28836): [36mrequest completed[39m
-    [35mreqId[39m: "req-4"
+[22:28:25.202] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5"
     [35mres[39m: {
       "statusCode": 201
     }
-    [35mresponseTime[39m: 253.00530000030994
-[20:18:32.820] [32mINFO[39m (28836): [36mincoming request[39m
-    [35mreqId[39m: "req-5"
+    [35mresponseTime[39m: 321.71879999991506
+[22:28:25.246] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6"
     [35mreq[39m: {
       "method": "GET",
       "url": "/api/v1/auth/bootstrap/",
       "host": "127.0.0.1:8001",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 50582
+      "remotePort": 50261
     }
-[20:18:32.836] [32mINFO[39m (28836): [36mrequest completed[39m
-    [35mreqId[39m: "req-5"
+[22:28:25.278] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6"
     [35mres[39m: {
       "statusCode": 200
     }
-    [35mresponseTime[39m: 15.205699995160103
-[20:18:33.272] [32mINFO[39m (28836): [36mincoming request[39m
-    [35mreqId[39m: "req-6"
+    [35mresponseTime[39m: 31.376899999566376
+[22:28:25.890] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7"
     [35mreq[39m: {
       "method": "POST",
       "url": "/api/v1/auth/login/",
       "host": "127.0.0.1:8001",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 50582
+      "remotePort": 50261
     }
-[20:18:33.504] [32mINFO[39m (28836): [36mrequest completed[39m
-    [35mreqId[39m: "req-6"
+[22:28:26.192] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7"
     [35mres[39m: {
       "statusCode": 200
     }
-    [35mresponseTime[39m: 231.86969999969006
-[20:18:33.516] [32mINFO[39m (28836): [36mincoming request[39m
-    [35mreqId[39m: "req-7"
+    [35mresponseTime[39m: 301.0148999998346
+[22:28:26.211] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8"
     [35mreq[39m: {
       "method": "GET",
       "url": "/api/v1/auth/bootstrap/",
       "host": "127.0.0.1:8001",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 50582
+      "remotePort": 50261
     }
-[20:18:33.534] [32mINFO[39m (28836): [36mrequest completed[39m
-    [35mreqId[39m: "req-7"
+[22:28:26.233] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8"
     [35mres[39m: {
       "statusCode": 200
     }
-    [35mresponseTime[39m: 17.705699995160103
+    [35mresponseTime[39m: 22.404099999926984
+[22:28:28.803] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-9"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/register/company/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50261
+    }
+[22:28:29.087] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-9"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 282.4993999991566
+[22:28:29.123] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-a"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50261
+    }
+[22:28:29.150] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-a"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 25.977099999785423
+[22:28:33.326] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-b"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/register/company",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50805
+    }
+[22:28:33.639] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-b"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 312.8493000008166
+[22:28:35.286] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-c"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:35.564] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-c"
+    [35mres[39m: {
+      "statusCode": 401
+    }
+    [35mresponseTime[39m: 277.9368999991566
+[22:28:38.370] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-d"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:38.628] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-d"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 256.0537000000477
+[22:28:38.675] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-e"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:38.703] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-e"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 27.30159999988973
+[22:28:38.828] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-f"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/alerts/unpaid",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:38.850] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-g"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/orders?archived=false&limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49973
+    }
+[22:28:38.854] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-h"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49974
+    }
+[22:28:38.884] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-f"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 55.1722999997437
+[22:28:38.934] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-g"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 83.35569999925792
+[22:28:38.947] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-h"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 92.68229999952018
+[22:28:41.350] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-i"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49974
+    }
+[22:28:41.743] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-i"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 392.3295999998227
+[22:28:41.802] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-j"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49974
+    }
+[22:28:41.851] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-j"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 48.185499999672174
+[22:28:42.111] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-k"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/warehouse/items",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49974
+    }
+[22:28:42.119] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-l"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/warehouse/movements?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49973
+    }
+[22:28:42.135] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-m"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/warehouse/alerts?status=open",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:42.151] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-n"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?status=pending_confirmation&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:28:42.169] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-o"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?status=archived&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57210
+    }
+[22:28:42.179] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-p"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/orders?status=on_warehouse&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57211
+    }
+[22:28:42.201] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-k"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 89.00600000005215
+[22:28:42.241] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-q"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/orders?hasWarehouseItems=true&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49974
+    }
+[22:28:42.256] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-l"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 136.37490000016987
+[22:28:42.283] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-m"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 147.52219999954104
+[22:28:42.288] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-n"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 132.5767999999225
+[22:28:42.290] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-r"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/orders?status=shipped&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49973
+    }
+[22:28:42.306] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-p"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 127.4769999999553
+[22:28:42.307] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-s"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/warehouse/foundation/sites",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:42.321] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-t"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:28:42.334] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-q"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 92.2988999998197
+[22:28:42.356] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-r"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 66.36390000022948
+[22:28:42.370] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-s"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 62.62390000000596
+[22:28:42.371] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-t"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 49.72589999996126
+[22:28:42.404] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-o"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 235.74019999988377
+[22:28:44.895] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-u"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57210
+    }
+[22:28:45.342] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-u"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 446.67210000008345
+[22:28:45.381] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-v"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57210
+    }
+[22:28:45.412] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-v"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 30.057599999941885
+[22:28:45.600] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-w"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57210
+    }
+[22:28:45.606] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-x"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:28:45.618] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-y"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:45.654] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-w"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 54.618999999947846
+[22:28:45.655] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-z"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTI1LCJleHAiOjE3NzU1ODM4MjV9.nV3WkvlOoAIGHJJ1fdPTCKirtwcD5KI84Wq1HEkgKBg",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49974
+    }
+[22:28:45.664] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-10"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTI1LCJleHAiOjE3NzU1ODM4MjV9.nV3WkvlOoAIGHJJ1fdPTCKirtwcD5KI84Wq1HEkgKBg",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57211
+    }
+[22:28:45.671] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-11"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/customers?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58612
+    }
+[22:28:45.683] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-x"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 71.66980000026524
+[22:28:45.697] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-y"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 78.55359999928623
+[22:28:45.705] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-11"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 33.681499999947846
+[22:28:45.808] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-12"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTI1LCJleHAiOjE3NzU1ODM4MjV9.nV3WkvlOoAIGHJJ1fdPTCKirtwcD5KI84Wq1HEkgKBg",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58612
+    }
+[22:28:46.212] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-13"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/customers",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:46.239] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-13"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 26.596400000154972
+[22:28:46.251] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-14"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/customers?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:46.270] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-14"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.21349999960512
+[22:28:49.036] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-15"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:49.319] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-15"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 282.95779999997467
+[22:28:49.352] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-16"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:49.384] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-16"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 30.95839999988675
+[22:28:49.585] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-17"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:49.593] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-18"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:28:49.617] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-17"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 31.43889999948442
+[22:28:49.619] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-19"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63078
+    }
+[22:28:49.628] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1a"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTI5LCJleHAiOjE3NzU1ODM4Mjl9.495-VewdjCR5KqgNLwfePU5P0oF-6QnN23vgQL5_FGE",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63079
+    }
+[22:28:49.636] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-18"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 42.911700000055134
+[22:28:49.637] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1b"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:49.647] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1c"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTI5LCJleHAiOjE3NzU1ODM4Mjl9.495-VewdjCR5KqgNLwfePU5P0oF-6QnN23vgQL5_FGE",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63080
+    }
+[22:28:49.667] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-19"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 47.337199999950826
+[22:28:49.669] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1b"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 31.431599999777973
+[22:28:49.750] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1d"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTI5LCJleHAiOjE3NzU1ODM4Mjl9.495-VewdjCR5KqgNLwfePU5P0oF-6QnN23vgQL5_FGE",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 53918
+    }
+[22:28:50.113] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1e"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/deals",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63078
+    }
+[22:28:50.153] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1e"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 39.67480000015348
+[22:28:50.182] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1f"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63078
+    }
+[22:28:50.199] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1f"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 16.430200000293553
+[22:28:51.359] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1g"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50805
+    }
+[22:28:51.774] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1g"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 414.6881999997422
+[22:28:51.809] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1h"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/deals",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50805
+    }
+[22:28:51.882] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1h"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 72.04100000020117
+[22:28:53.737] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1i"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63078
+    }
+[22:28:54.144] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1i"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 406.3540000002831
+[22:28:54.194] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1j"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63078
+    }
+[22:28:54.235] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1j"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 37.09889999963343
+[22:28:54.508] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1k"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63078
+    }
+[22:28:54.520] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1l"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:28:54.535] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1m"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49973
+    }
+[22:28:54.576] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1k"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 67.61939999926835
+[22:28:54.580] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1n"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTM0LCJleHAiOjE3NzU1ODM4MzR9.Bl88CEw1Z5lOGYTRyTJDcUHMPonm9WszR6xOy0if_fQ",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49979
+    }
+[22:28:54.593] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1o"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTM0LCJleHAiOjE3NzU1ODM4MzR9.Bl88CEw1Z5lOGYTRyTJDcUHMPonm9WszR6xOy0if_fQ",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63078
+    }
+[22:28:54.609] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1l"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 80.98139999993145
+[22:28:54.610] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1m"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 74.78940000012517
+[22:28:54.613] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1p"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49980
+    }
+[22:28:54.663] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1p"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 49.849499999545515
+[22:28:54.777] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1q"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTM0LCJleHAiOjE3NzU1ODM4MzR9.Bl88CEw1Z5lOGYTRyTJDcUHMPonm9WszR6xOy0if_fQ",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49980
+    }
+[22:28:55.079] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1r"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8eiu000ouqg8baas0phs",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49973
+    }
+[22:28:55.082] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1s"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8eiu000ouqg8baas0phs/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:28:55.117] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1r"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 36.627999999560416
+[22:28:55.118] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1s"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 36.0223999992013
+[22:28:55.418] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1t"
+    [35mreq[39m: {
+      "method": "PATCH",
+      "url": "/api/v1/deals/cmnow8eiu000ouqg8baas0phs",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:28:55.436] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1u"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8eiu000ouqg8baas0phs",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50805
+    }
+[22:28:55.490] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1u"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 54.13269999995828
+[22:28:55.497] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1t"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 77.86869999952614
+[22:28:55.517] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1v"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:28:55.526] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1w"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8eiu000ouqg8baas0phs",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49973
+    }
+[22:28:55.536] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1x"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8eiu000ouqg8baas0phs/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49981
+    }
+[22:28:55.569] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1v"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 50.04620000068098
+[22:28:55.585] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1w"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 57.96810000017285
+[22:28:55.585] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1y"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8eiu000ouqg8baas0phs",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49973
+    }
+[22:28:55.596] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1x"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 59.0906999995932
+[22:28:55.599] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-1z"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8eiu000ouqg8baas0phs/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49981
+    }
+[22:28:55.632] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1y"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 45.92100000008941
+[22:28:55.642] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-1z"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 42.317400000058115
+[22:28:56.453] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-20"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50805
+    }
+[22:28:56.766] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-20"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 311.7188999997452
+[22:28:56.781] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-21"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/deals",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50805
+    }
+[22:28:56.837] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-21"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 55.72550000064075
+[22:28:59.049] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-22"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49981
+    }
+[22:28:59.369] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-22"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 319.5152000002563
+[22:28:59.421] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-23"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49981
+    }
+[22:28:59.463] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-23"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 42.159200000576675
+[22:28:59.660] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-24"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49973
+    }
+[22:28:59.663] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-25"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:28:59.676] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-26"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51496
+    }
+[22:28:59.682] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-24"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 21.64089999999851
+[22:28:59.683] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-27"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTM5LCJleHAiOjE3NzU1ODM4Mzl9.vDkDUbbjWUj5ZcGxXxSanN3PAC6_x6NIwWTADPU6RzU",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51497
+    }
+[22:28:59.694] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-28"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTM5LCJleHAiOjE3NzU1ODM4Mzl9.vDkDUbbjWUj5ZcGxXxSanN3PAC6_x6NIwWTADPU6RzU",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51498
+    }
+[22:28:59.699] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-29"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49973
+    }
+[22:28:59.703] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-25"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 39.68280000053346
+[22:28:59.708] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-26"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 32.07109999936074
+[22:28:59.718] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-29"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.628399999812245
+[22:28:59.780] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2a"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTM5LCJleHAiOjE3NzU1ODM4Mzl9.vDkDUbbjWUj5ZcGxXxSanN3PAC6_x6NIwWTADPU6RzU",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49973
+    }
+[22:29:00.013] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2b"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8icm000tuqg8i9c7uaap",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51496
+    }
+[22:29:00.031] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2c"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8icm000tuqg8i9c7uaap/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:29:00.059] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2b"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 45.689900000579655
+[22:29:00.063] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2c"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 32.110000000335276
+[22:29:00.310] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2d"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/deals/cmnow8icm000tuqg8i9c7uaap/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:29:00.344] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2d"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 33.34030000027269
+[22:29:00.358] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2e"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8icm000tuqg8i9c7uaap/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:29:00.363] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2f"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8icm000tuqg8i9c7uaap",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51496
+    }
+[22:29:00.384] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2e"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 25.03899999987334
+[22:29:00.397] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2f"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 33.9906000001356
+[22:29:00.399] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2g"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8icm000tuqg8i9c7uaap/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:29:00.427] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2g"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 27.5187999997288
+[22:29:00.452] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2h"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnow8icm000tuqg8i9c7uaap/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50805
+    }
+[22:29:00.477] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2h"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 24.884300000034273
+[22:29:03.147] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2i"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:29:03.488] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2i"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 340.6952999997884
+[22:29:03.527] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2j"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:29:03.566] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2j"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 38.5394999999553
+[22:29:03.770] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2k"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:29:03.787] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2l"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59289
+    }
+[22:29:03.794] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2m"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59290
+    }
+[22:29:03.809] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2k"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 38.80520000029355
+[22:29:03.814] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2n"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTQzLCJleHAiOjE3NzU1ODM4NDN9.60B8wHVu_8rT1Ea7sM_hnFtEFXMmEBoOebvg4_VHICA",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59291
+    }
+[22:29:03.827] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2o"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTQzLCJleHAiOjE3NzU1ODM4NDN9.60B8wHVu_8rT1Ea7sM_hnFtEFXMmEBoOebvg4_VHICA",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 57209
+    }
+[22:29:03.831] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2l"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 43.39850000012666
+[22:29:03.832] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2p"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/customers?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59292
+    }
+[22:29:03.838] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2m"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 43.549999999813735
+[22:29:03.849] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2p"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 17.085500000044703
+[22:29:03.883] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2q"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTQzLCJleHAiOjE3NzU1ODM4NDN9.60B8wHVu_8rT1Ea7sM_hnFtEFXMmEBoOebvg4_VHICA",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59292
+    }
+[22:29:04.197] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2r"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/customers/cmnow56ro000tuqggexb2fmu2",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59290
+    }
+[22:29:04.246] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2r"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 48.04510000068694
+[22:29:06.997] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2s"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59290
+    }
+[22:29:07.309] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2s"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 312.6301999995485
+[22:29:07.356] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2t"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59290
+    }
+[22:29:07.396] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2t"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 38.844800000078976
+[22:29:07.636] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2u"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59290
+    }
+[22:29:07.645] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2v"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59289
+    }
+[22:29:07.666] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2w"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 56021
+    }
+[22:29:07.674] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2u"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 37.54230000078678
+[22:29:07.677] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2x"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTQ3LCJleHAiOjE3NzU1ODM4NDd9.tqvjaojH-06jJVgbFR2_R_gcy73Ktin3F2tQYEKm1yg",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 56022
+    }
+[22:29:07.681] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2y"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTQ3LCJleHAiOjE3NzU1ODM4NDd9.tqvjaojH-06jJVgbFR2_R_gcy73Ktin3F2tQYEKm1yg",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 56023
+    }
+[22:29:07.694] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2v"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 48.22109999973327
+[22:29:07.696] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-2w"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 30.446700000204146
+[22:29:07.698] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-2z"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTQ3LCJleHAiOjE3NzU1ODM4NDd9.tqvjaojH-06jJVgbFR2_R_gcy73Ktin3F2tQYEKm1yg",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59290
+    }
+[22:29:07.707] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-30"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/company/employees",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 56021
+    }
+[22:29:07.729] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-30"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 21.67630000039935
+[22:29:07.806] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-31"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgyOTQ3LCJleHAiOjE3NzU1ODM4NDd9.tqvjaojH-06jJVgbFR2_R_gcy73Ktin3F2tQYEKm1yg",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 56021
+    }
+[22:29:13.920] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-32"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/employee/lookup/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59846
+    }
+[22:29:13.939] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-32"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.251400000415742
+[22:29:30.437] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-33"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/register/company/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54367
+    }
+[22:29:30.737] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-33"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 299.45740000065416
+[22:29:30.807] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-34"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54367
+    }
+[22:29:30.826] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-34"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.847400000318885
+[22:29:32.065] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-35"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54367
+    }
+[22:29:32.334] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-35"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 268.455399999395
+[22:29:32.521] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-36"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54367
+    }
+[22:29:32.551] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-36"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 29.599600000306964
+[22:29:37.393] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-37"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/register/company/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54367
+    }
+[22:29:37.695] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-37"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 301.15199999976903
+[22:29:37.787] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-38"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54367
+    }
+[22:29:37.813] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-38"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 26.068799999542534
+[22:29:44.315] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-39"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/register/company",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54444
+    }
+[22:29:44.696] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-39"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 380.94709999952465
+[22:29:47.141] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3a"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54451
+    }
+[22:29:47.377] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3a"
+    [35mres[39m: {
+      "statusCode": 401
+    }
+    [35mresponseTime[39m: 235.1586999995634
+[22:29:51.177] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3b"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54451
+    }
+[22:29:51.409] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3b"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 231.93219999969006
+[22:29:51.494] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3c"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54451
+    }
+[22:29:51.517] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3c"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 22.457599999383092
+[22:29:51.727] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3d"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/alerts/unpaid",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54451
+    }
+[22:29:51.732] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3e"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/orders?archived=false&limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59003
+    }
+[22:29:51.743] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3f"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59004
+    }
+[22:29:51.759] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3d"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 31.17629999946803
+[22:29:51.777] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3e"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 38.644400000572205
+[22:29:51.780] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3f"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 37.460199999623
+[22:29:55.920] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3g"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59004
+    }
+[22:29:56.223] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3g"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 302.79229999985546
+[22:29:56.353] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3h"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59004
+    }
+[22:29:56.382] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3h"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 27.98770000040531
+[22:29:56.743] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3i"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/warehouse/items",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59004
+    }
+[22:29:56.758] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3j"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/warehouse/movements?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59003
+    }
+[22:29:56.769] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3k"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/warehouse/alerts?status=open",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54451
+    }
+[22:29:56.799] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3l"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?status=pending_confirmation&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51914
+    }
+[22:29:56.812] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3m"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?status=archived&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51915
+    }
+[22:29:56.821] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3n"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/orders?status=on_warehouse&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51917
+    }
+[22:29:56.833] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3j"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 73.1965999994427
+[22:29:56.845] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3i"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 101.84790000040084
+[22:29:56.859] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3o"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/orders?hasWarehouseItems=true&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59003
+    }
+[22:29:56.880] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3k"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 110.23220000043511
+[22:29:56.880] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3p"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/orders?status=shipped&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59004
+    }
+[22:29:56.894] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3l"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 94.85929999966174
+[22:29:56.896] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3m"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 83.44950000010431
+[22:29:56.898] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3q"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/warehouse/foundation/sites",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54451
+    }
+[22:29:56.906] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3n"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 82.97869999986142
+[22:29:56.907] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3r"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51915
+    }
+[22:29:56.924] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3o"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 65.2590999994427
+[22:29:56.941] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3p"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 61.023299999535084
+[22:29:56.960] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3r"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 53.201500000432134
+[22:29:56.965] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3q"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 66.2445000000298
+[22:30:00.909] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3s"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54451
+    }
+[22:30:01.193] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3s"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 283.26249999925494
+[22:30:01.307] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3t"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54451
+    }
+[22:30:01.331] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3t"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 23.45559999998659
+[22:30:01.480] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3u"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDAxLCJleHAiOjE3NzU1ODM5MDF9.ghQxGzMDY0x7j5Hh6R5svBVagNysS46AsmJ2NQsVBxo",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54451
+    }
+[22:30:01.500] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3v"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51915
+    }
+[22:30:01.510] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3w"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59004
+    }
+[22:30:01.524] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3v"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 23.602799999527633
+[22:30:01.535] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3x"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51915
+    }
+[22:30:01.557] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3w"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 45.65059999935329
+[22:30:01.577] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3x"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 41.61079999990761
+[22:30:01.584] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3y"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDAxLCJleHAiOjE3NzU1ODM5MDF9.ghQxGzMDY0x7j5Hh6R5svBVagNysS46AsmJ2NQsVBxo",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 51915
+    }
+[22:30:01.640] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-3z"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/customers?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59004
+    }
+[22:30:01.657] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-3z"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 16.8656000001356
+[22:30:02.126] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-40"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/customers",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59004
+    }
+[22:30:02.147] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-40"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 21.141400000080466
+[22:30:02.170] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-41"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/customers?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59004
+    }
+[22:30:02.191] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-41"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 20.3562000002712
+[22:30:07.216] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-42"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49621
+    }
+[22:30:07.436] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-42"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 219.5997000001371
+[22:30:07.526] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-43"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49621
+    }
+[22:30:07.544] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-43"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.412500000558794
+[22:30:07.675] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-44"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDA3LCJleHAiOjE3NzU1ODM5MDd9.AU5b45W4ccPhJ-85S4Hpektro593oEfo1djj-kE7OKw",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49621
+    }
+[22:30:07.696] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-45"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49622
+    }
+[22:30:07.720] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-45"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 24.114300000481308
+[22:30:07.722] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-46"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49625
+    }
+[22:30:07.726] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-47"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49622
+    }
+[22:30:07.751] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-46"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 29.117099999450147
+[22:30:07.756] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-48"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDA3LCJleHAiOjE3NzU1ODM5MDd9.AU5b45W4ccPhJ-85S4Hpektro593oEfo1djj-kE7OKw",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49625
+    }
+[22:30:07.767] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-47"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 41.080299999564886
+[22:30:07.786] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-49"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDA3LCJleHAiOjE3NzU1ODM5MDd9.AU5b45W4ccPhJ-85S4Hpektro593oEfo1djj-kE7OKw",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49622
+    }
+[22:30:07.830] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4a"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49627
+    }
+[22:30:07.857] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4a"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 26.683100000023842
+[22:30:08.224] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4b"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/deals",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49627
+    }
+[22:30:08.257] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4b"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 33.18480000086129
+[22:30:08.291] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4c"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49627
+    }
+[22:30:08.310] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4c"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.15249999985099
+[22:30:10.423] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4d"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54444
+    }
+[22:30:10.691] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4d"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 268.43699999991804
+[22:30:10.706] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4e"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/deals",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54444
+    }
+[22:30:10.742] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4e"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 35.1813999991864
+[22:30:12.757] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4f"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49627
+    }
+[22:30:12.997] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4f"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 239.24239999987185
+[22:30:13.072] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4g"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49627
+    }
+[22:30:13.092] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4g"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 19.704600000754
+[22:30:13.207] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4h"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDEyLCJleHAiOjE3NzU1ODM5MTJ9.ipK6_fo4xcwFrruXoYeLnA0J_sFyifdeD4ZHmuJeLxg",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49627
+    }
+[22:30:13.222] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4i"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49661
+    }
+[22:30:13.244] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4j"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49976
+    }
+[22:30:13.252] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4i"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 30.052700000815094
+[22:30:13.253] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4k"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49979
+    }
+[22:30:13.271] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4j"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 26.6991000007838
+[22:30:13.274] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4k"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 20.580800000578165
+[22:30:13.294] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4l"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDEyLCJleHAiOjE3NzU1ODM5MTJ9.ipK6_fo4xcwFrruXoYeLnA0J_sFyifdeD4ZHmuJeLxg",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49979
+    }
+[22:30:13.330] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4m"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDEyLCJleHAiOjE3NzU1ODM5MTJ9.ipK6_fo4xcwFrruXoYeLnA0J_sFyifdeD4ZHmuJeLxg",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49976
+    }
+[22:30:13.371] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4n"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49661
+    }
+[22:30:13.390] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4n"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.968100000172853
+[22:30:13.701] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4o"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa3dv001luqg81s75d72o",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49661
+    }
+[22:30:13.720] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4p"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa3dv001luqg81s75d72o/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49981
+    }
+[22:30:13.737] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4o"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 35.15209999959916
+[22:30:13.755] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4p"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 34.447399999946356
+[22:30:14.438] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4q"
+    [35mreq[39m: {
+      "method": "PATCH",
+      "url": "/api/v1/deals/cmnowa3dv001luqg81s75d72o",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49981
+    }
+[22:30:14.460] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4r"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa3dv001luqg81s75d72o",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54444
+    }
+[22:30:14.491] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4r"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 29.718900000676513
+[22:30:14.509] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4q"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 70.20530000049621
+[22:30:14.569] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4s"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49981
+    }
+[22:30:14.584] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4t"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa3dv001luqg81s75d72o",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49661
+    }
+[22:30:14.621] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4u"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa3dv001luqg81s75d72o/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50265
+    }
+[22:30:14.634] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4v"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa3dv001luqg81s75d72o",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50267
+    }
+[22:30:14.665] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4w"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa3dv001luqg81s75d72o",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54444
+    }
+[22:30:14.698] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4s"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 127.92640000022948
+[22:30:14.699] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4t"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 115.32210000045598
+[22:30:14.714] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4u"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 86.11489999946207
+[22:30:14.716] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4x"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa3dv001luqg81s75d72o/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49661
+    }
+[22:30:14.726] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4v"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 89.56400000024587
+[22:30:14.754] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4w"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 88.4695999994874
+[22:30:14.782] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4x"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 65.65340000018477
+[22:30:17.038] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4y"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54444
+    }
+[22:30:17.355] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4y"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 316.9067000001669
+[22:30:17.369] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-4z"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/deals",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54444
+    }
+[22:30:17.406] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-4z"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 37.55379999987781
+[22:30:19.408] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-50"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49661
+    }
+[22:30:19.637] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-50"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 228.2088999999687
+[22:30:19.708] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-51"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49661
+    }
+[22:30:19.728] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-51"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 19.644000000320375
+[22:30:19.872] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-52"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDE5LCJleHAiOjE3NzU1ODM5MTl9.EYFCrcZtsS65t2GPKOIMDwiGVb2Wfe3NwFFrSXuQc4I",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 49661
+    }
+[22:30:19.880] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-53"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50395
+    }
+[22:30:19.889] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-54"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50397
+    }
+[22:30:19.900] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-53"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 19.597000000067055
+[22:30:19.904] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-55"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50399
+    }
+[22:30:19.929] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-54"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 40.255599999800324
+[22:30:19.931] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-55"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 27.152599999681115
+[22:30:19.953] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-56"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDE5LCJleHAiOjE3NzU1ODM5MTl9.EYFCrcZtsS65t2GPKOIMDwiGVb2Wfe3NwFFrSXuQc4I",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50399
+    }
+[22:30:19.982] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-57"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDE5LCJleHAiOjE3NzU1ODM5MTl9.EYFCrcZtsS65t2GPKOIMDwiGVb2Wfe3NwFFrSXuQc4I",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50397
+    }
+[22:30:20.021] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-58"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50395
+    }
+[22:30:20.044] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-58"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 19.790300000458956
+[22:30:20.335] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-59"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa8j3001quqg8j95r5br4",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50395
+    }
+[22:30:20.349] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5a"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa8j3001quqg8j95r5br4/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50403
+    }
+[22:30:20.405] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-59"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 68.86230000015348
+[22:30:20.420] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5a"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 71.0417999997735
+[22:30:21.564] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5b"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/deals/cmnowa8j3001quqg8j95r5br4/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50403
+    }
+[22:30:21.588] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5b"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 24.56469999998808
+[22:30:21.711] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5c"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa8j3001quqg8j95r5br4/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50403
+    }
+[22:30:21.717] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5d"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa8j3001quqg8j95r5br4",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50395
+    }
+[22:30:21.733] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5e"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa8j3001quqg8j95r5br4/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50405
+    }
+[22:30:21.752] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5c"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 40.40579999983311
+[22:30:21.755] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5d"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 37.79909999947995
+[22:30:21.767] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5e"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 33.23300000000745
+[22:30:21.834] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5f"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowa8j3001quqg8j95r5br4/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54444
+    }
+[22:30:21.853] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5f"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 19.008399999700487
+[22:30:26.084] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5g"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50405
+    }
+[22:30:26.371] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5g"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 286.86670000012964
+[22:30:26.445] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5h"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50405
+    }
+[22:30:26.460] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5h"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 14.747299999929965
+[22:30:26.632] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5i"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDI2LCJleHAiOjE3NzU1ODM5MjZ9.ugyBQVIuwDSmtZNXaCirmvCs8x3Ss-VSfB1iVyMT_9g",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50405
+    }
+[22:30:26.654] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5j"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50395
+    }
+[22:30:26.661] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5k"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50403
+    }
+[22:30:26.671] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5j"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 16.976999999955297
+[22:30:26.676] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5l"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50538
+    }
+[22:30:26.696] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5k"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 34.95949999988079
+[22:30:26.702] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5l"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 26.301800000481308
+[22:30:26.752] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5m"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDI2LCJleHAiOjE3NzU1ODM5MjZ9.ugyBQVIuwDSmtZNXaCirmvCs8x3Ss-VSfB1iVyMT_9g",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50538
+    }
+[22:30:26.852] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5n"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/customers?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50403
+    }
+[22:30:26.871] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5n"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.77919999975711
+[22:30:27.613] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5o"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/customers/cmnow56ro000tuqggexb2fmu2",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50403
+    }
+[22:30:27.642] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5o"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 29.5433999998495
+[22:30:31.175] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5p"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50403
+    }
+[22:30:31.448] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5p"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 272.68760000076145
+[22:30:31.508] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5q"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50403
+    }
+[22:30:31.534] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5q"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 26.196100000292063
+[22:30:31.660] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5r"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDMxLCJleHAiOjE3NzU1ODM5MzF9.IofcOjmc3ZD_FQJUMkUfNwOc4ysF34Rfb80vF1OekIM",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50403
+    }
+[22:30:31.670] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5s"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50772
+    }
+[22:30:31.682] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5t"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50773
+    }
+[22:30:31.694] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5s"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 23.111800000071526
+[22:30:31.700] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5u"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50776
+    }
+[22:30:31.717] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5t"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 31.030900000594556
+[22:30:31.719] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5u"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.635000000707805
+[22:30:31.734] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5v"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDMxLCJleHAiOjE3NzU1ODM5MzF9.IofcOjmc3ZD_FQJUMkUfNwOc4ysF34Rfb80vF1OekIM",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50776
+    }
+[22:30:31.750] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5w"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDMxLCJleHAiOjE3NzU1ODM5MzF9.IofcOjmc3ZD_FQJUMkUfNwOc4ysF34Rfb80vF1OekIM",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50773
+    }
+[22:30:31.808] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5x"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/company/employees",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50772
+    }
+[22:30:31.828] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5x"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 19.548299999907613
+[22:30:31.847] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5y"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMDMxLCJleHAiOjE3NzU1ODM5MzF9.IofcOjmc3ZD_FQJUMkUfNwOc4ysF34Rfb80vF1OekIM",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50772
+    }
+[22:30:41.779] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-5z"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/employee/lookup/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60170
+    }
+[22:30:41.797] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-5z"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 17.720499999821186
+[22:31:01.349] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-60"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/register/company/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58033
+    }
+[22:31:01.662] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-60"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 311.80239999946207
+[22:31:01.713] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-61"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58033
+    }
+[22:31:01.735] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-61"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 21.8105999995023
+[22:31:05.341] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-62"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58033
+    }
+[22:31:05.609] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-62"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 267.9598000003025
+[22:31:05.631] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-63"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58033
+    }
+[22:31:05.646] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-63"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 14.975799999199808
+[22:31:10.681] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-64"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/register/company/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58089
+    }
+[22:31:10.914] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-64"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 232.6865000007674
+[22:31:10.945] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-65"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58089
+    }
+[22:31:10.963] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-65"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 17.217899999581277
+[22:31:23.319] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-66"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/register/company",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58145
+    }
+[22:31:23.670] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-66"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 350.78509999997914
+[22:31:27.687] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-67"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58180
+    }
+[22:31:27.929] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-67"
+    [35mres[39m: {
+      "statusCode": 401
+    }
+    [35mresponseTime[39m: 241.25140000041574
+[22:31:35.178] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-68"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50785
+    }
+[22:31:35.474] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-68"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 296.1024000002071
+[22:31:35.512] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-69"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50785
+    }
+[22:31:35.532] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-69"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 19.01799999922514
+[22:31:35.785] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6a"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/alerts/unpaid",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50785
+    }
+[22:31:35.797] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6b"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/orders?archived=false&limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50790
+    }
+[22:31:35.804] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6c"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50791
+    }
+[22:31:35.820] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6a"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 34.4144999999553
+[22:31:35.827] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6b"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 29.89280000049621
+[22:31:35.828] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6c"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 23.93779999949038
+[22:31:41.885] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6d"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50841
+    }
+[22:31:42.070] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6d"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 184.53740000072867
+[22:31:42.101] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6e"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50841
+    }
+[22:31:42.119] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6e"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 17.04340000078082
+[22:31:42.437] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6f"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/warehouse/items",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50841
+    }
+[22:31:42.443] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6g"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/warehouse/movements?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60763
+    }
+[22:31:42.452] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6h"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/warehouse/alerts?status=open",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60764
+    }
+[22:31:42.457] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6i"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?status=pending_confirmation&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60765
+    }
+[22:31:42.462] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6j"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?status=archived&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60766
+    }
+[22:31:42.472] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6k"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/orders?status=on_warehouse&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60767
+    }
+[22:31:42.493] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6h"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 40.35040000081062
+[22:31:42.499] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6g"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 52.695600000210106
+[22:31:42.500] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6l"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/orders?hasWarehouseItems=true&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60764
+    }
+[22:31:42.510] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6m"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/invoices?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60763
+    }
+[22:31:42.523] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6k"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 51.40500000026077
+[22:31:42.526] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6n"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chapan/orders?status=shipped&limit=200",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60767
+    }
+[22:31:42.562] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6f"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 123.98159999959171
+[22:31:42.563] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6m"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 53.23170000035316
+[22:31:42.567] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6o"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/warehouse/foundation/sites",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50841
+    }
+[22:31:42.592] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6l"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 91.08790000062436
+[22:31:42.600] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6n"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 70.13159999996424
+[22:31:42.619] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6j"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 156.89489999972284
+[22:31:42.622] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6i"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 164.6337000001222
+[22:31:42.640] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6o"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 72.91619999986142
+[22:31:48.872] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6p"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60805
+    }
+[22:31:49.109] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6p"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 236.9630999993533
+[22:31:49.148] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6q"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60805
+    }
+[22:31:49.168] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6q"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 19.567400000058115
+[22:31:49.322] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6r"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60805
+    }
+[22:31:49.327] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6s"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60829
+    }
+[22:31:49.337] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6r"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 15.113300000317395
+[22:31:49.341] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6t"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60831
+    }
+[22:31:49.365] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6t"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 23.50499999988824
+[22:31:49.370] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6u"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTA5LCJleHAiOjE3NzU1ODQwMDl9.dfRlJ0A3uQGuRT7UDZH6VURJaZyDWmLWMHH9QhGkxsA",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60831
+    }
+[22:31:49.375] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6s"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 47.32400000002235
+[22:31:49.409] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6v"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTA5LCJleHAiOjE3NzU1ODQwMDl9.dfRlJ0A3uQGuRT7UDZH6VURJaZyDWmLWMHH9QhGkxsA",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60829
+    }
+[22:31:49.434] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6w"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/customers?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60805
+    }
+[22:31:49.456] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6w"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 22.18389999959618
+[22:31:50.106] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6x"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/customers",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60805
+    }
+[22:31:50.126] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6x"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 19.46640000026673
+[22:31:50.139] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6y"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/customers?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60805
+    }
+[22:31:50.155] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6y"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 16.117200000211596
+[22:31:57.013] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-6z"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60865
+    }
+[22:31:57.272] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-6z"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 258.6207999996841
+[22:31:57.308] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-70"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60865
+    }
+[22:31:57.325] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-70"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 16.798400000669062
+[22:31:57.472] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-71"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60870
+    }
+[22:31:57.479] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-72"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60871
+    }
+[22:31:57.489] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-73"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60872
+    }
+[22:31:57.555] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-71"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 81.94320000056177
+[22:31:57.612] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-72"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 131.699800000526
+[22:31:57.619] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-73"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 130.27840000018477
+[22:31:57.734] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-74"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTE3LCJleHAiOjE3NzU1ODQwMTd9.Cn3I9s5OgsY2HFazPfVehLuJCgM98MNdNSunsm_OCfE",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60872
+    }
+[22:31:57.754] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-75"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTE3LCJleHAiOjE3NzU1ODQwMTd9.Cn3I9s5OgsY2HFazPfVehLuJCgM98MNdNSunsm_OCfE",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60871
+    }
+[22:31:57.791] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-76"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60870
+    }
+[22:31:57.837] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-76"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 46.361699999310076
+[22:31:58.553] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-77"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/deals",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60870
+    }
+[22:31:58.639] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-77"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 85.93369999993593
+[22:31:58.660] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-78"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60870
+    }
+[22:31:58.700] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-78"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 39.19319999963045
+[22:32:00.651] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-79"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTE3LCJleHAiOjE3NzU1ODQwMTd9.Cn3I9s5OgsY2HFazPfVehLuJCgM98MNdNSunsm_OCfE",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60870
+    }
+[22:32:02.372] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7a"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58145
+    }
+[22:32:02.639] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7a"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 266.34960000030696
+[22:32:02.656] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7b"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/deals",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58145
+    }
+[22:32:02.694] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7b"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 38.49749999959022
+[22:32:07.055] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7c"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60926
+    }
+[22:32:07.396] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7c"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 339.92630000039935
+[22:32:07.431] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7d"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60926
+    }
+[22:32:07.446] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7d"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 14.470800000242889
+[22:32:07.582] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7e"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60926
+    }
+[22:32:07.590] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7f"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60931
+    }
+[22:32:07.600] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7g"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60933
+    }
+[22:32:07.604] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7e"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 22.101700000464916
+[22:32:07.617] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7f"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 25.801200000569224
+[22:32:07.618] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7g"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 17.643599999137223
+[22:32:07.650] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7h"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTI3LCJleHAiOjE3NzU1ODQwMjd9.IEr8KGNM1p5DISZlYt1DU3FMvyDVDh3caNNGhfChAdo",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60933
+    }
+[22:32:07.681] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7i"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTI3LCJleHAiOjE3NzU1ODQwMjd9.IEr8KGNM1p5DISZlYt1DU3FMvyDVDh3caNNGhfChAdo",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60931
+    }
+[22:32:07.736] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7j"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60926
+    }
+[22:32:07.758] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7j"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 21.742000000551343
+[22:32:07.947] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7k"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTI3LCJleHAiOjE3NzU1ODQwMjd9.IEr8KGNM1p5DISZlYt1DU3FMvyDVDh3caNNGhfChAdo",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60926
+    }
+[22:32:13.052] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7l"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowchrm002iuqg83yusd6nv",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60954
+    }
+[22:32:13.057] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7m"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowchrm002iuqg83yusd6nv/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60955
+    }
+[22:32:13.080] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7l"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 27.34609999973327
+[22:32:13.091] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7m"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 33.552300000563264
+[22:32:16.765] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7n"
+    [35mreq[39m: {
+      "method": "PATCH",
+      "url": "/api/v1/deals/cmnowchrm002iuqg83yusd6nv",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60955
+    }
+[22:32:16.813] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7n"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 48.44440000038594
+[22:32:16.831] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7o"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60955
+    }
+[22:32:16.835] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7p"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowchrm002iuqg83yusd6nv",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60954
+    }
+[22:32:16.844] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7q"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowchrm002iuqg83yusd6nv/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60978
+    }
+[22:32:16.850] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7r"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowchrm002iuqg83yusd6nv",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60980
+    }
+[22:32:16.856] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7s"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowchrm002iuqg83yusd6nv/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60981
+    }
+[22:32:16.867] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7o"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 35.956100000068545
+[22:32:16.872] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7p"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 35.45060000009835
+[22:32:16.884] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7r"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 33.401499999687076
+[22:32:16.893] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7t"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowchrm002iuqg83yusd6nv",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58145
+    }
+[22:32:16.898] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7q"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 53.77029999997467
+[22:32:16.899] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7s"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 42.97649999987334
+[22:32:16.932] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7t"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 38.798200000077486
+[22:32:20.304] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7u"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58145
+    }
+[22:32:20.608] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7u"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 303.96419999934733
+[22:32:20.624] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7v"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/deals",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58145
+    }
+[22:32:20.680] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7v"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 56.40279999934137
+[22:32:24.331] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7w"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63077
+    }
+[22:32:24.748] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7w"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 417.275899999775
+[22:32:24.809] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7x"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63077
+    }
+[22:32:24.827] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7x"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.3429000005126
+[22:32:24.932] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7y"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63077
+    }
+[22:32:24.937] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-7z"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63079
+    }
+[22:32:24.942] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-80"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63081
+    }
+[22:32:24.961] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7y"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 28.740500000305474
+[22:32:24.980] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-7z"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 40.95619999989867
+[22:32:24.981] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-80"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 38.93900000024587
+[22:32:25.055] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-81"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTQ0LCJleHAiOjE3NzU1ODQwNDR9.GAUVIvIK8nbsENABtpdC6tO5yvXesIetbARVh929Be4",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63081
+    }
+[22:32:25.090] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-82"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTQ0LCJleHAiOjE3NzU1ODQwNDR9.GAUVIvIK8nbsENABtpdC6tO5yvXesIetbARVh929Be4",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63079
+    }
+[22:32:25.139] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-83"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/board/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63077
+    }
+[22:32:25.158] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-83"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.842400000430644
+[22:32:25.480] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-84"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTQ0LCJleHAiOjE3NzU1ODQwNDR9.GAUVIvIK8nbsENABtpdC6tO5yvXesIetbARVh929Be4",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63077
+    }
+[22:32:31.097] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-85"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowcvmv002nuqg8ojy1ebuv",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63107
+    }
+[22:32:31.107] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-86"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowcvmv002nuqg8ojy1ebuv/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63108
+    }
+[22:32:31.156] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-85"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 59.03349999990314
+[22:32:31.168] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-86"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 60.902300000190735
+[22:32:34.430] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-87"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/deals/cmnowcvmv002nuqg8ojy1ebuv/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63108
+    }
+[22:32:34.476] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-87"
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 45.28909999970347
+[22:32:34.509] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-88"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowcvmv002nuqg8ojy1ebuv/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63108
+    }
+[22:32:34.519] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-89"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowcvmv002nuqg8ojy1ebuv",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63107
+    }
+[22:32:34.524] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8a"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowcvmv002nuqg8ojy1ebuv/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58315
+    }
+[22:32:34.554] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-88"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 44.27029999997467
+[22:32:34.560] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-89"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 39.67980000004172
+[22:32:34.607] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8a"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 82.45540000032634
+[22:32:34.800] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8b"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/deals/cmnowcvmv002nuqg8ojy1ebuv/activities",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58145
+    }
+[22:32:34.819] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8b"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.807199999690056
+[22:32:42.082] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8c"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58350
+    }
+[22:32:42.349] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8c"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 267.2752000000328
+[22:32:42.386] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8d"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58350
+    }
+[22:32:42.407] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8d"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 20.552600000053644
+[22:32:42.552] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8e"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58354
+    }
+[22:32:42.556] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8f"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58355
+    }
+[22:32:42.566] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8g"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58356
+    }
+[22:32:42.571] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8e"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18.376199999824166
+[22:32:42.586] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8f"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 29.20810000039637
+[22:32:42.587] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8g"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 20.16830000001937
+[22:32:42.629] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8h"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTYyLCJleHAiOjE3NzU1ODQwNjJ9.K43PZ7BInX-oQbfPaji6rz3CNE1DERVZ8Dp5J0NHoZY",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58356
+    }
+[22:32:42.662] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8i"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTYyLCJleHAiOjE3NzU1ODQwNjJ9.K43PZ7BInX-oQbfPaji6rz3CNE1DERVZ8Dp5J0NHoZY",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58355
+    }
+[22:32:42.698] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8j"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/customers?limit=100",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58354
+    }
+[22:32:42.719] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8j"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 20.878100000321865
+[22:32:48.300] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8k"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/customers/cmnow56ro000tuqggexb2fmu2",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58377
+    }
+[22:32:48.322] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8k"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 21.590400000102818
+[22:32:56.321] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8l"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58431
+    }
+[22:32:56.508] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8l"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 186.74390000011772
+[22:32:56.538] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8m"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58431
+    }
+[22:32:56.555] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8m"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 16.80129999946803
+[22:32:56.719] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8n"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58431
+    }
+[22:32:56.729] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8o"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58436
+    }
+[22:32:56.734] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8p"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58437
+    }
+[22:32:56.740] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8n"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 20.969800000078976
+[22:32:56.768] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8o"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 38.30819999985397
+[22:32:56.768] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8p"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 34.6457000002265
+[22:32:56.817] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8q"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTc2LCJleHAiOjE3NzU1ODQwNzZ9.XIYxBXshAYsNnGGq6oeW0lk_iKLsKeVRBbtqF1fOfqY",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58437
+    }
+[22:32:56.834] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8r"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTc2LCJleHAiOjE3NzU1ODQwNzZ9.XIYxBXshAYsNnGGq6oeW0lk_iKLsKeVRBbtqF1fOfqY",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58436
+    }
+[22:32:56.860] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8s"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/company/employees",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58431
+    }
+[22:32:56.883] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8s"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 22.760599999688566
+[22:32:56.992] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8t"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NTgzMTc2LCJleHAiOjE3NzU1ODQwNzZ9.XIYxBXshAYsNnGGq6oeW0lk_iKLsKeVRBbtqF1fOfqY",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58431
+    }
+[22:33:13.448] [32mINFO[39m (10952): [36mincoming request[39m
+    [35mreqId[39m: "req-8u"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/employee/lookup/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54135
+    }
+[22:33:13.466] [32mINFO[39m (10952): [36mrequest completed[39m
+    [35mreqId[39m: "req-8u"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 17.709800000302494

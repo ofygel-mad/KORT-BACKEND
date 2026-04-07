@@ -190,6 +190,7 @@ model Organization {
   chapanSizes    ChapanCatalogSize[]
   chapanPaymentMethods ChapanCatalogPaymentMethod[]
   chapanInvoices ChapanInvoice[]
+  chapanReturns  ChapanReturn[]
 
   // Warehouse
   warehouseItems            WarehouseItem[]
@@ -669,6 +670,11 @@ model ChapanOrder {
   isArchived      Boolean   @default(false) @map("is_archived")
   archivedAt    DateTime? @map("archived_at")
   deletedAt     DateTime? @map("deleted_at")   // soft-delete: set by manager, permanent delete by owner
+  hasReturns    Boolean   @default(false) @map("has_returns")
+  // Manager who owns/is credited for this order (for salary/bonus calculations).
+  // Null for orders created before this field was introduced.
+  managerId     String?   @map("manager_id")
+  managerName   String?   @map("manager_name")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
@@ -683,6 +689,7 @@ model ChapanOrder {
   unpaidAlerts    ChapanUnpaidAlert[]
   changeRequests  ChapanChangeRequest[]
   attachments     ChapanOrderAttachment[]
+  returns         ChapanReturn[]
 
   @@index([orgId, status])
   @@index([orgId, createdAt])
@@ -890,6 +897,60 @@ model ChapanInvoiceOrder {
   @@unique([invoiceId, orderId])
   @@index([orderId])
   @@map("chapan_invoice_orders")
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CHAPAN RETURNS (АКТЫ ВОЗВРАТА)
+// ═══════════════════════════════════════════════════════════════
+
+model ChapanReturn {
+  id                String    @id @default(cuid())
+  orgId             String    @map("org_id")
+  returnNumber      String    @map("return_number")
+  orderId           String    @map("order_id")
+  status            String    @default("draft") // draft | confirmed
+  reason            String    // defect | wrong_size | wrong_item | customer_refusal | other
+  reasonNotes       String?   @map("reason_notes")
+  createdById       String    @map("created_by_id")
+  createdByName     String    @map("created_by_name")
+  confirmedAt       DateTime? @map("confirmed_at")
+  confirmedBy       String?   @map("confirmed_by")
+  totalRefundAmount Float     @default(0) @map("total_refund_amount")
+  refundMethod      String?   @map("refund_method") // cash | bank
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  org   Organization      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  order ChapanOrder       @relation(fields: [orderId], references: [id])
+  items ChapanReturnItem[]
+
+  @@unique([orgId, returnNumber])
+  @@index([orgId, status])
+  @@index([orgId, orderId])
+  @@index([orgId, createdAt])
+  @@map("chapan_returns")
+}
+
+model ChapanReturnItem {
+  id              String  @id @default(cuid())
+  returnId        String  @map("return_id")
+  orderItemId     String? @map("order_item_id")
+  productName     String  @map("product_name")
+  size            String
+  fabric          String?
+  color           String?
+  gender          String?
+  qty             Int     @default(1)
+  unitPrice       Float   @map("unit_price")
+  refundAmount    Float   @map("refund_amount")
+  condition       String  @default("good") // good | defective | damaged
+  warehouseItemId String? @map("warehouse_item_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  chapanReturn ChapanReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+
+  @@index([returnId])
+  @@map("chapan_return_items")
 }
 
 // ═══════════════════════════════════════════════════════════════
