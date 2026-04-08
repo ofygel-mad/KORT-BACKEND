@@ -60,6 +60,7 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       hasWarehouseItems: query.hasWarehouseItems === 'true',
       createdFrom,
       createdTo,
+      managerId: query.managerId || undefined,
     });
     return { count: orders.length, results: orders };
   });

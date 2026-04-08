@@ -450,6 +450,7 @@ export async function list(orgId: string, filters?: {
   hasWarehouseItems?: boolean;
   createdFrom?: Date;
   createdTo?: Date;
+  managerId?: string;
 }) {
   const where: Record<string, unknown> = { orgId, deletedAt: null };
 
@@ -487,6 +488,9 @@ export async function list(orgId: string, filters?: {
       ...(filters.createdFrom ? { gte: filters.createdFrom } : {}),
       ...(filters.createdTo ? { lte: filters.createdTo } : {}),
     };
+  }
+  if (filters?.managerId) {
+    where.managerId = filters.managerId;
   }
 
   const orderBy: Record<string, string> = {};
