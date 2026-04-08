@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { normalizeProductionStatus } from './workflow.js';
 import { syncOrderToSheets } from './sheets.sync.js';
+import { syncOrderStatus } from './production.service.js';
 import {
   applyWarehouseOrderTransitionSideEffectsTx as applyWarehouseOrderTransitionSideEffectsTxV2,
   consumeCanonicalWarehouseReservationsForOrder as consumeCanonicalWarehouseReservationsForOrderV2,
@@ -447,6 +448,8 @@ export async function list(orgId: string, filters?: {
   sortBy?: string;
   archived?: boolean;
   hasWarehouseItems?: boolean;
+  createdFrom?: Date;
+  createdTo?: Date;
 }) {
   const where: Record<string, unknown> = { orgId, deletedAt: null };
 
@@ -478,6 +481,12 @@ export async function list(orgId: string, filters?: {
       { clientName: { contains: q, mode: 'insensitive' } },
       { items: { some: { productName: { contains: q, mode: 'insensitive' } } } },
     ];
+  }
+  if (filters?.createdFrom || filters?.createdTo) {
+    where.createdAt = {
+      ...(filters.createdFrom ? { gte: filters.createdFrom } : {}),
+      ...(filters.createdTo ? { lte: filters.createdTo } : {}),
+    };
   }
 
   const orderBy: Record<string, string> = {};
@@ -1840,14 +1849,30 @@ export async function routeSingleItem(
 ) {
   const order = await prisma.chapanOrder.findFirst({
     where: { id: orderId, orgId },
-    include: { items: true },
+    include: {
+      items: true,
+      productionTasks: {
+        select: { orderItemId: true },
+      },
+    },
   });
   if (!order) throw new NotFoundError('ChapanOrder', orderId);
-  if (!['new', 'confirmed'].includes(order.status)) {
-    throw new ValidationError('Маршрутизацию позиции можно задать только для нового или подтверждённого заказа');
+  if (!['new', 'confirmed', 'in_production'].includes(order.status)) {
+    throw new ValidationError('Маршрутизацию позиции можно задать только для нового, подтверждённого заказа или заказа в производстве');
   }
   const item = order.items.find((i) => i.id === itemId);
   if (!item) throw new NotFoundError('ChapanOrderItem', itemId);
+
+  const currentMode =
+    item.fulfillmentMode === 'warehouse' || item.fulfillmentMode === 'production'
+      ? item.fulfillmentMode
+      : order.productionTasks.some((task) => task.orderItemId === itemId)
+        ? 'production'
+        : 'unassigned';
+
+  if (currentMode === fulfillmentMode) {
+    return;
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.chapanOrderItem.update({ where: { id: itemId }, data: { fulfillmentMode } });
@@ -1886,6 +1911,13 @@ export async function routeSingleItem(
       },
     });
   });
+
+  // Re-derive order status after routing change.
+  // Use the effective status after the transaction (new → confirmed inside tx).
+  const effectiveStatus = order.status === 'new' ? 'confirmed' : order.status;
+  if (['confirmed', 'in_production'].includes(effectiveStatus)) {
+    await syncOrderStatus(orderId, authorId, authorName);
+  }
 }
 
 
@@ -2020,4 +2052,3 @@ export async function listOrgManagers(orgId: string) {
     role: m.role,
   }));
 }
-

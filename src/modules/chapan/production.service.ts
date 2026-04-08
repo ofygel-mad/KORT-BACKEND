@@ -44,11 +44,15 @@ async function findTask(orgId: string, taskId: string) {
   return task;
 }
 
-async function syncOrderStatus(orderId: string, authorId: string, authorName: string) {
-  const [order, tasks] = await Promise.all([
+export async function syncOrderStatus(orderId: string, authorId: string, authorName: string) {
+  const [order, items, tasks] = await Promise.all([
     prisma.chapanOrder.findUnique({
       where: { id: orderId },
       select: { status: true },
+    }),
+    prisma.chapanOrderItem.findMany({
+      where: { orderId },
+      select: { fulfillmentMode: true },
     }),
     prisma.chapanProductionTask.findMany({
       where: { orderId },
@@ -56,11 +60,58 @@ async function syncOrderStatus(orderId: string, authorId: string, authorName: st
     }),
   ]);
 
-  if (!order || tasks.length === 0) {
+  if (!order) {
     return;
   }
 
-  const nextStatus = deriveOrderStatusFromTasks(tasks.map((task) => task.status));
+  // If nothing has been routed yet (all items still unassigned), don't advance status
+  const hasRoutedItems = items.some((item) => item.fulfillmentMode === 'warehouse' || item.fulfillmentMode === 'production');
+  if (!hasRoutedItems) {
+    return;
+  }
+
+  const hasPendingRouting = items.some((item) => !item.fulfillmentMode || item.fulfillmentMode === 'unassigned');
+
+  if (tasks.length === 0 && hasPendingRouting) {
+    if (order.status !== 'confirmed') {
+      await prisma.$transaction([
+        prisma.chapanOrder.update({ where: { id: orderId }, data: { status: 'confirmed' } }),
+        prisma.chapanActivity.create({
+          data: {
+            orderId,
+            type: 'status_change',
+            content: `${getOrderStatusLabel(order.status)} в†’ ${getOrderStatusLabel('confirmed')}`,
+            authorId,
+            authorName,
+          },
+        }),
+      ]);
+    }
+    return;
+  }
+
+  // At least one item is routed. If no production tasks → all routed items went to warehouse → order is ready
+  if (tasks.length === 0) {
+    const nextStatus = 'ready';
+    if (order.status !== nextStatus) {
+      await prisma.$transaction([
+        prisma.chapanOrder.update({ where: { id: orderId }, data: { status: nextStatus } }),
+        prisma.chapanActivity.create({
+          data: {
+            orderId,
+            type: 'status_change',
+            content: `${getOrderStatusLabel(order.status)} → ${getOrderStatusLabel('ready')}`,
+            authorId,
+            authorName,
+          },
+        }),
+      ]);
+    }
+    return;
+  }
+
+  const derivedStatus = deriveOrderStatusFromTasks(tasks.map((task) => task.status));
+  const nextStatus = hasPendingRouting && derivedStatus === 'ready' ? 'confirmed' : derivedStatus;
 
   if (order.status === nextStatus) {
     return;
@@ -173,7 +224,7 @@ export async function listForWorkshop(orgId: string) {
     .filter((task) => task.status !== 'done');
 }
 
-export async function moveStatus(orgId: string, taskId: string, status: string, authorId: string, authorName: string) {
+export async function moveStatus(orgId: string, taskId: string, status: string, authorId: string, authorName: string): Promise<string> {
   const task = await findTask(orgId, taskId);
 
   if (task.isBlocked) {
@@ -208,6 +259,7 @@ export async function moveStatus(orgId: string, taskId: string, status: string, 
   ]);
 
   await syncOrderStatus(task.orderId, authorId, authorName);
+  return task.orderId;
 }
 
 export async function claimTask(orgId: string, taskId: string, authorId: string, authorName: string) {

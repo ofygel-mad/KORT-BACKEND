@@ -47,6 +47,8 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
     const statuses = query.statuses
       ? query.statuses.split(',').map((value) => value.trim()).filter(Boolean)
       : undefined;
+    const createdFrom = query.createdFrom ? new Date(query.createdFrom) : undefined;
+    const createdTo = query.createdTo ? new Date(query.createdTo) : undefined;
     const orders = await svc.list(request.orgId, {
       status: query.status,
       statuses,
@@ -56,6 +58,8 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       sortBy: query.sortBy,
       archived,
       hasWarehouseItems: query.hasWarehouseItems === 'true',
+      createdFrom,
+      createdTo,
     });
     return { count: orders.length, results: orders };
   });

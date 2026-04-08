@@ -30,8 +30,8 @@ export async function chapanProductionRoutes(app: FastifyInstance) {
       status: z.enum(['queued', 'in_progress', 'done']),
     }).parse(request.body);
 
-    await svc.moveStatus(request.orgId, id, status, request.userId, request.userFullName);
-    return reply.send({ ok: true });
+    const orderId = await svc.moveStatus(request.orgId, id, status, request.userId, request.userFullName);
+    return reply.send({ ok: true, orderId });
   });
 
   // POST /api/v1/chapan/production/:id/claim

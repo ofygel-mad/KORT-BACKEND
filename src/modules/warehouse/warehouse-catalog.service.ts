@@ -410,7 +410,7 @@ export async function seedDefaultFieldDefinitions(orgId: string): Promise<{
       isVariantAxis: true,
       affectsAvailability: true,
       sortOrder: 3,
-      options: ['Длинный', 'Короткий', 'Стандарт'],
+      options: ['Длинный', 'Короткий', 'Стандарт', 'Укороченный'],
     },
   ];
 

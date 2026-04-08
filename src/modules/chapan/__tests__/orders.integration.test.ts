@@ -8,9 +8,11 @@ import {
   fulfillFromStock,
   getById,
   list,
+  routeSingleItem,
   restore,
   updateStatus,
 } from '../orders.service.js';
+import { moveStatus } from '../production.service.js';
 
 vi.mock('../sheets.sync.js', () => ({
   syncOrderToSheets: vi.fn().mockResolvedValue({ ok: true }),
@@ -159,6 +161,48 @@ describe('Orders Service Integration Tests', () => {
     expect(ready.status).toBe('ready');
     expect(ready.items.every((item) => item.fulfillmentMode === 'warehouse')).toBe(true);
     expect(ready.productionTasks).toHaveLength(0);
+  });
+
+  it('keeps the order in routing flow when only one item is marked ready', async () => {
+    const created = await createOrderForContext(context);
+    const firstItem = created.items[0];
+    const secondItem = created.items[1];
+
+    expect(firstItem).toBeDefined();
+    expect(secondItem).toBeDefined();
+
+    await routeSingleItem(context.orgId, created.id, firstItem!.id, 'warehouse', context.authorId, context.authorName);
+
+    const partiallyRouted = await getById(context.orgId, created.id);
+    expect(partiallyRouted.status).toBe('confirmed');
+    expect(partiallyRouted.items.find((item) => item.id === firstItem!.id)?.fulfillmentMode).toBe('warehouse');
+    expect(partiallyRouted.items.find((item) => item.id === secondItem!.id)?.fulfillmentMode).toBe('unassigned');
+
+    const activityCount = partiallyRouted.activities.length;
+    await routeSingleItem(context.orgId, created.id, firstItem!.id, 'warehouse', context.authorId, context.authorName);
+
+    const afterRepeat = await getById(context.orgId, created.id);
+    expect(afterRepeat.activities).toHaveLength(activityCount);
+  });
+
+  it('does not move the whole order to ready when production is finished but other items are still unassigned', async () => {
+    const created = await createOrderForContext(context);
+    const firstItem = created.items[0];
+
+    expect(firstItem).toBeDefined();
+
+    await routeSingleItem(context.orgId, created.id, firstItem!.id, 'production', context.authorId, context.authorName);
+
+    const routed = await getById(context.orgId, created.id);
+    const task = routed.productionTasks.find((entry) => entry.orderItemId === firstItem!.id);
+
+    expect(task).toBeDefined();
+
+    await moveStatus(context.orgId, task!.id, 'done', context.authorId, context.authorName);
+
+    const afterProduction = await getById(context.orgId, created.id);
+    expect(afterProduction.status).toBe('confirmed');
+    expect(afterProduction.items.filter((item) => item.fulfillmentMode === 'unassigned')).toHaveLength(1);
   });
 
   it('blocks ready status until production tasks are completed', async () => {
