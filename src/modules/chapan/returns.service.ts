@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js';
-import { AppError, NotFoundError } from '../../lib/errors.js';
+import { AppError, NotFoundError, ValidationError } from '../../lib/errors.js';
+import { validateStatusTransitionRules } from './status-validator.js';
 import { addMovement } from '../warehouse/warehouse.service.js';
 
 // ── Return number generation ──────────────────────────────────────────────────
@@ -226,6 +227,8 @@ export async function confirm(
   // If warehouseItemId is not set, try to resolve it via orderItemId -> variantKey -> WarehouseItem.
   // Try both old and new variantKey formats for compatibility during migration.
   // Run outside main transaction so warehouse errors don't rollback the return confirmation.
+  const warehouseErrors: Array<{ itemId: string; productName: string; error: string }> = [];
+
   for (const item of ret.items) {
     let warehouseItemId = item.warehouseItemId;
 
@@ -269,7 +272,14 @@ export async function confirm(
       }
     }
 
-    if (!warehouseItemId) continue;
+    if (!warehouseItemId) {
+      warehouseErrors.push({
+        itemId: item.id,
+        productName: item.productName,
+        error: 'Warehouse item not found',
+      });
+      continue;
+    }
 
     try {
       await addMovement(orgId, {
@@ -282,12 +292,26 @@ export async function confirm(
         author: userName,
       });
     } catch (err) {
-      // Log but don't fail the whole confirmation if warehouse movement fails
+      // Track warehouse errors but don't fail the confirmation
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      warehouseErrors.push({
+        itemId: item.id,
+        productName: item.productName,
+        error: errorMsg,
+      });
       console.error(`[returns] Failed to create warehouse movement for item ${item.id}:`, err);
     }
   }
 
-  return updated;
+  // Return with warnings if there were warehouse errors
+  return {
+    ...updated,
+    warnings: warehouseErrors.length > 0 ? {
+      warehouseMovementsFailed: true,
+      failedItems: warehouseErrors,
+      message: `Warning: Stock replenishment failed for ${warehouseErrors.length} item(s). Warehouse team should be notified.`,
+    } : undefined,
+  };
 }
 
 export async function deleteDraft(orgId: string, id: string) {
