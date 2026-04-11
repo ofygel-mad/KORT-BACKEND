@@ -1,6 +1,5 @@
 import { prisma } from '../../lib/prisma.js';
-import { AppError, NotFoundError, ValidationError } from '../../lib/errors.js';
-import { validateStatusTransitionRules } from './status-validator.js';
+import { AppError, NotFoundError } from '../../lib/errors.js';
 import { addMovement } from '../warehouse/warehouse.service.js';
 
 // ── Return number generation ──────────────────────────────────────────────────

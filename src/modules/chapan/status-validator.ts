@@ -3,7 +3,7 @@
  * Ensures consistent state transitions across all Chapan modules
  */
 
-import type { OrderStatus } from '../../lib/prisma.js';
+import type { OrderStatus } from './types.js';
 
 /**
  * Valid status transitions for Chapan orders

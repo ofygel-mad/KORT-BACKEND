@@ -43,7 +43,7 @@ export async function chapanReturnsRoutes(app: FastifyInstance) {
       orderId: z.string().min(1),
       reason: z.enum(['defect', 'wrong_size', 'wrong_item', 'customer_refusal', 'other']),
       reasonNotes: z.string().optional(),
-      refundMethod: z.enum(['cash', 'bank']).optional(),
+      refundMethod: z.enum(['cash', 'bank']),
       items: z.array(returnItemSchema).min(1),
     }).parse(request.body);
 
