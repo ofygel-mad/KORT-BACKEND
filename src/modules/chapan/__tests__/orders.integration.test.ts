@@ -209,18 +209,32 @@ describe('Orders Service Integration Tests', () => {
     const created = await createOrderForContext(context);
     const confirmed = await confirm(context.orgId, created.id, context.authorId, context.authorName);
 
+    // First transition from confirmed to in_production
+    await updateStatus(
+      context.orgId,
+      confirmed.id,
+      'in_production',
+      context.authorId,
+      context.authorName,
+    );
+    const inProduction = await getById(context.orgId, confirmed.id);
+    expect(inProduction.status).toBe('in_production');
+
+    // Try to move to ready without completing production tasks - should fail
     await expect(
-      updateStatus(context.orgId, confirmed.id, 'ready', context.authorId, context.authorName),
+      updateStatus(context.orgId, inProduction.id, 'ready', context.authorId, context.authorName),
     ).rejects.toThrow();
 
+    // Complete production tasks
     await prisma.chapanProductionTask.updateMany({
-      where: { orderId: confirmed.id },
+      where: { orderId: inProduction.id },
       data: { status: 'done' },
     });
 
-    await updateStatus(context.orgId, confirmed.id, 'ready', context.authorId, context.authorName);
+    // Now should be able to move to ready
+    await updateStatus(context.orgId, inProduction.id, 'ready', context.authorId, context.authorName);
 
-    const ready = await getById(context.orgId, confirmed.id);
+    const ready = await getById(context.orgId, inProduction.id);
     expect(ready.status).toBe('ready');
   });
 
