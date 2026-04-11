@@ -102,6 +102,8 @@ async function loadInvoiceSourceOrders(
           quantity: true,
           unitPrice: true,
           color: true,
+          gender: true,
+          length: true,
         },
       },
     },

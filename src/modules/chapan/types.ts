@@ -363,7 +363,7 @@ export interface CreateReturnDto {
   orderId: string;
   reason: ReturnReason;
   reasonNotes?: string;
-  refundMethod?: ReturnRefundMethod;
+  refundMethod: ReturnRefundMethod;
   items: CreateReturnItemDto[];
 }
 
@@ -433,6 +433,7 @@ export interface ChapanInvoice {
   warehouseConfirmedAt: string | null;
   warehouseConfirmedBy: string | null;
   rejectedBy: string | null;
+  rejectedAt: string | null;
   rejectionReason: string | null;
   documentPayload?: InvoiceDocumentPayload | null;
   notes: string | null;

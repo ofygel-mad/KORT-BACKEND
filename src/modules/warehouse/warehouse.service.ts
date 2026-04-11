@@ -277,14 +277,8 @@ export async function createItem(orgId: string, dto: CreateItemDto, authorName: 
   if (dto.color?.trim()) attrs.color = dto.color.trim();
   if (dto.gender?.trim()) attrs.gender = dto.gender.trim();
   if (dto.size?.trim()) attrs.size = dto.size.trim();
-  const attrParts = Object.entries(attrs)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([k, v]) => `${k}=${v.toLowerCase()}`)
-    .join(':');
-  const variantKey = attrParts
-    ? `${dto.name.toLowerCase()}:${attrParts}`
-    : dto.name.toLowerCase();
-  const attributesSummary = Object.values(attrs).join(' / ') || null;
+  const variantKey = buildWarehouseVariantKey(dto.name, attrs);
+  const attributesSummary = summarizeVariantAttributes(attrs) || null;
 
   const item = await prisma.warehouseItem.create({
     data: {
@@ -376,14 +370,8 @@ export async function bulkImportOpeningBalance(
       if (row.gender?.trim()) attrs.gender = row.gender.trim();
       if (row.size?.trim()) attrs.size = row.size.trim();
 
-      const attrParts = Object.entries(attrs)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([k, v]) => `${k}=${v.toLowerCase()}`)
-        .join(':');
-      const variantKey = attrParts
-        ? `${name.toLowerCase()}:${attrParts}`
-        : name.toLowerCase();
-      const attributesSummary = [row.color, row.gender, row.size].filter(Boolean).join(' / ') || null;
+      const variantKey = buildWarehouseVariantKey(name, attrs);
+      const attributesSummary = summarizeVariantAttributes(attrs) || null;
 
       const existing = await prisma.warehouseItem.findFirst({ where: { orgId, variantKey } });
 
@@ -794,11 +782,7 @@ async function reserveSimpleOrderItems(
     if (orderItem.color?.trim()) attrs.color = orderItem.color.trim();
     if (orderItem.gender?.trim()) attrs.gender = orderItem.gender.trim();
     if (orderItem.size?.trim()) attrs.size = orderItem.size.trim();
-    const attrParts = Object.entries(attrs)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([k, v]) => `${k}=${v.toLowerCase()}`)
-      .join(':');
-    const variantKey = attrParts ? `${name.toLowerCase()}:${attrParts}` : name.toLowerCase();
+    const variantKey = buildWarehouseVariantKey(name, attrs);
 
     const warehouseItem = await prisma.warehouseItem.findFirst({
       where: { orgId, variantKey },
@@ -1512,11 +1496,8 @@ export async function checkVariantAvailability(
     if (v.gender?.trim()) attrs.gender = v.gender.trim();
     if (v.size?.trim()) attrs.size = v.size.trim();
 
-    const attrParts = Object.entries(attrs)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([k, val]) => `${k}=${val.toLowerCase()}`)
-      .join(':');
-    const variantKey = attrParts ? `${name.toLowerCase()}:${attrParts}` : name.toLowerCase();
+    const variantKey = buildWarehouseVariantKey(name, attrs);
+    const hasAttributes = Object.keys(attrs).length > 0;
 
     // Exact variantKey match first
     let item = await prisma.warehouseItem.findFirst({
@@ -1525,7 +1506,7 @@ export async function checkVariantAvailability(
     });
 
     // Fall back to name-only match when no attributes given
-    if (!item && !attrParts) {
+    if (!item && !hasAttributes) {
       item = await prisma.warehouseItem.findFirst({
         where: { orgId, name: { contains: name, mode: 'insensitive' } },
         select: { name: true, qty: true, qtyReserved: true, qtyMin: true },
