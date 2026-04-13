@@ -6,7 +6,7 @@ import {
   normalizeProductionStatus,
 } from './workflow.js';
 
-function mapTask<T extends { status: string | null; orderItem?: { color?: string | null; gender?: string | null; length?: string | null } | null }>(task: T) {
+function mapTask<T extends { status: string | null; orderItem?: { color?: string | null; gender?: string | null; length?: string | null; workshopNotes?: string | null } | null }>(task: T) {
   const { orderItem, ...rest } = task;
   return {
     ...rest,
@@ -14,7 +14,8 @@ function mapTask<T extends { status: string | null; orderItem?: { color?: string
     color: orderItem?.color ?? null,
     gender: orderItem?.gender ?? null,
     length: orderItem?.length ?? null,
-  } as Omit<T, 'orderItem'> & { status: ReturnType<typeof normalizeProductionStatus>; color: string | null; gender: string | null; length: string | null };
+    workshopNotes: orderItem?.workshopNotes ?? null,
+  } as Omit<T, 'orderItem'> & { status: ReturnType<typeof normalizeProductionStatus>; color: string | null; gender: string | null; length: string | null; workshopNotes: string | null };
 }
 
 function getOrderStatusLabel(status: string) {
@@ -163,6 +164,7 @@ export async function list(orgId: string, filters?: { status?: string; assignedT
           color: true,
           gender: true,
           length: true,
+          workshopNotes: true,
         },
       },
     },
@@ -210,6 +212,7 @@ export async function listForWorkshop(orgId: string) {
           color: true,
           gender: true,
           length: true,
+          workshopNotes: true,
         },
       },
     },
