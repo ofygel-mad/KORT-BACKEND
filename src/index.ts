@@ -1,8 +1,9 @@
 import { config } from './config.js';
 import { buildApp } from './app.js';
 import { connectDatabase, disconnectDatabase } from './lib/prisma.js';
-import { attachChatWebSocket, broadcastToUser } from './modules/chat/chat.ws.js';
-import { setChatEventEmitter } from './modules/chat/chat.service.js';
+// Chat disabled - pending schema migration
+// import { attachChatWebSocket, broadcastToUser } from './modules/chat/chat.ws.js';
+// import { setChatEventEmitter } from './modules/chat/chat.service.js';
 import { startWarehouseOutboxWorker } from './modules/warehouse/warehouse-outbox.worker.js';
 
 async function main() {
@@ -16,10 +17,10 @@ async function main() {
     app.log.info({ origins: config.CORS_ORIGINS }, 'CORS origins configured');
     console.log(`Server running at http://${config.HOST}:${config.PORT}`);
 
-    // Wire real-time chat WebSocket on ws://host/api/v1/ws/chat?token=<jwt>
-    attachChatWebSocket(app.server);
-    setChatEventEmitter(broadcastToUser);
-    app.log.info('Chat WebSocket attached at /api/v1/ws/chat');
+    // Chat disabled - pending schema migration
+    // attachChatWebSocket(app.server);
+    // setChatEventEmitter(broadcastToUser);
+    // app.log.info('Chat WebSocket attached at /api/v1/ws/chat');
 
     warehouseOutboxWorker = startWarehouseOutboxWorker(app.log);
     app.log.info('Warehouse outbox worker started');

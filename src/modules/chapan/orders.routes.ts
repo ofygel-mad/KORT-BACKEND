@@ -29,7 +29,6 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
 
   const orderItemSchema = z.object({
     productName: z.string(),
-    fabric: z.string().optional(),
     color: z.string().optional(),
     gender: z.string().optional(),
     length: z.string().optional(),
@@ -372,7 +371,6 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
     const body = z.object({
       items: z.array(z.object({
         productName: z.string().min(1),
-        fabric: z.string().optional(),
         size: z.string().min(1),
         quantity: z.number().int().min(1),
         unitPrice: z.number().min(0),

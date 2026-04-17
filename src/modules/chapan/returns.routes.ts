@@ -6,7 +6,6 @@ const returnItemSchema = z.object({
   orderItemId: z.string().optional(),
   productName: z.string().min(1),
   size: z.string().min(1),
-  fabric: z.string().optional(),
   color: z.string().optional(),
   gender: z.string().optional(),
   qty: z.number().int().min(1),

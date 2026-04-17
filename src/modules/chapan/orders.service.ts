@@ -159,9 +159,15 @@ async function buildOrderItemVariantSnapshot(
     },
   });
 
+  const ATTR_KEY_RU: Record<string, string> = {
+    color: 'Цвет', gender: 'Пол', size: 'Размер', length: 'Длина',
+  };
+  const ATTR_VAL_RU: Record<string, string> = {
+    female: 'Женский', male: 'Мужской',
+  };
+
   const rawAttributes = Object.fromEntries(
     Object.entries({
-      fabric: item.fabric?.trim() || '',
       color: item.color?.trim() || '',
       gender: item.gender?.trim() || '',
       length: item.length?.trim() || '',
@@ -182,7 +188,7 @@ async function buildOrderItemVariantSnapshot(
 
   const attributesSummary = Object.entries(rawAttributes)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}: ${value}`)
+    .map(([key, value]) => `${ATTR_KEY_RU[key] ?? key}: ${ATTR_VAL_RU[value] ?? value}`)
     .join(', ');
 
   return {
@@ -521,6 +527,9 @@ export async function list(orgId: string, filters?: {
               status: true,
               seamstressConfirmed: true,
               warehouseConfirmed: true,
+              rejectionReason: true,
+              rejectedAt: true,
+              rejectedBy: true,
             },
           },
         },
@@ -617,7 +626,7 @@ export async function create(orgId: string, authorId: string, authorName: string
   const paymentMethod = data.paymentMethod?.trim() || 'cash';
   const paymentNote = buildInitialPaymentNote(data);
 
-  return prisma.$transaction(async (tx) => {
+  const mapped = await prisma.$transaction(async (tx) => {
     // Order number is incremented atomically inside the transaction so that
     // a rollback also rolls back the counter — no skipped numbers, no races.
     const orderNumber = await nextOrderNumber(orgId, tx);
@@ -654,7 +663,6 @@ export async function create(orgId: string, authorId: string, authorName: string
         const variantSnapshot = await buildOrderItemVariantSnapshot(tx, orgId, item);
         return {
           productName: item.productName,
-          fabric: item.fabric?.trim() || '',
           color: item.color?.trim() || undefined,
           gender: item.gender?.trim() || undefined,
           length: item.length?.trim() || undefined,
@@ -745,10 +753,34 @@ export async function create(orgId: string, authorId: string, authorName: string
     }
 
     const mapped = mapOrder(order);
-    // Sprint 10: async sync to Google Sheets — fire-and-forget, never blocks
-    fireSheetSync(orgId, order.id);
     return mapped;
   });
+
+  // P3: Немедленная складская регистрация спроса при создании заказа (Метод накопления).
+  // Запускается после коммита транзакции, non-fatal — не должна блокировать создание заказа.
+  try {
+    const { autoCreateFromOrder, reserveNewOrderItems, createOrderTransitEntries } =
+      await import('../warehouse/warehouse.service.js');
+    const warehouseItems = mapped.items.map((item) => ({
+      id: item.id,
+      productName: item.productName,
+      color: item.color,
+      gender: item.gender,
+      length: item.length,
+      size: item.size,
+      quantity: item.quantity,
+      variantKey: item.variantKey,
+      attributesJson: item.attributesJson as Record<string, string> | null,
+      attributesSummary: item.attributesSummary,
+    }));
+    await autoCreateFromOrder(orgId, warehouseItems, mapped.id, authorName || 'system');
+    await reserveNewOrderItems(orgId, mapped.id, warehouseItems);
+    await createOrderTransitEntries(orgId, mapped.id, warehouseItems);
+  } catch { /* non-fatal: не должно блокировать создание заказа */ }
+
+  // Sprint 10: async sync to Google Sheets — fire-and-forget, never blocks
+  fireSheetSync(orgId, mapped.id);
+  return mapped;
 }
 
 // Confirm order (creates production tasks)
@@ -813,14 +845,12 @@ async function applyItemRouting(
             orderId: id,
             orderItemId: item.id,
             productName: item.productName,
-            fabric: item.fabric ?? '',
             size: item.size,
             quantity: item.quantity,
             status: 'queued',
           },
           update: {
             productName: item.productName,
-            fabric: item.fabric ?? '',
             size: item.size,
             quantity: item.quantity,
             status: 'queued',
@@ -875,7 +905,9 @@ async function applyItemRouting(
 
   if (warehouseItems.length > 0) {
     try {
-      const { reserveOrderWarehouseItems } = await import('../warehouse/warehouse.service.js');
+      const { autoCreateFromOrder, reserveOrderWarehouseItems } = await import('../warehouse/warehouse.service.js');
+      // Auto-create skeleton warehouse entries for any new product variants (Accumulation Method)
+      await autoCreateFromOrder(orgId, warehouseItems, id, authorName || 'system');
       const summary = await reserveOrderWarehouseItems(orgId, id, authorName || 'system');
 
       await prisma.chapanActivity.create({
@@ -1079,8 +1111,9 @@ export async function updateStatus(orgId: string, id: string, status: string, au
   // P3: Release simple warehouse reservations on cancellation
   if (status === 'cancelled') {
     try {
-      const { releaseOrderReservations } = await import('../warehouse/warehouse.service.js');
+      const { releaseOrderReservations, cancelOrderTransitEntries } = await import('../warehouse/warehouse.service.js');
       await releaseOrderReservations(orgId, id);
+      await cancelOrderTransitEntries(orgId, id);
     } catch { /* non-fatal */ }
   }
 
@@ -1325,7 +1358,6 @@ export async function update(orgId: string, id: string, authorId: string, author
           data: {
             orderId: id,
             productName: item.productName,
-            fabric: item.fabric?.trim() || '',
             color: item.color?.trim() || null,
             gender: item.gender?.trim() || null,
             length: item.length?.trim() || null,
@@ -1509,8 +1541,10 @@ export async function close(orgId: string, id: string, authorId: string, authorN
 
   // P3: Consume simple warehouse reservations on close (order completed)
   try {
-    const { consumeSimpleOrderReservations } = await import('../warehouse/warehouse.service.js');
+    const { consumeSimpleOrderReservations, dispatchOrderTransitEntries } =
+      await import('../warehouse/warehouse.service.js');
     await consumeSimpleOrderReservations(orgId, id, authorName);
+    await dispatchOrderTransitEntries(orgId, id);
   } catch { /* non-fatal */ }
 
   fireSheetSync(orgId, id);
@@ -1607,8 +1641,9 @@ export async function shipOrder(
 
   // P3: Consume simple (non-canonical) warehouse reservations on shipment
   try {
-    const { consumeSimpleOrderReservations } = await import('../warehouse/warehouse.service.js');
+    const { consumeSimpleOrderReservations, dispatchOrderTransitEntries } = await import('../warehouse/warehouse.service.js');
     await consumeSimpleOrderReservations(orgId, id, authorName);
+    await dispatchOrderTransitEntries(orgId, id);
   } catch { /* non-fatal */ }
 
   fireSheetSync(orgId, id);
@@ -1738,20 +1773,20 @@ export async function approveChangeRequest(
 
     const currentItems = order.items;
 
-    function itemKey(productName: string, size: string, fabric?: string | null) {
-      return `${productName}|${size}|${(fabric ?? '').toLowerCase().trim()}`;
+    function itemKey(productName: string, size: string) {
+      return `${productName}|${size}`;
     }
 
-    const existingKeys = new Set(currentItems.map((i) => itemKey(i.productName, i.size, i.fabric)));
+    const existingKeys = new Set(currentItems.map((i) => itemKey(i.productName, i.size)));
 
     const addedItems = proposedItems.filter(
-      (p) => !existingKeys.has(itemKey(p.productName, p.size, p.fabric)),
+      (p) => !existingKeys.has(itemKey(p.productName, p.size)),
     );
 
     // Update prices/notes on existing items (non-disruptive — no task changes)
     for (const proposed of proposedItems) {
-      const key = itemKey(proposed.productName, proposed.size, proposed.fabric);
-      const existing = currentItems.find((i) => itemKey(i.productName, i.size, i.fabric) === key);
+      const key = itemKey(proposed.productName, proposed.size);
+      const existing = currentItems.find((i) => itemKey(i.productName, i.size) === key);
       if (existing) {
         const variantSnapshot = await buildOrderItemVariantSnapshot(tx, orgId, proposed);
         await tx.chapanOrderItem.update({
@@ -1773,7 +1808,6 @@ export async function approveChangeRequest(
         data: {
           orderId: order.id,
           productName: item.productName,
-          fabric: item.fabric?.trim() || '',
           size: item.size,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
@@ -1788,7 +1822,6 @@ export async function approveChangeRequest(
           orderId: order.id,
           orderItemId: newItem.id,
           productName: item.productName,
-          fabric: item.fabric?.trim() || '',
           size: item.size,
           quantity: item.quantity,
           status: 'queued',
@@ -1901,7 +1934,6 @@ export async function routeSingleItem(
           orderId,
           orderItemId: itemId,
           productName: item.productName,
-          fabric: item.fabric ?? '',
           size: item.size,
           quantity: item.quantity,
           status: 'queued',

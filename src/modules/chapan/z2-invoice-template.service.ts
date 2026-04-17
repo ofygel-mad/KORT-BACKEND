@@ -12,7 +12,7 @@ type TemplateOrder = {
   createdAt: Date;
   items: Array<{
     productName: string;
-    fabric: string;
+    fabric: string | null;
     size: string;
     quantity: number;
     unitPrice: number;
@@ -137,7 +137,6 @@ function chooseRecipientName(orders: TemplateOrder[]): string {
 
 function formatItemDescription(item: TemplateOrder['items'][number]): string {
   const parts = [item.productName];
-  if (item.fabric?.trim()) parts.push(`ткань ${item.fabric.trim()}`);
   if (item.size?.trim()) parts.push(`размер ${item.size.trim()}`);
   if (item.color?.trim()) parts.push(`цвет ${item.color.trim()}`);
   return parts.join(', ');

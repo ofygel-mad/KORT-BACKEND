@@ -22,7 +22,6 @@ interface OrderForInvoice {
   createdAt: Date;
   items: Array<{
     productName: string;
-    fabric?: string | null;
     size: string;
     quantity: number;
     unitPrice: number;
@@ -251,7 +250,6 @@ export async function generateInvoiceXlsx(
       items: {
         select: {
           productName: true,
-          fabric: true,
           size: true,
           quantity: true,
           unitPrice: true,
@@ -307,7 +305,6 @@ export async function generateBatchInvoiceXlsx(
       items: {
         select: {
           productName: true,
-          fabric: true,
           size: true,
           quantity: true,
           unitPrice: true,

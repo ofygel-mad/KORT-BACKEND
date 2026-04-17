@@ -197,6 +197,8 @@ model Organization {
   warehouseCategories       WarehouseCategory[]
   warehouseMovements        WarehouseMovement[]
   warehouseReservations     WarehouseReservation[]
+  warehouseTransitZones     WarehouseTransitZone[]
+  warehouseTransitEntries   WarehouseTransitEntry[]
   warehouseBomLines         WarehouseBOMLine[]
   warehouseAlerts           WarehouseAlert[]
   warehouseLots             WarehouseLot[]
@@ -229,6 +231,7 @@ model Organization {
   accountingGaps       AccountingGap[]
   importTemplates      ImportTemplate[]
   conversations        Conversation[]
+  chatAttachments      ChatAttachment[]
 
   @@map("organizations")
 }
@@ -703,7 +706,7 @@ model ChapanOrderItem {
   id                String  @id @default(cuid())
   orderId           String  @map("order_id")
   productName       String  @map("product_name")
-  fabric            String
+  fabric            String?
   size              String
   quantity          Int     @default(1)
   unitPrice         Float   @map("unit_price")
@@ -729,7 +732,7 @@ model ChapanProductionTask {
   orderId     String    @map("order_id")
   orderItemId String    @unique @map("order_item_id")
   productName String    @map("product_name")
-  fabric      String
+  fabric      String?
   size        String
   quantity    Int
   status      String    @default("pending")
@@ -994,7 +997,9 @@ model WarehouseItem {
   name              String
   unit              String   @default("шт")   // шт | кг | м | л | пар | рулон | лист
   qty               Float    @default(0)
+  qtyBeginning      Float    @default(0)      @map("qty_beginning")
   qtyReserved       Float    @default(0)      @map("qty_reserved")
+  verificationRequired Boolean @default(false) @map("verification_required")
   qtyMin            Float    @default(0)      @map("qty_min")
   qtyMax            Float?   @map("qty_max")
   costPrice         Float?   @map("cost_price")
@@ -1015,6 +1020,7 @@ model WarehouseItem {
   productCatalog WarehouseProductCatalog?  @relation(fields: [productCatalogId], references: [id], onDelete: SetNull)
   movements      WarehouseMovement[]
   reservations   WarehouseReservation[]
+  transitEntries WarehouseTransitEntry[]
   bomLines       WarehouseBOMLine[]
   lots           WarehouseLot[]
   alerts         WarehouseAlert[]
@@ -1022,6 +1028,7 @@ model WarehouseItem {
   @@index([orgId])
   @@index([orgId, categoryId])
   @@index([orgId, variantKey])
+  @@index([orgId, verificationRequired])
   @@map("warehouse_items")
 }
 
@@ -1067,6 +1074,46 @@ model WarehouseReservation {
   @@index([orgId, status])
   @@index([sourceId])
   @@map("warehouse_reservations")
+}
+
+// ── Транзитная зона ────────────────────────────────────────────────────────────
+// Отдельная именованная зона в рамках склада для отслеживания товаров
+// "в пути к клиенту": зарезервированных по заказу или направленных напрямую с цеха.
+
+model WarehouseTransitZone {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  name      String   @default("Транзит")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org     Organization           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  entries WarehouseTransitEntry[]
+
+  @@index([orgId])
+  @@map("warehouse_transit_zones")
+}
+
+model WarehouseTransitEntry {
+  id         String   @id @default(cuid())
+  orgId      String   @map("org_id")
+  zoneId     String   @map("zone_id")
+  itemId     String   @map("item_id")
+  orderId    String?  @map("order_id")   // ссылка на ChapanOrder (если по заказу)
+  qty        Float
+  // in_transit | dispatched | cancelled
+  status     String   @default("in_transit")
+  // order_demand | workshop_direct | market_purchase
+  sourceType String   @map("source_type")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt      @map("updated_at")
+
+  org  Organization         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  zone WarehouseTransitZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  item WarehouseItem         @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, status])
+  @@index([orderId])
+  @@map("warehouse_transit_entries")
 }
 
 // Bill of Materials: product SKU/name → list of warehouse items needed per unit
@@ -1911,17 +1958,51 @@ model ConversationParticipant {
   @@map("conversation_participants")
 }
 
-model Message {
-  id             String    @id @default(cuid())
-  conversationId String    @map("conversation_id")
-  senderId       String    @map("sender_id")
-  body           String    @db.Text
-  createdAt      DateTime  @default(now()) @map("created_at")
-  readAt         DateTime? @map("read_at")
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  ORDER_REF
+}
 
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender       User         @relation(fields: [senderId], references: [id])
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String      @map("conversation_id")
+  senderId       String      @map("sender_id")
+  body           String      @db.Text
+  type           MessageType @default(TEXT)
+  replyToId      String?     @map("reply_to_id")
+  editedAt       DateTime?   @map("edited_at")
+  deletedAt      DateTime?   @map("deleted_at")
+  orderId        String?     @map("order_id")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  readAt         DateTime?   @map("read_at")
+
+  conversation Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User            @relation(fields: [senderId], references: [id])
+  replyTo      Message?        @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies      Message[]       @relation("MessageReplies")
+  attachments  ChatAttachment[]
 
   @@index([conversationId, createdAt])
   @@map("messages")
+}
+
+model ChatAttachment {
+  id          String   @id @default(cuid())
+  messageId   String   @map("message_id")
+  orgId       String   @map("org_id")
+  fileName    String   @map("file_name")
+  mimeType    String   @map("mime_type")
+  sizeBytes   Int      @map("size_bytes")
+  storagePath String   @map("storage_path")
+  width       Int?
+  height      Int?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  message Message      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("chat_attachments")
 }

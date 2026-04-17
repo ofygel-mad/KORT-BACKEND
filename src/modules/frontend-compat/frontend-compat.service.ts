@@ -1071,3 +1071,65 @@ export async function listCustomerActivities(orgId: string, customerId: string) 
     results,
   };
 }
+
+// ── SSE entity change detection ───────────────────────────────────────────────
+
+export type EntityCursors = Record<string, Date>;
+
+export async function detectEntityChanges(
+  orgId: string,
+  cursors: EntityCursors,
+): Promise<string[]> {
+  // ChapanProductionTask has no orgId — covered via chapan_orders invalidation on frontend
+  const checks: Array<{ key: string; fn: () => Promise<Date | null> }> = [
+    {
+      key: 'chapan_orders',
+      fn: async () => (await prisma.chapanOrder.aggregate({ where: { orgId }, _max: { updatedAt: true } }))._max.updatedAt,
+    },
+    {
+      key: 'chapan_invoices',
+      fn: async () => (await prisma.chapanInvoice.aggregate({ where: { orgId }, _max: { updatedAt: true } }))._max.updatedAt,
+    },
+    {
+      key: 'chapan_returns',
+      fn: async () => (await prisma.chapanReturn.aggregate({ where: { orgId }, _max: { updatedAt: true } }))._max.updatedAt,
+    },
+    {
+      key: 'leads',
+      fn: async () => (await prisma.lead.aggregate({ where: { orgId }, _max: { updatedAt: true } }))._max.updatedAt,
+    },
+    {
+      key: 'deals',
+      fn: async () => (await prisma.deal.aggregate({ where: { orgId }, _max: { updatedAt: true } }))._max.updatedAt,
+    },
+    {
+      key: 'customers',
+      fn: async () => (await prisma.customer.aggregate({ where: { orgId }, _max: { updatedAt: true } }))._max.updatedAt,
+    },
+    {
+      key: 'tasks',
+      fn: async () => (await prisma.task.aggregate({ where: { orgId }, _max: { updatedAt: true } }))._max.updatedAt,
+    },
+    {
+      key: 'finance',
+      fn: async () => (await prisma.accountingEntry.aggregate({ where: { orgId }, _max: { createdAt: true } }))._max.createdAt,
+    },
+  ];
+
+  const results = await Promise.allSettled(checks.map((c) => c.fn()));
+  const changed: string[] = [];
+
+  results.forEach((result, i) => {
+    if (result.status !== 'fulfilled' || !result.value) return;
+    const check = checks[i];
+    if (!check) return;
+    const latest = result.value;
+    const prev = cursors[check.key];
+    if (!prev || latest > prev) {
+      changed.push(check.key);
+      cursors[check.key] = latest;
+    }
+  });
+
+  return changed;
+}

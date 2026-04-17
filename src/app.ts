@@ -40,7 +40,8 @@ import { warehouseFoundationRoutes } from './modules/warehouse/warehouse-foundat
 import { warehouseInventoryCoreRoutes } from './modules/warehouse/warehouse-inventory-core.routes.js';
 import { warehouseLiveRoutes } from './modules/warehouse/warehouse-live.routes.js';
 import { warehouseRuntimeRoutes } from './modules/warehouse/warehouse-runtime.routes.js';
-import { chatRoutes } from './modules/chat/chat.routes.js';
+// Chat routes disabled - pending schema migration
+// import { chatRoutes } from './modules/chat/chat.routes.js';
 
 export async function buildApp() {
   const isProd = process.env.NODE_ENV === 'production';
@@ -165,7 +166,8 @@ export async function buildApp() {
   await app.register(warehouseRuntimeRoutes, { prefix: '/api/v1/warehouse' });
   await app.register(warehouseLiveRoutes, { prefix: '/api/v1/warehouse-live' });
   await app.register(accountingRoutes, { prefix: '/api/v1/accounting' });
-  await app.register(chatRoutes, { prefix: '/api/v1/chat' });
+  // Chat routes disabled - pending schema migration
+  // await app.register(chatRoutes, { prefix: '/api/v1/chat' });
 
   // ── Health check ────────────────────────────────────────
   const healthHandler = async () => ({ status: 'ok', ts: new Date().toISOString() });

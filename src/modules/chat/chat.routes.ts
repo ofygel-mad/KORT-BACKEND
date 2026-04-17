@@ -1,8 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import * as chatService from './chat.service.js';
+import * as attachService from './chat-attachments.service.js';
 
 export async function chatRoutes(app: FastifyInstance) {
+
+  // ── Conversations ──────────────────────────────────────────────────────
+
   // GET /api/v1/chat/conversations/
   app.get('/conversations', {
     preHandler: [app.authenticate, app.resolveOrg],
@@ -22,6 +26,8 @@ export async function chatRoutes(app: FastifyInstance) {
     return reply.status(201).send(result);
   });
 
+  // ── Messages ───────────────────────────────────────────────────────────
+
   // GET /api/v1/chat/conversations/:id/messages/
   app.get('/conversations/:id/messages', {
     preHandler: [app.authenticate],
@@ -40,12 +46,32 @@ export async function chatRoutes(app: FastifyInstance) {
     preHandler: [app.authenticate],
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { body } = z.object({
+    const { body, reply_to_id } = z.object({
       body: z.string().min(1).max(4000),
+      reply_to_id: z.string().optional().nullable(),
     }).parse(request.body);
 
-    const message = await chatService.sendMessage(id, request.userId, body);
+    const message = await chatService.sendMessage(id, request.userId, body, {
+      replyToId: reply_to_id ?? undefined,
+    });
     return reply.status(201).send(message);
+  });
+
+  // PATCH /api/v1/chat/messages/:id — edit message
+  app.patch('/messages/:id', {
+    preHandler: [app.authenticate],
+  }, async (request) => {
+    const { id } = request.params as { id: string };
+    const { body } = z.object({ body: z.string().min(1).max(4000) }).parse(request.body);
+    return chatService.editMessage(id, request.userId, body);
+  });
+
+  // DELETE /api/v1/chat/messages/:id — soft delete message
+  app.delete('/messages/:id', {
+    preHandler: [app.authenticate],
+  }, async (request) => {
+    const { id } = request.params as { id: string };
+    return chatService.deleteMessage(id, request.userId);
   });
 
   // POST /api/v1/chat/conversations/:id/read/
@@ -54,5 +80,51 @@ export async function chatRoutes(app: FastifyInstance) {
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
     return reply.send(await chatService.markRead(id, request.userId));
+  });
+
+  // ── Attachments ────────────────────────────────────────────────────────
+
+  // POST /api/v1/chat/conversations/:id/attachments — multipart file upload
+  app.post('/conversations/:id/attachments', {
+    preHandler: [app.authenticate, app.resolveOrg],
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    const data = await request.file();
+    if (!data) {
+      return reply.status(400).send({ error: 'Файл не передан.' });
+    }
+
+    const message = await attachService.uploadChatAttachment(
+      id,
+      request.orgId,
+      request.userId,
+      {
+        filename: data.filename,
+        mimetype: data.mimetype,
+        stream: data.file,
+      },
+    );
+
+    return reply.status(201).send(message);
+  });
+
+  // GET /api/v1/chat/attachments/:id/file — presigned download URL
+  app.get('/attachments/:id/file', {
+    preHandler: [app.authenticate],
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { url } = await attachService.getAttachmentDownloadUrl(id, request.userId);
+    return reply.redirect(url, 302);
+  });
+
+  // ── Order preview ──────────────────────────────────────────────────────
+
+  // GET /api/v1/chat/orders/:orderId/preview
+  app.get('/orders/:orderId/preview', {
+    preHandler: [app.authenticate],
+  }, async (request) => {
+    const { orderId } = request.params as { orderId: string };
+    return chatService.getOrderPreview(orderId, request.userId);
   });
 }

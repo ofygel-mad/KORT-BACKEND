@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { UnauthorizedError } from '../../lib/errors.js';
 import { verifyAccessToken } from '../../lib/jwt.js';
 import { config, normalizeCorsOrigin } from '../../config.js';
+import { prisma } from '../../lib/prisma.js';
 import * as svc from './frontend-compat.service.js';
 
 export async function frontendCompatRoutes(app: FastifyInstance) {
@@ -110,11 +111,18 @@ export async function frontendCompatRoutes(app: FastifyInstance) {
       })
       .parse(request.query);
 
+    let userId: string;
     try {
-      verifyAccessToken(token);
+      userId = verifyAccessToken(token).sub;
     } catch {
       throw new UnauthorizedError('Invalid or expired SSE token');
     }
+
+    // JWT doesn't carry orgId — resolve from active membership
+    const membership = await prisma.membership.findFirst({
+      where: { userId, status: 'active' },
+      select: { orgId: true },
+    });
 
     const requestOrigin = typeof request.headers.origin === 'string'
       ? normalizeCorsOrigin(request.headers.origin)
@@ -135,15 +143,38 @@ export async function frontendCompatRoutes(app: FastifyInstance) {
       'X-Accel-Buffering': 'no',
       ...corsHeaders,
     });
-    reply.raw.write('event: connected\n');
-    reply.raw.write(`data: ${JSON.stringify({ status: 'ok' })}\n\n`);
+
+    const send = (event: string, data: unknown) => {
+      if (!reply.raw.destroyed) {
+        reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+      }
+    };
+
+    send('connected', { status: 'ok' });
 
     const heartbeat = setInterval(() => {
-      reply.raw.write(': keep-alive\n\n');
-    }, 25000);
+      if (!reply.raw.destroyed) reply.raw.write(': keep-alive\n\n');
+    }, 25_000);
+
+    let pollInterval: ReturnType<typeof setInterval> | undefined;
+
+    if (membership) {
+      const cursors: svc.EntityCursors = {};
+      // Warm up cursors on connect so first tick only emits real changes
+      await svc.detectEntityChanges(membership.orgId, cursors).catch(() => {});
+
+      pollInterval = setInterval(() => {
+        void svc.detectEntityChanges(membership.orgId, cursors)
+          .then((changed) => {
+            if (changed.length > 0) send('entity_update', { entities: changed });
+          })
+          .catch(() => { /* ignore transient DB errors */ });
+      }, 5_000);
+    }
 
     request.raw.on('close', () => {
       clearInterval(heartbeat);
+      if (pollInterval) clearInterval(pollInterval);
       reply.raw.end();
     });
 

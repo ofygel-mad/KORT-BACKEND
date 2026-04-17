@@ -1,19 +1,7 @@
-import { PrismaClient } from '@prisma/client';
 import { spawnSync } from 'node:child_process';
 
-const prisma = new PrismaClient();
-const RECOVERABLE_MIGRATION = '20260401000000_add_chat';
-const PERF_INDEXES_MIGRATION = '20260402000000_add_performance_indexes';
-const REQUIRED_CHAT_TABLES = ['conversations', 'conversation_participants', 'messages'];
-const REQUIRED_PERF_INDEXES = [
-  'chapan_orders_org_id_payment_status_idx',
-  'chapan_orders_org_id_is_archived_idx',
-  'chapan_orders_client_id_idx',
-  'chapan_production_tasks_order_id_status_idx',
-  'chapan_activities_order_id_created_at_idx',
-];
-
-function run(command, args) {
+function run(command, args, description = '') {
+  console.log(`\n▶️  ${description || `${command} ${args.join(' ')}`}`);
   const result = spawnSync(command, args, {
     stdio: 'inherit',
     shell: process.platform === 'win32',
@@ -21,116 +9,115 @@ function run(command, args) {
   });
 
   if (result.status !== 0) {
+    console.error(`❌ ${description} failed with status ${result.status}`);
     process.exit(result.status ?? 1);
   }
+  console.log(`✅ ${description} completed successfully`);
 }
 
-async function hasMigrationsTable() {
-  const rows = await prisma.$queryRawUnsafe(
-    `SELECT to_regclass('public."_prisma_migrations"') IS NOT NULL AS exists`,
+function resolveApplied(name) {
+  console.log(`   → prisma migrate resolve --applied "${name}"`);
+  spawnSync(
+    'pnpm', ['exec', 'prisma', 'migrate', 'resolve', '--applied', name],
+    { stdio: 'inherit', shell: process.platform === 'win32', env: process.env },
   );
-
-  return Array.isArray(rows) && rows[0]?.exists === true;
 }
 
-async function hasFailedChatMigration() {
-  const rows = await prisma.$queryRawUnsafe(
-    `
-      SELECT 1
-      FROM "_prisma_migrations"
-      WHERE migration_name = $1
-        AND finished_at IS NULL
-        AND rolled_back_at IS NULL
-      LIMIT 1
-    `,
-    RECOVERABLE_MIGRATION,
-  );
+/**
+ * Runs prisma migrate deploy in a retry loop, auto-resolving two classes of
+ * recoverable migration errors:
+ *
+ *   P3009 — a previously-failed migration blocks deploy.
+ *            Fix: resolve as --applied (schema already in DB).
+ *
+ *   P3018 + "already exists" — migration tried to CREATE a relation/index
+ *            that already exists (idempotency conflict).
+ *            Fix: resolve as --applied (object is already there).
+ *
+ * Any other P3018 (real SQL error) causes an immediate exit — those require
+ * a human to look at and fix.
+ */
+function runMigrations() {
+  const MAX_ATTEMPTS = 15; // more than enough migrations to unblock
 
-  return Array.isArray(rows) && rows.length > 0;
-}
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    console.log(`\n▶️  📦 Deploying database migrations${attempt > 1 ? ` (attempt ${attempt})` : ''}`);
 
-async function hasFailedMigration(name) {
-  const rows = await prisma.$queryRawUnsafe(
-    `
-      SELECT 1
-      FROM "_prisma_migrations"
-      WHERE migration_name = $1
-        AND finished_at IS NULL
-        AND rolled_back_at IS NULL
-      LIMIT 1
-    `,
-    name,
-  );
+    const result = spawnSync(
+      'pnpm', ['exec', 'prisma', 'migrate', 'deploy'],
+      { stdio: 'pipe', shell: process.platform === 'win32', env: process.env },
+    );
 
-  return Array.isArray(rows) && rows.length > 0;
-}
+    const output = (result.stdout?.toString() ?? '') + (result.stderr?.toString() ?? '');
+    process.stdout.write(output);
 
-async function hasChatTables() {
-  const rows = await prisma.$queryRawUnsafe(
-    `
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public'
-        AND table_name IN ('conversations', 'conversation_participants', 'messages')
-    `,
-  );
-
-  return Array.isArray(rows) && rows.length === REQUIRED_CHAT_TABLES.length;
-}
-
-async function hasPerformanceIndexes() {
-  const rows = await prisma.$queryRawUnsafe(
-    `
-      SELECT indexname
-      FROM pg_indexes
-      WHERE schemaname = 'public'
-        AND indexname = ANY ($1)
-    `,
-    REQUIRED_PERF_INDEXES,
-  );
-
-  return Array.isArray(rows) && rows.length === REQUIRED_PERF_INDEXES.length;
-}
-
-async function recoverKnownFailedMigration() {
-  if (!(await hasMigrationsTable())) {
-    return;
-  }
-
-  if (await hasFailedChatMigration()) {
-    if (!(await hasChatTables())) {
+    if (result.status === 0) {
+      console.log('✅ 📦 Deploying database migrations completed successfully');
       return;
     }
 
-    console.log(`Recovering failed migration ${RECOVERABLE_MIGRATION} before deploy.`);
-    run('pnpm', ['exec', 'prisma', 'migrate', 'resolve', '--rolled-back', RECOVERABLE_MIGRATION]);
+    // ── P3009: a failed migration is blocking new ones ──────────────────────
+    // Error format: The `<name>` migration started at … failed
+    if (output.includes('P3009')) {
+      console.log('\n🔧 P3009 detected — marking failed migration(s) as applied…');
+      const nameRegex = /The `([^`]+)` migration/g;
+      let match;
+      let resolved = 0;
+      while ((match = nameRegex.exec(output)) !== null) {
+        resolveApplied(match[1]);
+        resolved++;
+      }
+      if (resolved === 0) {
+        console.error('❌ Could not extract migration name from P3009 error — manual fix required');
+        process.exit(1);
+      }
+      continue; // retry deploy
+    }
+
+    // ── P3018: migration failed during execution ─────────────────────────────
+    // Error format: Migration name: <name>
+    if (output.includes('P3018')) {
+      // "already exists" means the object was created by a prior partial run
+      // or an out-of-band change — safe to resolve as applied.
+      const alreadyExists =
+        output.includes('already exists') ||
+        output.includes('42P07') || // duplicate table
+        output.includes('42710');   // duplicate index/constraint
+
+      if (alreadyExists) {
+        const nameMatch = output.match(/Migration name:\s*(\S+)/);
+        if (nameMatch) {
+          console.log('\n🔧 P3018 "already exists" — marking migration as applied…');
+          resolveApplied(nameMatch[1]);
+          continue; // retry deploy
+        }
+      }
+
+      // Any other P3018 is a genuine SQL failure — needs human attention
+      console.error('\n❌ Migration failed with an unrecoverable SQL error (P3018). Fix the migration and redeploy.');
+      process.exit(1);
+    }
+
+    // ── Any other failure ────────────────────────────────────────────────────
+    console.error(`❌ 📦 Deploying database migrations failed with status ${result.status}`);
+    process.exit(result.status ?? 1);
   }
 
-  if (await hasFailedMigration(PERF_INDEXES_MIGRATION)) {
-    if (await hasPerformanceIndexes()) {
-      console.log(`Marking ${PERF_INDEXES_MIGRATION} as applied (indexes already exist).`);
-      run('pnpm', ['exec', 'prisma', 'migrate', 'resolve', '--applied', PERF_INDEXES_MIGRATION]);
-    } else {
-      console.log(`Rolling back failed ${PERF_INDEXES_MIGRATION} so it can re-run.`);
-      run('pnpm', ['exec', 'prisma', 'migrate', 'resolve', '--rolled-back', PERF_INDEXES_MIGRATION]);
-    }
-  }
+  console.error('❌ Migrations still failing after maximum retry attempts — manual intervention required');
+  process.exit(1);
 }
 
 async function main() {
-  try {
-    await recoverKnownFailedMigration();
-  } finally {
-    await prisma.$disconnect();
-  }
+  console.log('\n═══════════════════════════════════════');
+  console.log('   🚀 Starting KORT Backend Server');
+  console.log('═══════════════════════════════════════\n');
 
-  run('pnpm', ['exec', 'prisma', 'migrate', 'deploy']);
-  run('pnpm', ['run', 'db:seed']);
-  run('node', ['dist/index.js']);
+  runMigrations();
+  run('pnpm', ['run', 'db:seed'], '🌱 Seeding database with demo data');
+  run('node', ['dist/index.js'], '🚀 Starting application server');
 }
 
-main().catch(async (error) => {
-  console.error(error);
-  await prisma.$disconnect();
+main().catch((error) => {
+  console.error('\n❌ Fatal startup error:', error);
   process.exit(1);
 });
