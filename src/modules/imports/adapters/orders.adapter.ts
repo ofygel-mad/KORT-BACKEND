@@ -14,7 +14,6 @@ export interface OrderRow {
   customer_name?: string;
   phone?: string;
   product_name?: string;
-  fabric?: string;
   size?: string;
   color?: string;
   gender?: string;
@@ -133,14 +132,12 @@ export async function importOrders(
         const qty = Math.max(1, Math.round(parseNum(row.quantity || 1)));
         const unitPrice = parseNum(row.unit_price);
         const productName = row.product_name?.trim() ?? 'Без названия';
-        const fabric = row.fabric?.trim() ?? '—';
         const size = row.size?.trim() ?? '—';
 
         await prisma.chapanOrderItem.create({
           data: {
             orderId: order.id,
             productName,
-            fabric,
             size,
             quantity: qty,
             unitPrice,

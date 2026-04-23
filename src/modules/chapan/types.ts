@@ -78,7 +78,6 @@ export interface OrderItem {
   id: string;
   orderId: string;
   productName: string;
-  fabric?: string;          // optional after removing fabric input from the order form
   size: string;             // was: sizeName
   quantity: number;         // was: qty
   unitPrice: number;
@@ -95,7 +94,6 @@ export interface ProductionTask {
   orderId: string;
   orderItemId: string;
   productName: string;
-  fabric?: string;
   size: string;
   quantity: number;
   status: ProductionStatus;
@@ -193,7 +191,6 @@ export interface CreateOrderDto {
 
 export interface CreateOrderItemDto {
   productName: string;
-  fabric?: string;             // optional; backend will default when omitted
   color?: string;
   gender?: string;
   length?: string;
@@ -230,7 +227,6 @@ export interface AddPaymentDto {
 // Backend returns string[] for catalogs (not {id,name}[])
 export interface ChapanCatalogs {
   productCatalog: string[];
-  fabricCatalog: string[];
   sizeCatalog: string[];
   workers: string[];
 }
@@ -308,7 +304,6 @@ export interface ChapanReturnItem {
   orderItemId: string | null;
   productName: string;
   size: string;
-  fabric: string | null;
   color: string | null;
   gender: string | null;
   qty: number;
@@ -349,7 +344,6 @@ export interface CreateReturnItemDto {
   orderItemId?: string;
   productName: string;
   size: string;
-  fabric?: string;
   color?: string;
   gender?: string;
   qty: number;

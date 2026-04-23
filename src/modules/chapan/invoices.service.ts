@@ -67,7 +67,6 @@ function buildFallbackDocument(invoice: {
       orderNumber: string;
       items: Array<{
         productName: string;
-        fabric?: string | null;
         size: string;
         quantity: number;
         unitPrice: number;
@@ -98,7 +97,6 @@ async function loadInvoiceSourceOrders(
       items: {
         select: {
           productName: true,
-          fabric: true,
           size: true,
           quantity: true,
           unitPrice: true,
@@ -300,7 +298,6 @@ export async function listInvoices(
                   items: {
                     select: {
                       productName: true,
-                      fabric: true,
                       size: true,
                       quantity: true,
                       unitPrice: true,

@@ -96,9 +96,8 @@ function sizeToSortOrder(name: string): number {
 }
 
 export async function getCatalogs(orgId: string) {
-  const [products, fabrics, sizes, workers, paymentMethods] = await Promise.all([
+  const [products, sizes, workers, paymentMethods] = await Promise.all([
     prisma.chapanCatalogProduct.findMany({ where: { orgId }, select: { name: true } }),
-    prisma.chapanCatalogFabric.findMany({ where: { orgId }, select: { name: true } }),
     prisma.chapanCatalogSize.findMany({ where: { orgId }, select: { name: true, sortOrder: true }, orderBy: { sortOrder: 'asc' } }),
     prisma.chapanWorker.findMany({ where: { orgId }, select: { name: true } }),
     prisma.chapanCatalogPaymentMethod.findMany({ where: { orgId }, select: { name: true }, orderBy: { name: 'asc' } }),
@@ -106,7 +105,6 @@ export async function getCatalogs(orgId: string) {
 
   return {
     productCatalog: products.map((p) => p.name),
-    fabricCatalog: fabrics.map((f) => f.name),
     sizeCatalog: sizes.map((s) => s.name), // already sorted by sortOrder asc
     workers: workers.map((w) => w.name),
     paymentMethodCatalog: paymentMethods.map((m) => m.name),
@@ -115,7 +113,6 @@ export async function getCatalogs(orgId: string) {
 
 export async function saveCatalogs(orgId: string, data: {
   productCatalog?: string[];
-  fabricCatalog?: string[];
   sizeCatalog?: string[];
   workers?: string[];
   paymentMethodCatalog?: string[];
@@ -126,16 +123,6 @@ export async function saveCatalogs(orgId: string, data: {
       const unique = [...new Set(data.productCatalog.map((n) => n.trim()).filter(Boolean))];
       if (unique.length > 0) {
         await tx.chapanCatalogProduct.createMany({
-          data: unique.map((name) => ({ orgId, name })),
-        });
-      }
-    }
-
-    if (data.fabricCatalog) {
-      await tx.chapanCatalogFabric.deleteMany({ where: { orgId } });
-      const unique = [...new Set(data.fabricCatalog.map((n) => n.trim()).filter(Boolean))];
-      if (unique.length > 0) {
-        await tx.chapanCatalogFabric.createMany({
           data: unique.map((name) => ({ orgId, name })),
         });
       }

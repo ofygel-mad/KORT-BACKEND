@@ -27,7 +27,6 @@ export interface WarehouseItemRow {
 export interface CatalogRow {
   name?: string;
   category?: string;
-  fabric?: string;
   size_range?: string;
   colors?: string;
   unit_price?: number | string;
@@ -146,15 +145,6 @@ export async function importCatalog(
         create: { orgId, name },
       });
 
-      // If fabric is known, upsert ChapanCatalogFabric
-      if (row.fabric?.trim()) {
-        await prisma.chapanCatalogFabric.upsert({
-          where: { orgId_name: { orgId, name: row.fabric.trim() } },
-          update: {},
-          create: { orgId, name: row.fabric.trim() },
-        });
-      }
-
       // Build size entries
       if (row.size_range?.trim()) {
         // e.g. "42-58" → individual sizes or store as-is
@@ -169,7 +159,6 @@ export async function importCatalog(
       // Create warehouse item for the catalog product
       const unitPrice = parseNum(row.unit_price) || undefined;
       const tags: string[] = [];
-      if (row.fabric) tags.push(row.fabric.trim());
       if (row.category) tags.push(row.category.trim());
       if (row.colors) tags.push(...row.colors.split(',').map((c) => c.trim()).filter(Boolean));
 
@@ -191,7 +180,7 @@ export async function importCatalog(
             costPrice: unitPrice,
             categoryId: cat.id,
             tags,
-            notes: [row.fabric, row.size_range, row.notes].filter(Boolean).join(' | ') || undefined,
+            notes: [row.size_range, row.notes].filter(Boolean).join(' | ') || undefined,
           },
         });
         result.created++;

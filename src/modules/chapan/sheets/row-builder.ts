@@ -111,7 +111,6 @@ function buildShortItemSummary(items: Array<{
 
 function buildItemsJson(items: Array<{
   productName?: string | null;
-  fabric?: string | null;
   color?: string | null;
   gender?: string | null;
   length?: string | null;
@@ -123,7 +122,6 @@ function buildItemsJson(items: Array<{
 }>): string {
   return JSON.stringify(items.map((item) => ({
     productName:   compact(item.productName),
-    fabric:        compact(item.fabric),
     color:         compact(item.color),
     gender:        compact(item.gender),
     length:        compact(item.length),
@@ -192,7 +190,6 @@ export type SheetOrderPayload = {
   sourceRequestId?: string | null;
   items: Array<{
     productName?: string | null;
-    fabric?: string | null;
     color?: string | null;
     gender?: string | null;
     length?: string | null;

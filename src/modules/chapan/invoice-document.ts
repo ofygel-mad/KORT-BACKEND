@@ -53,7 +53,6 @@ export interface InvoiceDocumentPayload {
 
 interface OrderItemSource {
   productName: string;
-  fabric?: string | null;
   size: string;
   quantity: number;
   unitPrice: number;
@@ -156,7 +155,6 @@ export function buildInvoiceDocumentPayload(source: BuildInvoiceDocumentSource):
     for (const item of order.items) {
       const key = [
         normalizeKeyPart(item.productName),
-        normalizeKeyPart(item.fabric),
         normalizeKeyPart(item.size),
         normalizeKeyPart(item.color),
         item.unitPrice,

@@ -43,7 +43,6 @@ export async function submit(orgId: string, data: {
   source?: string;
   items: Array<{
     productName: string;
-    fabricPreference?: string;
     size?: string;
     quantity: number;
     notes?: string;
@@ -68,7 +67,6 @@ export async function submit(orgId: string, data: {
       items: {
         create: data.items.map((item) => ({
           productName: item.productName.trim(),
-          fabricPreference: item.fabricPreference?.trim(),
           size: item.size?.trim(),
           quantity: Math.max(1, item.quantity),
           notes: item.notes?.trim(),
@@ -101,9 +99,8 @@ export async function getPublicProfile(orgId: string) {
   if (!profile || !profile.publicIntakeEnabled) return null;
 
   // Also fetch catalogs for the form
-  const [products, fabrics, sizes] = await Promise.all([
+  const [products, sizes] = await Promise.all([
     prisma.chapanCatalogProduct.findMany({ where: { orgId }, select: { name: true } }),
-    prisma.chapanCatalogFabric.findMany({ where: { orgId }, select: { name: true } }),
     prisma.chapanCatalogSize.findMany({ where: { orgId }, select: { name: true } }),
   ]);
 
@@ -114,7 +111,6 @@ export async function getPublicProfile(orgId: string) {
     supportLabel: profile.supportLabel,
     catalogs: {
       products: products.map((p) => p.name),
-      fabrics: fabrics.map((f) => f.name),
       sizes: sizes.map((s) => s.name),
     },
   };

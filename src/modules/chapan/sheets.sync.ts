@@ -119,7 +119,6 @@ export async function syncOrderToSheets(
       sourceRequestId:       (order as any).sourceRequestId       ?? null,
       items: order.items.map(item => ({
         productName:   item.productName,
-        fabric:        item.fabric,
         color:         item.color,
         gender:        item.gender,
         length:        item.length,

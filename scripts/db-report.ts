@@ -142,9 +142,6 @@ async function main() {
   counts.chapan_catalog_products = writeCsv(outDir, 'chapan_catalog_products.csv',
     (await prisma.chapanCatalogProduct.findMany()) as Record<string, unknown>[]);
 
-  counts.chapan_catalog_fabrics = writeCsv(outDir, 'chapan_catalog_fabrics.csv',
-    (await prisma.chapanCatalogFabric.findMany()) as Record<string, unknown>[]);
-
   counts.chapan_catalog_sizes = writeCsv(outDir, 'chapan_catalog_sizes.csv',
     (await prisma.chapanCatalogSize.findMany()) as Record<string, unknown>[]);
 

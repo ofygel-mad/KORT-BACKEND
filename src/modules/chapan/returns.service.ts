@@ -52,7 +52,6 @@ const returnWithItems = {
       orderItemId: true,
       productName: true,
       size: true,
-      fabric: true,
       color: true,
       gender: true,
       qty: true,
@@ -72,7 +71,6 @@ export interface CreateReturnItemDto {
   orderItemId?: string;
   productName: string;
   size: string;
-  fabric?: string;
   color?: string;
   gender?: string;
   qty: number;
@@ -160,7 +158,6 @@ export async function create(
           orderItemId: item.orderItemId,
           productName: item.productName,
           size: item.size,
-          fabric: item.fabric,
           color: item.color,
           gender: item.gender,
           qty: item.qty,

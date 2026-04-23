@@ -20,7 +20,6 @@ export async function chapanRequestsRoutes(app: FastifyInstance) {
       notes: z.string().optional(),
       items: z.array(z.object({
         productName: z.string().min(1),
-        fabricPreference: z.string().optional(),
         size: z.string().optional(),
         quantity: z.number().int().min(1),
         notes: z.string().optional(),
@@ -62,7 +61,6 @@ export async function chapanRequestsRoutes(app: FastifyInstance) {
       source: z.string().optional(),
       items: z.array(z.object({
         productName: z.string().min(1),
-        fabricPreference: z.string().optional(),
         size: z.string().optional(),
         quantity: z.number().int().min(1),
         notes: z.string().optional(),

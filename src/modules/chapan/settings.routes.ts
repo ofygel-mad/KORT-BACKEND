@@ -34,7 +34,6 @@ export async function chapanSettingsRoutes(app: FastifyInstance) {
   }, async (request, reply) => {
     const body = z.object({
       productCatalog: z.array(z.string()).optional(),
-      fabricCatalog: z.array(z.string()).optional(),
       sizeCatalog: z.array(z.string()).optional(),
       workers: z.array(z.string()).optional(),
     }).parse(request.body);

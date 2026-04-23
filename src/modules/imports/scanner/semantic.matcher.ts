@@ -52,7 +52,6 @@ const FIELD_DEFS: Record<ImportTarget, FieldDef[]> = {
     { key: 'customer_name',  label: 'Клиент',           aliases: ['клиент', 'имя клиента', 'заказчик'],         preferredType: 'nameScore' },
     { key: 'phone',          label: 'Телефон',          aliases: ['тел', 'phone', 'номер'],                     preferredType: 'phoneScore' },
     { key: 'product_name',   label: 'Товар',            aliases: ['товар', 'product', 'наименование', 'изделие'] },
-    { key: 'fabric',         label: 'Ткань',            aliases: ['ткань', 'fabric', 'материал'],               preferredType: 'enumScore' },
     { key: 'size',           label: 'Размер',           aliases: ['размер', 'size'],                            preferredType: 'enumScore' },
     { key: 'color',          label: 'Цвет',             aliases: ['цвет', 'color', 'colour'],                   preferredType: 'enumScore' },
     { key: 'gender',         label: 'Муж/Жен',          aliases: ['муж', 'жен', 'gender', 'пол'],               preferredType: 'enumScore' },
@@ -73,7 +72,6 @@ const FIELD_DEFS: Record<ImportTarget, FieldDef[]> = {
   catalog: [
     { key: 'name',       label: 'Наименование',  aliases: ['наимен', 'name', 'товар', 'изделие', 'продукт'], required: true },
     { key: 'category',   label: 'Категория',     aliases: ['катал', 'категор', 'category', 'коллекц'] },
-    { key: 'fabric',     label: 'Ткань',         aliases: ['ткань', 'fabric', 'материал'] },
     { key: 'size_range', label: 'Размерный ряд', aliases: ['размер', 'size', 'ряд'] },
     { key: 'colors',     label: 'Цвета',         aliases: ['цвет', 'color', 'colour'] },
     { key: 'unit_price', label: 'Цена',          aliases: ['цена', 'price', 'стоим'],                       preferredType: 'moneyScore' },

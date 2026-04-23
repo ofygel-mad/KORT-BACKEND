@@ -29,7 +29,6 @@ type CreateOrderInput = {
   isDemandingClient?: boolean;
   items: Array<{
     productName: string;
-    fabric?: string;
     color?: string;
     gender?: string;
     length?: string;
@@ -142,7 +141,6 @@ async function buildOrderItemVariantSnapshot(
   orgId: string,
   item: {
     productName: string;
-    fabric?: string | null;
     color?: string | null;
     gender?: string | null;
     length?: string | null;
@@ -1264,7 +1262,6 @@ type UpdateOrderInput = {
   paymentBreakdown?: Record<string, number>;
   items?: Array<{
     productName: string;
-    fabric?: string;
     color?: string;
     gender?: string;
     length?: string;
@@ -1671,7 +1668,6 @@ export async function addActivity(orgId: string, orderId: string, authorId: stri
 
 type ProposedItem = {
   productName: string;
-  fabric?: string;
   size: string;
   quantity: number;
   unitPrice: number;
@@ -1767,7 +1763,7 @@ export async function approveChangeRequest(
     });
 
     // ── Diff: only ADD items that don't exist yet ────────────────────────────
-    // We match by (productName, size, fabric) tuple — exact matches are kept as-is.
+    // We match by (productName, size) tuple — exact matches are kept as-is.
     // New entries (not matching any current item) get a new OrderItem + queued ProductionTask.
     // Existing tasks are NEVER deleted — seamstress keeps her current work.
 

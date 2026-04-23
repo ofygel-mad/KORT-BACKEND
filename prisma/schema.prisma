@@ -186,11 +186,11 @@ model Organization {
   chapanRequests ChapanRequest[]
   chapanWorkers  ChapanWorker[]
   chapanProducts ChapanCatalogProduct[]
-  chapanFabrics  ChapanCatalogFabric[]
   chapanSizes    ChapanCatalogSize[]
   chapanPaymentMethods ChapanCatalogPaymentMethod[]
-  chapanInvoices ChapanInvoice[]
-  chapanReturns  ChapanReturn[]
+  chapanInvoices        ChapanInvoice[]
+  chapanReturns         ChapanReturn[]
+  chapanManualInvoices  ChapanManualInvoice[]
 
   // Warehouse
   warehouseItems            WarehouseItem[]
@@ -543,17 +543,6 @@ model ChapanCatalogProduct {
   @@map("chapan_catalog_products")
 }
 
-model ChapanCatalogFabric {
-  id    String @id @default(cuid())
-  orgId String @map("org_id")
-  name  String
-
-  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-
-  @@unique([orgId, name])
-  @@map("chapan_catalog_fabrics")
-}
-
 model ChapanCatalogSize {
   id        String @id @default(cuid())
   orgId     String @map("org_id")
@@ -626,7 +615,6 @@ model ChapanRequestItem {
   id               String  @id @default(cuid())
   requestId        String  @map("request_id")
   productName      String  @map("product_name")
-  fabricPreference String? @map("fabric_preference")
   size             String?
   quantity         Int     @default(1)
   notes            String?
@@ -706,7 +694,6 @@ model ChapanOrderItem {
   id                String  @id @default(cuid())
   orderId           String  @map("order_id")
   productName       String  @map("product_name")
-  fabric            String?
   size              String
   quantity          Int     @default(1)
   unitPrice         Float   @map("unit_price")
@@ -732,7 +719,6 @@ model ChapanProductionTask {
   orderId     String    @map("order_id")
   orderItemId String    @unique @map("order_item_id")
   productName String    @map("product_name")
-  fabric      String?
   size        String
   quantity    Int
   status      String    @default("pending")
@@ -940,7 +926,6 @@ model ChapanReturnItem {
   orderItemId     String? @map("order_item_id")
   productName     String  @map("product_name")
   size            String
-  fabric          String?
   color           String?
   gender          String?
   qty             Int     @default(1)
@@ -2005,4 +1990,42 @@ model ChatAttachment {
 
   @@index([messageId])
   @@map("chat_attachments")
+}
+
+
+model ChapanManualInvoice {
+  id            String   @id @default(cuid())
+  orgId         String   @map("org_id")
+  type          String
+  invoiceNum    String   @map("invoice_num")
+  title         String
+  notes         String?
+  createdById   String   @map("created_by_id")
+  createdByName String   @map("created_by_name")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  org   Organization             @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  items ChapanManualInvoiceItem[]
+
+  @@unique([orgId, invoiceNum])
+  @@index([orgId, type])
+  @@index([orgId, createdAt])
+  @@map("chapan_manual_invoices")
+}
+
+model ChapanManualInvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String   @map("invoice_id")
+  productName String   @map("product_name")
+  color       String?
+  size        String?
+  quantity    Int      @default(1)
+  unitPrice   Float    @map("unit_price")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  invoice ChapanManualInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("chapan_manual_invoice_items")
 }

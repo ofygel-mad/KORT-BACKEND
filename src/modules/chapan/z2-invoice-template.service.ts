@@ -12,7 +12,6 @@ type TemplateOrder = {
   createdAt: Date;
   items: Array<{
     productName: string;
-    fabric: string | null;
     size: string;
     quantity: number;
     unitPrice: number;
@@ -366,7 +365,6 @@ async function getTemplateOrder(orgId: string, orderId: string): Promise<Templat
       items: {
         select: {
           productName: true,
-          fabric: true,
           size: true,
           quantity: true,
           unitPrice: true,
@@ -387,7 +385,6 @@ async function getTemplateOrders(orgId: string, orderIds: string[]): Promise<Tem
       items: {
         select: {
           productName: true,
-          fabric: true,
           size: true,
           quantity: true,
           unitPrice: true,
