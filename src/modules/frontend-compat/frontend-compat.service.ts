@@ -1076,6 +1076,11 @@ export async function listCustomerActivities(orgId: string, customerId: string) 
 
 export type EntityCursors = Record<string, Date>;
 
+// Per-org cache of raw aggregate timestamps so concurrent SSE connections from
+// the same org share one DB round-trip instead of each running 8 queries.
+const _timestampCache = new Map<string, { ts: Record<string, Date | null>; expiresAt: number }>();
+const _CACHE_TTL_MS = 12_000;
+
 export async function detectEntityChanges(
   orgId: string,
   cursors: EntityCursors,
@@ -1116,20 +1121,32 @@ export async function detectEntityChanges(
     },
   ];
 
-  const results = await Promise.allSettled(checks.map((c) => c.fn()));
-  const changed: string[] = [];
+  const now = Date.now();
+  let timestamps: Record<string, Date | null>;
 
-  results.forEach((result, i) => {
-    if (result.status !== 'fulfilled' || !result.value) return;
-    const check = checks[i];
-    if (!check) return;
-    const latest = result.value;
+  const cached = _timestampCache.get(orgId);
+  if (cached && cached.expiresAt > now) {
+    timestamps = cached.ts;
+  } else {
+    const results = await Promise.allSettled(checks.map((c) => c.fn()));
+    timestamps = {};
+    results.forEach((result, i) => {
+      const key = checks[i]?.key;
+      if (key) timestamps[key] = result.status === 'fulfilled' ? result.value : null;
+    });
+    _timestampCache.set(orgId, { ts: timestamps, expiresAt: now + _CACHE_TTL_MS });
+  }
+
+  const changed: string[] = [];
+  for (const check of checks) {
+    const latest = timestamps[check.key];
+    if (!latest) continue;
     const prev = cursors[check.key];
     if (!prev || latest > prev) {
       changed.push(check.key);
       cursors[check.key] = latest;
     }
-  });
+  }
 
   return changed;
 }
