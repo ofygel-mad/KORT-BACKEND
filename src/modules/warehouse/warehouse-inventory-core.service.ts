@@ -1022,7 +1022,7 @@ export async function releaseStockReservationInTx(
     },
   });
   if (!reservation) {
-    throw new AppError(404, 'Р РµР·РµСЂРІ РЅРµ РЅР°Р№РґРµРЅ', 'NOT_FOUND');
+    throw new AppError(404, 'Резерв не найден', 'NOT_FOUND');
   }
 
   if (reservation.status !== 'active') {
@@ -1276,7 +1276,7 @@ export async function consumeStockReservationInTx(
     },
   });
   if (!reservation) {
-    throw new AppError(404, 'Р РµР·РµСЂРІ РЅРµ РЅР°Р№РґРµРЅ', 'NOT_FOUND');
+    throw new AppError(404, 'Резерв не найден', 'NOT_FOUND');
   }
 
   if (reservation.status === 'consumed') {
@@ -1288,7 +1288,7 @@ export async function consumeStockReservationInTx(
   }
 
   if (reservation.status !== 'active') {
-    throw new AppError(409, 'Р РµР·РµСЂРІ РЅРµР»СЊР·СЏ СЃРїРёСЃР°С‚СЊ РёР· С‚РµРєСѓС‰РµРіРѕ СЃС‚Р°С‚СѓСЃР°', 'CONFLICT');
+    throw new AppError(409, 'Резерв нельзя списать из текущего статуса', 'CONFLICT');
   }
 
   const compatibilityItem = await ensureCompatibilityItem(tx, orgId, reservation.variant);
@@ -1299,11 +1299,11 @@ export async function consumeStockReservationInTx(
       where: { id: allocation.stockBalanceId, orgId },
     });
     if (!balance) {
-      throw new AppError(404, 'Р‘Р°Р»Р°РЅСЃ СЂРµР·РµСЂРІР° РЅРµ РЅР°Р№РґРµРЅ', 'NOT_FOUND');
+      throw new AppError(404, 'Баланс резерва не найден', 'NOT_FOUND');
     }
 
     if (balance.qtyReserved < allocation.qtyReserved || balance.qtyOnHand < allocation.qtyReserved) {
-      throw new AppError(409, 'Р РµР·РµСЂРІРЅС‹Р№ Р±Р°Р»Р°РЅСЃ РїРѕРІСЂРµР¶РґРµРЅ РёР»Рё СѓР¶Рµ СЃРїРёСЃР°РЅ', 'CONFLICT');
+      throw new AppError(409, 'Резервный баланс поврежден или уже списан', 'CONFLICT');
     }
 
     await tx.warehouseStockBalance.update({

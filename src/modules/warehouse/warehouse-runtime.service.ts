@@ -255,7 +255,7 @@ async function ensureSiteAccess<T extends Tx>(db: T, orgId: string, siteId: stri
   });
 
   if (!site) {
-    throw new AppError(404, 'РЎРєР»Р°Рґ РЅРµ РЅР°Р№РґРµРЅ', 'NOT_FOUND');
+    throw new AppError(404, 'Склад не найден', 'NOT_FOUND');
   }
 
   return site;

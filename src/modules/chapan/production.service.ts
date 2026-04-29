@@ -81,7 +81,7 @@ export async function syncOrderStatus(orderId: string, authorId: string, authorN
           data: {
             orderId,
             type: 'status_change',
-            content: `${getOrderStatusLabel(order.status)} в†’ ${getOrderStatusLabel('confirmed')}`,
+            content: `${getOrderStatusLabel(order.status)} -> ${getOrderStatusLabel('confirmed')}`,
             authorId,
             authorName,
           },
