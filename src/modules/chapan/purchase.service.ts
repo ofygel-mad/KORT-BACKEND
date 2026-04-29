@@ -33,6 +33,8 @@ const invoiceSelect = {
     select: {
       id: true,
       productName: true,
+      gender: true,
+      length: true,
       color: true,
       size: true,
       quantity: true,
@@ -46,6 +48,8 @@ const invoiceSelect = {
 
 export interface ManualInvoiceItemDto {
   productName: string;
+  gender?: string;
+  length?: string;
   color?: string;
   size?: string;
   quantity: number;
@@ -98,6 +102,8 @@ export async function create(
       items: {
         create: dto.items.map((item) => ({
           productName: item.productName,
+          gender: item.gender,
+          length: item.length,
           color: item.color,
           size: item.size,
           quantity: item.quantity,
@@ -123,6 +129,8 @@ export async function update(
         data: dto.items.map((item) => ({
           invoiceId: id,
           productName: item.productName,
+          gender: item.gender,
+          length: item.length,
           color: item.color,
           size: item.size,
           quantity: item.quantity,
