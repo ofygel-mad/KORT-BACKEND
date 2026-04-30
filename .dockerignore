@@ -3,6 +3,8 @@ node_modules
 .gitignore
 .env
 .env.*
+../_database-report
+*.dump
 coverage
 npm-debug.log
 pnpm-debug.log

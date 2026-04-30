@@ -33,6 +33,8 @@ const invoiceSelect = {
     select: {
       id: true,
       productName: true,
+      gender: true,
+      length: true,
       color: true,
       size: true,
       quantity: true,
@@ -46,6 +48,8 @@ const invoiceSelect = {
 
 export interface ManualInvoiceItemDto {
   productName: string;
+  gender?: string;
+  length?: string;
   color?: string;
   size?: string;
   quantity: number;
@@ -98,6 +102,8 @@ export async function create(
       items: {
         create: dto.items.map((item) => ({
           productName: item.productName,
+          gender: item.gender,
+          length: item.length,
           color: item.color,
           size: item.size,
           quantity: item.quantity,
@@ -123,6 +129,8 @@ export async function update(
         data: dto.items.map((item) => ({
           invoiceId: id,
           productName: item.productName,
+          gender: item.gender,
+          length: item.length,
           color: item.color,
           size: item.size,
           quantity: item.quantity,
@@ -148,9 +156,17 @@ export async function remove(orgId: string, id: string) {
   return { deleted: true };
 }
 
-export async function generateXlsx(orgId: string, id: string) {
-  const invoice = await getById(orgId, id);
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  KZT: '₸', RUB: '₽', USD: '$', EUR: '€', CNY: '¥',
+};
 
+export async function generateXlsx(orgId: string, id: string) {
+  const [invoice, org] = await Promise.all([
+    getById(orgId, id),
+    prisma.organization.findUnique({ where: { id: orgId }, select: { currency: true } }),
+  ]);
+
+  const symbol = CURRENCY_SYMBOLS[org?.currency ?? 'KZT'] ?? '₸';
   const typeLabel = invoice.type === 'workshop' ? 'Цех' : 'Базар';
   const totalAmount = invoice.items.reduce(
     (sum, item) => sum + item.unitPrice * item.quantity,
@@ -168,7 +184,9 @@ export async function generateXlsx(orgId: string, id: string) {
   ws.columns = [
     { key: 'num',         width: 6  },
     { key: 'productName', width: 32 },
-    { key: 'color',       width: 14 },
+    { key: 'gender',      width: 14 },
+    { key: 'length',      width: 16 },
+    { key: 'color',       width: 16 },
     { key: 'size',        width: 12 },
     { key: 'quantity',    width: 10 },
     { key: 'unitPrice',   width: 14 },
@@ -176,12 +194,12 @@ export async function generateXlsx(orgId: string, id: string) {
   ];
 
   // Title block
-  ws.mergeCells('A1:G1');
+  ws.mergeCells('A1:I1');
   ws.getCell('A1').value = invoice.title;
   ws.getCell('A1').font = { bold: true, size: 14 };
   ws.getCell('A1').alignment = { horizontal: 'center' };
 
-  ws.mergeCells('A2:G2');
+  ws.mergeCells('A2:I2');
   ws.getCell('A2').value = `${invoice.invoiceNum} · ${typeLabel} · ${new Date(invoice.createdAt).toLocaleDateString('ru-KZ')}`;
   ws.getCell('A2').alignment = { horizontal: 'center' };
   ws.getCell('A2').font = { color: { argb: 'FF888888' } };
@@ -191,6 +209,15 @@ export async function generateXlsx(orgId: string, id: string) {
   // Header row
   const headerRow = ws.addRow(['№', 'Наименование', 'Цвет', 'Размер', 'Кол-во', 'Цена', 'Итого']);
   headerRow.font = { bold: true };
+  headerRow.getCell(1).value = '№';
+  headerRow.getCell(2).value = 'Наименование';
+  headerRow.getCell(3).value = 'Пол';
+  headerRow.getCell(4).value = 'Длина';
+  headerRow.getCell(5).value = 'Цвет';
+  headerRow.getCell(6).value = 'Размер';
+  headerRow.getCell(7).value = 'Кол-во';
+  headerRow.getCell(8).value = 'Цена';
+  headerRow.getCell(9).value = 'Итого';
   headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F0F0' } };
   headerRow.eachCell((cell) => {
     cell.border = {
@@ -205,6 +232,8 @@ export async function generateXlsx(orgId: string, id: string) {
     const row = ws.addRow([
       idx + 1,
       item.productName,
+      item.gender ?? '',
+      item.length ?? '',
       item.color ?? '',
       item.size ?? '',
       item.quantity,
@@ -218,17 +247,27 @@ export async function generateXlsx(orgId: string, id: string) {
       };
     });
     // Format currency cells
-    ['F', 'G'].forEach((col) => {
-      ws.getCell(`${col}${row.number}`).numFmt = '#,##0 "₸"';
+    ['H', 'I'].forEach((col) => {
+      ws.getCell(`${col}${row.number}`).numFmt = `#,##0 "${symbol}"`;
     });
-    ws.getCell(`E${row.number}`).alignment = { horizontal: 'center' };
-    ws.getCell(`A${row.number}`).alignment = { horizontal: 'center' };
+    ['A', 'C', 'D', 'F', 'G'].forEach((col) => {
+      ws.getCell(`${col}${row.number}`).alignment = { horizontal: 'center' };
+    });
   });
 
   // Total row
   ws.addRow([]);
-  const totalRow = ws.addRow(['', '', '', '', '', 'ИТОГО:', fmt(totalAmount) + ' ₸']);
+  const totalRow = ws.addRow(['', '', '', '', '', 'ИТОГО:', fmt(totalAmount) + ' ' + symbol]);
   totalRow.font = { bold: true };
+  totalRow.getCell(1).value = '';
+  totalRow.getCell(2).value = '';
+  totalRow.getCell(3).value = '';
+  totalRow.getCell(4).value = '';
+  totalRow.getCell(5).value = '';
+  totalRow.getCell(6).value = '';
+  totalRow.getCell(7).value = '';
+  totalRow.getCell(8).value = 'ИТОГО:';
+  totalRow.getCell(9).value = fmt(totalAmount) + ' ' + symbol;
 
   if (invoice.notes) {
     ws.addRow([]);

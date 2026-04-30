@@ -25,6 +25,15 @@ function parseCorsOrigins(value: string) {
   )];
 }
 
+function getDevCorsOrigins() {
+  return [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:4173',
+    'http://127.0.0.1:4173',
+  ];
+}
+
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(16),
@@ -59,7 +68,10 @@ function loadConfig() {
     process.exit(1);
   }
 
-  const corsOrigins = parseCorsOrigins(parsed.data.CORS_ORIGIN);
+  const corsOrigins = [...new Set([
+    ...parseCorsOrigins(parsed.data.CORS_ORIGIN),
+    ...getDevCorsOrigins(),
+  ])];
 
   if (corsOrigins.length === 0) {
     console.error('Invalid environment variables:', { CORS_ORIGIN: ['Provide at least one allowed origin'] });

@@ -60,6 +60,7 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       createdFrom,
       createdTo,
       managerId: query.managerId || undefined,
+      customerType: query.customerType || undefined,
     });
     return { count: orders.length, results: orders };
   });
@@ -117,6 +118,7 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       bankCommissionAmount: z.number().min(0).optional(),
       managerNote: z.string().optional(),
       sourceRequestId: z.string().optional(),
+      customerType: z.enum(['retail', 'wholesale']).optional(),
     }).refine(
       (d) => !!(d.clientPhone?.trim()) || !!(d.clientPhoneForeign?.trim()),
       { message: 'Укажите казахстанский или иностранный номер телефона', path: ['clientPhone'] },

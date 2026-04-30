@@ -230,10 +230,72 @@ model Organization {
   accountingEntries    AccountingEntry[]
   accountingGaps       AccountingGap[]
   importTemplates      ImportTemplate[]
+  adCampaigns          AdCampaign[]
+  adDailyMetrics       AdDailyMetric[]
   conversations        Conversation[]
   chatAttachments      ChatAttachment[]
 
   @@map("organizations")
+}
+
+model ExchangeRate {
+  id        String   @id @default(cuid())
+  base      String
+  quote     String
+  rate      Float
+  source    String   @default("NBK")
+  rateDate  DateTime @map("rate_date")
+  fetchedAt DateTime @default(now()) @map("fetched_at")
+
+  @@unique([base, quote, rateDate, source])
+  @@index([base, quote, rateDate])
+  @@map("exchange_rates")
+}
+
+model AdCampaign {
+  id          String   @id @default(cuid())
+  orgId       String   @map("org_id")
+  name        String
+  channel     String   @default("target")
+  status      String   @default("active")
+  managerName String?  @map("manager_name")
+  creativeUrl String?  @map("creative_url")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  org     Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  metrics AdDailyMetric[]
+
+  @@index([orgId, channel, status])
+  @@index([orgId, name])
+  @@map("ad_campaigns")
+}
+
+model AdDailyMetric {
+  id           String   @id @default(cuid())
+  orgId        String   @map("org_id")
+  campaignId   String   @map("campaign_id")
+  date         DateTime
+  spendUsd     Float    @default(0) @map("spend_usd")
+  exchangeRate Float    @default(0) @map("exchange_rate")
+  spendKzt     Float    @default(0) @map("spend_kzt")
+  impressions  Int      @default(0)
+  reach        Int      @default(0)
+  clicks       Int      @default(0)
+  leads        Int      @default(0)
+  sales        Int      @default(0)
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  campaign AdCampaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, date])
+  @@index([orgId, date])
+  @@index([orgId, campaignId])
+  @@map("ad_daily_metrics")
 }
 
 model Membership {
@@ -569,19 +631,23 @@ model ChapanCatalogPaymentMethod {
 }
 
 model ChapanClient {
-  id        String   @id @default(cuid())
-  orgId     String   @map("org_id")
-  fullName  String   @map("full_name")
-  phone     String
-  email     String?
-  company   String?
-  notes     String?
-  createdAt DateTime @default(now()) @map("created_at")
+  id            String   @id @default(cuid())
+  orgId         String   @map("org_id")
+  fullName      String   @map("full_name")
+  phone         String
+  email         String?
+  company       String?
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  crmCustomerId String?  @map("crm_customer_id")
 
   org    Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
   orders ChapanOrder[]
 
   @@index([orgId])
+  @@index([orgId, phone])
+  @@index([crmCustomerId])
   @@map("chapan_clients")
 }
 
@@ -666,6 +732,7 @@ model ChapanOrder {
   // Null for orders created before this field was introduced.
   managerId     String?   @map("manager_id")
   managerName   String?   @map("manager_name")
+  customerType  String    @default("retail") @map("customer_type")  // retail | wholesale
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
@@ -2018,6 +2085,8 @@ model ChapanManualInvoiceItem {
   id          String   @id @default(cuid())
   invoiceId   String   @map("invoice_id")
   productName String   @map("product_name")
+  gender      String?
+  length      String?
   color       String?
   size        String?
   quantity    Int      @default(1)

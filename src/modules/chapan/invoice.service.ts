@@ -58,6 +58,14 @@ const TABLE_COLS: TableColumn[] = [
   { key: 'lineTotal', width: 14, align: 'right' },
 ];
 
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  KZT: '₸', RUB: '₽', USD: '$', EUR: '€', CNY: '¥',
+};
+
+function getCurrencySymbol(currency: string): string {
+  return CURRENCY_SYMBOLS[currency] ?? currency;
+}
+
 function thinBorder(color: string) {
   const side = { style: 'thin' as const, color: { argb: color } };
   return { top: side, bottom: side, left: side, right: side };
@@ -81,6 +89,7 @@ function applyMetaPair(
   valueEndCol: number,
   label: string,
   value: string | number,
+  numFmtOverride?: string,
 ) {
   ws.mergeCells(row, labelStartCol, row, labelEndCol);
   ws.mergeCells(row, valueStartCol, row, valueEndCol);
@@ -98,7 +107,7 @@ function applyMetaPair(
   valueCell.alignment = { horizontal: 'center', vertical: 'middle' };
   valueCell.border = thinBorder(BORDER_ACCENT);
   if (typeof value === 'number') {
-    valueCell.numFmt = '#,##0';
+    valueCell.numFmt = numFmtOverride ?? '#,##0';
   }
 }
 
@@ -134,7 +143,10 @@ async function createWorkbook(orgName: string) {
 async function generateBrandedInvoiceXlsx(
   orgName: string,
   document: InvoiceDocumentPayload,
+  currency = 'KZT',
 ): Promise<Buffer> {
+  const symbol = getCurrencySymbol(currency);
+  const moneyFmt = `#,##0 "${symbol}"`;
   const { wb, ws } = await createWorkbook(orgName);
   const totals = calculateInvoiceDocumentTotals(document);
 
@@ -191,7 +203,7 @@ async function generateBrandedInvoiceXlsx(
       cell.alignment = { horizontal: col.align, vertical: 'middle', wrapText: true };
       cell.border = thinBorder(BORDER_SOFT);
       if (typeof value === 'number' && col.align === 'right') {
-        cell.numFmt = '#,##0';
+        cell.numFmt = moneyFmt;
       }
     });
 
@@ -212,7 +224,7 @@ async function generateBrandedInvoiceXlsx(
   const summaryStartRow = rowIndex + 1;
   ws.getRow(summaryStartRow - 1).height = 10;
   applyMetaPair(ws, summaryStartRow, 7, 8, 9, 10, 'Итого Кол.во', totals.totalQuantity);
-  applyMetaPair(ws, summaryStartRow + 1, 7, 8, 9, 10, 'Итого Сумма', totals.totalAmount);
+  applyMetaPair(ws, summaryStartRow + 1, 7, 8, 9, 10, 'Итого Сумма', totals.totalAmount, moneyFmt);
   ws.getRow(summaryStartRow).height = 22;
   ws.getRow(summaryStartRow + 1).height = 22;
 
@@ -277,7 +289,10 @@ export async function generateInvoiceXlsx(
     },
   });
 
-  const profile = await prisma.chapanProfile.findUnique({ where: { orgId } });
+  const [profile, org] = await Promise.all([
+    prisma.chapanProfile.findUnique({ where: { orgId } }),
+    prisma.organization.findUnique({ where: { id: orgId }, select: { currency: true } }),
+  ]);
   const orgName = profile?.displayName ?? 'Чапан';
   const fallbackDocument = ordersToDocument([order as OrderForInvoice], linkedInvoice ?? undefined);
   const linkedInvoiceDocumentPayload = (linkedInvoice as { documentPayload?: unknown } | null)?.documentPayload;
@@ -285,7 +300,7 @@ export async function generateInvoiceXlsx(
     ? normalizeInvoiceDocumentPayload(linkedInvoiceDocumentPayload, fallbackDocument)
     : fallbackDocument;
 
-  return generateBrandedInvoiceXlsx(orgName, document);
+  return generateBrandedInvoiceXlsx(orgName, document, org?.currency ?? 'KZT');
 }
 
 export async function generateBatchInvoiceXlsx(
@@ -319,7 +334,10 @@ export async function generateBatchInvoiceXlsx(
     throw new NotFoundError('ChapanOrder', orderIds.join(','));
   }
 
-  const profile = await prisma.chapanProfile.findUnique({ where: { orgId } });
+  const [profile, org] = await Promise.all([
+    prisma.chapanProfile.findUnique({ where: { orgId } }),
+    prisma.organization.findUnique({ where: { id: orgId }, select: { currency: true } }),
+  ]);
   const orgName = profile?.displayName ?? 'Чапан';
   const resolvedInvoiceMeta = invoiceMeta ?? {
     invoiceNumber: await getNextInvoiceNumberCandidate(prisma, orgId, new Date()),
@@ -336,5 +354,5 @@ export async function generateBatchInvoiceXlsx(
     )
     : fallbackDocument;
 
-  return generateBrandedInvoiceXlsx(orgName, document);
+  return generateBrandedInvoiceXlsx(orgName, document, org?.currency ?? 'KZT');
 }

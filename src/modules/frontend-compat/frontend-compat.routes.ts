@@ -169,7 +169,7 @@ export async function frontendCompatRoutes(app: FastifyInstance) {
             if (changed.length > 0) send('entity_update', { entities: changed });
           })
           .catch(() => { /* ignore transient DB errors */ });
-      }, 5_000);
+      }, 15_000);
     }
 
     request.raw.on('close', () => {
