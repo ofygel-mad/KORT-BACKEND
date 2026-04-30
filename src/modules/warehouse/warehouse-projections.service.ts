@@ -1059,7 +1059,7 @@ export async function getSiteFeed(
   });
 
   if (!site) {
-    throw new AppError(404, 'Склад не найден', 'NOT_FOUND');
+    throw new AppError(404, 'РЎРєР»Р°Рґ РЅРµ РЅР°Р№РґРµРЅ', 'NOT_FOUND');
   }
 
   const [reservations, documents, outbox, inbox, tasks, exceptions] = await Promise.all([
@@ -1253,7 +1253,7 @@ export async function getSiteHealthSnapshot(orgId: string, siteId: string) {
   });
 
   if (!site) {
-    throw new AppError(404, 'Склад не найден', 'NOT_FOUND');
+    throw new AppError(404, 'РЎРєР»Р°Рґ РЅРµ РЅР°Р№РґРµРЅ', 'NOT_FOUND');
   }
 
   const [

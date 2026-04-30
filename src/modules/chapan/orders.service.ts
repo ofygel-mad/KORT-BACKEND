@@ -55,7 +55,6 @@ type CreateOrderInput = {
   bankCommissionAmount?: number;
   managerNote?: string;
   sourceRequestId?: string;
-  customerType?: string;
 };
 
 type OrderRecord = Prisma.ChapanOrderGetPayload<{
@@ -457,7 +456,6 @@ export async function list(orgId: string, filters?: {
   createdFrom?: Date;
   createdTo?: Date;
   managerId?: string;
-  customerType?: string;
 }) {
   const where: Record<string, unknown> = { orgId, deletedAt: null };
 
@@ -498,9 +496,6 @@ export async function list(orgId: string, filters?: {
   }
   if (filters?.managerId) {
     where.managerId = filters.managerId;
-  }
-  if (filters?.customerType) {
-    where.customerType = filters.customerType;
   }
 
   const orderBy: Record<string, string> = {};
@@ -712,7 +707,6 @@ export async function create(orgId: string, authorId: string, authorName: string
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
         managerId: authorId,
         managerName: authorName,
-        customerType: data.customerType ?? 'retail',
         items: {
           create: orderItemCreates,
         },

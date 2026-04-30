@@ -4,8 +4,6 @@ import * as svc from './purchase.service.js';
 
 const itemSchema = z.object({
   productName: z.string().min(1),
-  gender: z.string().optional(),
-  length: z.string().optional(),
   color: z.string().optional(),
   size: z.string().optional(),
   quantity: z.number().int().min(1),
