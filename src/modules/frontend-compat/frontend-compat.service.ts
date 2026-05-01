@@ -729,7 +729,6 @@ export function getExchangeRates() {
       KZT: 1,
       USD: 500,
       EUR: 545,
-      RUB: 5.4,
     },
   };
 }

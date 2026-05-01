@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../lib/errors.js';
+import { normalizeOrgCurrency } from '../../lib/currency.js';
 import {
   buildInvoiceDocumentPayload,
   calculateInvoiceDocumentTotals,
@@ -59,7 +60,7 @@ const TABLE_COLS: TableColumn[] = [
 ];
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
-  KZT: '₸', RUB: '₽', USD: '$', EUR: '€', CNY: '¥',
+  KZT: '₸', USD: '$', EUR: '€', CNY: '¥',
 };
 
 function getCurrencySymbol(currency: string): string {
@@ -300,7 +301,7 @@ export async function generateInvoiceXlsx(
     ? normalizeInvoiceDocumentPayload(linkedInvoiceDocumentPayload, fallbackDocument)
     : fallbackDocument;
 
-  return generateBrandedInvoiceXlsx(orgName, document, org?.currency ?? 'KZT');
+  return generateBrandedInvoiceXlsx(orgName, document, normalizeOrgCurrency(org?.currency));
 }
 
 export async function generateBatchInvoiceXlsx(
@@ -354,5 +355,5 @@ export async function generateBatchInvoiceXlsx(
     )
     : fallbackDocument;
 
-  return generateBrandedInvoiceXlsx(orgName, document, org?.currency ?? 'KZT');
+  return generateBrandedInvoiceXlsx(orgName, document, normalizeOrgCurrency(org?.currency));
 }

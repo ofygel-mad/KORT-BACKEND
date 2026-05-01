@@ -1,8 +1,13 @@
 import ExcelJS from 'exceljs';
-import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../lib/errors.js';
+import {
+  formatOrgCurrencyAmount,
+  getOrgCurrencySymbol,
+  normalizeOrgCurrency,
+} from '../../lib/currency.js';
+import { prisma } from '../../lib/prisma.js';
 
-// ── Invoice number generation ─────────────────────────────────────────────────
+const MANUAL_INVOICE_PREFIX = '\u041c\u041d';
 
 async function nextInvoiceNumber(orgId: string): Promise<string> {
   const last = await prisma.chapanManualInvoice.findFirst({
@@ -11,13 +16,14 @@ async function nextInvoiceNumber(orgId: string): Promise<string> {
     select: { invoiceNum: true },
   });
 
-  if (!last) return 'МН-0001';
-  const match = last.invoiceNum.match(/^МН-(\d+)$/);
-  const seq = match?.[1] ? parseInt(match[1], 10) + 1 : 1;
-  return `МН-${String(seq).padStart(4, '0')}`;
-}
+  if (!last) {
+    return `${MANUAL_INVOICE_PREFIX}-0001`;
+  }
 
-// ── Select shape ──────────────────────────────────────────────────────────────
+  const match = last.invoiceNum.match(new RegExp(`^${MANUAL_INVOICE_PREFIX}-(\\d+)$`));
+  const seq = match?.[1] ? Number.parseInt(match[1], 10) + 1 : 1;
+  return `${MANUAL_INVOICE_PREFIX}-${String(seq).padStart(4, '0')}`;
+}
 
 const invoiceSelect = {
   id: true,
@@ -44,8 +50,6 @@ const invoiceSelect = {
   },
 } as const;
 
-// ── DTOs ──────────────────────────────────────────────────────────────────────
-
 export interface ManualInvoiceItemDto {
   productName: string;
   gender?: string;
@@ -63,8 +67,6 @@ export interface CreateManualInvoiceDto {
   items: ManualInvoiceItemDto[];
 }
 
-// ── Service functions ─────────────────────────────────────────────────────────
-
 export async function list(orgId: string, type?: string) {
   return prisma.chapanManualInvoice.findMany({
     where: { orgId, ...(type ? { type } : {}) },
@@ -78,7 +80,11 @@ export async function getById(orgId: string, id: string) {
     where: { orgId, id },
     select: invoiceSelect,
   });
-  if (!invoice) throw new NotFoundError('Накладная не найдена');
+
+  if (!invoice) {
+    throw new NotFoundError('\u041d\u0430\u043a\u043b\u0430\u0434\u043d\u0430\u044f \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u0430');
+  }
+
   return invoice;
 }
 
@@ -156,81 +162,89 @@ export async function remove(orgId: string, id: string) {
   return { deleted: true };
 }
 
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  KZT: '₸', RUB: '₽', USD: '$', EUR: '€', CNY: '¥',
-};
-
 export async function generateXlsx(orgId: string, id: string) {
   const [invoice, org] = await Promise.all([
     getById(orgId, id),
-    prisma.organization.findUnique({ where: { id: orgId }, select: { currency: true } }),
+    prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { currency: true },
+    }),
   ]);
 
-  const symbol = CURRENCY_SYMBOLS[org?.currency ?? 'KZT'] ?? '₸';
-  const typeLabel = invoice.type === 'workshop' ? 'Цех' : 'Базар';
+  const currency = normalizeOrgCurrency(org?.currency);
+  const currencySymbol = getOrgCurrencySymbol(currency);
+  const typeLabel = invoice.type === 'workshop'
+    ? '\u0426\u0435\u0445'
+    : '\u0411\u0430\u0437\u0430\u0440';
   const totalAmount = invoice.items.reduce(
     (sum, item) => sum + item.unitPrice * item.quantity,
     0,
   );
-  const fmt = (n: number) =>
-    new Intl.NumberFormat('ru-KZ', { maximumFractionDigits: 0 }).format(n);
 
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'KORT';
   workbook.created = new Date();
 
-  const ws = workbook.addWorksheet('Закуп');
+  const worksheet = workbook.addWorksheet('\u0417\u0430\u043a\u0443\u043f');
 
-  ws.columns = [
-    { key: 'num',         width: 6  },
+  worksheet.columns = [
+    { key: 'num', width: 6 },
     { key: 'productName', width: 32 },
-    { key: 'gender',      width: 14 },
-    { key: 'length',      width: 16 },
-    { key: 'color',       width: 16 },
-    { key: 'size',        width: 12 },
-    { key: 'quantity',    width: 10 },
-    { key: 'unitPrice',   width: 14 },
-    { key: 'total',       width: 16 },
+    { key: 'gender', width: 14 },
+    { key: 'length', width: 16 },
+    { key: 'color', width: 16 },
+    { key: 'size', width: 12 },
+    { key: 'quantity', width: 10 },
+    { key: 'unitPrice', width: 14 },
+    { key: 'total', width: 16 },
   ];
 
-  // Title block
-  ws.mergeCells('A1:I1');
-  ws.getCell('A1').value = invoice.title;
-  ws.getCell('A1').font = { bold: true, size: 14 };
-  ws.getCell('A1').alignment = { horizontal: 'center' };
+  worksheet.mergeCells('A1:I1');
+  worksheet.getCell('A1').value = invoice.title;
+  worksheet.getCell('A1').font = { bold: true, size: 14 };
+  worksheet.getCell('A1').alignment = { horizontal: 'center' };
 
-  ws.mergeCells('A2:I2');
-  ws.getCell('A2').value = `${invoice.invoiceNum} · ${typeLabel} · ${new Date(invoice.createdAt).toLocaleDateString('ru-KZ')}`;
-  ws.getCell('A2').alignment = { horizontal: 'center' };
-  ws.getCell('A2').font = { color: { argb: 'FF888888' } };
+  worksheet.mergeCells('A2:I2');
+  worksheet.getCell('A2').value = [
+    invoice.invoiceNum,
+    typeLabel,
+    new Date(invoice.createdAt).toLocaleDateString('ru-KZ'),
+  ].join(' - ');
+  worksheet.getCell('A2').alignment = { horizontal: 'center' };
+  worksheet.getCell('A2').font = { color: { argb: 'FF888888' } };
 
-  ws.addRow([]);
+  worksheet.addRow([]);
 
-  // Header row
-  const headerRow = ws.addRow(['№', 'Наименование', 'Цвет', 'Размер', 'Кол-во', 'Цена', 'Итого']);
+  const headerRow = worksheet.addRow([
+    '\u2116',
+    '\u041d\u0430\u0438\u043c\u0435\u043d\u043e\u0432\u0430\u043d\u0438\u0435',
+    '\u041f\u043e\u043b',
+    '\u0414\u043b\u0438\u043d\u0430',
+    '\u0426\u0432\u0435\u0442',
+    '\u0420\u0430\u0437\u043c\u0435\u0440',
+    '\u041a\u043e\u043b-\u0432\u043e',
+    '\u0426\u0435\u043d\u0430',
+    '\u0418\u0442\u043e\u0433\u043e',
+  ]);
   headerRow.font = { bold: true };
-  headerRow.getCell(1).value = '№';
-  headerRow.getCell(2).value = 'Наименование';
-  headerRow.getCell(3).value = 'Пол';
-  headerRow.getCell(4).value = 'Длина';
-  headerRow.getCell(5).value = 'Цвет';
-  headerRow.getCell(6).value = 'Размер';
-  headerRow.getCell(7).value = 'Кол-во';
-  headerRow.getCell(8).value = 'Цена';
-  headerRow.getCell(9).value = 'Итого';
-  headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F0F0' } };
+  headerRow.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFF0F0F0' },
+  };
   headerRow.eachCell((cell) => {
     cell.border = {
-      top: { style: 'thin' }, bottom: { style: 'thin' },
-      left: { style: 'thin' }, right: { style: 'thin' },
+      top: { style: 'thin' },
+      bottom: { style: 'thin' },
+      left: { style: 'thin' },
+      right: { style: 'thin' },
     };
     cell.alignment = { horizontal: 'center' };
   });
 
-  // Data rows
-  invoice.items.forEach((item, idx) => {
-    const row = ws.addRow([
-      idx + 1,
+  invoice.items.forEach((item, index) => {
+    const row = worksheet.addRow([
+      index + 1,
       item.productName,
       item.gender ?? '',
       item.length ?? '',
@@ -240,42 +254,50 @@ export async function generateXlsx(orgId: string, id: string) {
       item.unitPrice,
       item.unitPrice * item.quantity,
     ]);
+
     row.eachCell((cell) => {
       cell.border = {
-        top: { style: 'thin' }, bottom: { style: 'thin' },
-        left: { style: 'thin' }, right: { style: 'thin' },
+        top: { style: 'thin' },
+        bottom: { style: 'thin' },
+        left: { style: 'thin' },
+        right: { style: 'thin' },
       };
     });
-    // Format currency cells
-    ['H', 'I'].forEach((col) => {
-      ws.getCell(`${col}${row.number}`).numFmt = `#,##0 "${symbol}"`;
+
+    ['H', 'I'].forEach((column) => {
+      worksheet.getCell(`${column}${row.number}`).numFmt = `#,##0 "${currencySymbol}"`;
     });
-    ['A', 'C', 'D', 'F', 'G'].forEach((col) => {
-      ws.getCell(`${col}${row.number}`).alignment = { horizontal: 'center' };
+
+    ['A', 'C', 'D', 'F', 'G'].forEach((column) => {
+      worksheet.getCell(`${column}${row.number}`).alignment = { horizontal: 'center' };
     });
   });
 
-  // Total row
-  ws.addRow([]);
-  const totalRow = ws.addRow(['', '', '', '', '', 'ИТОГО:', fmt(totalAmount) + ' ' + symbol]);
+  worksheet.addRow([]);
+  const totalRow = worksheet.addRow([
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '\u0418\u0422\u041e\u0413\u041e:',
+    formatOrgCurrencyAmount(totalAmount, currency),
+  ]);
   totalRow.font = { bold: true };
-  totalRow.getCell(1).value = '';
-  totalRow.getCell(2).value = '';
-  totalRow.getCell(3).value = '';
-  totalRow.getCell(4).value = '';
-  totalRow.getCell(5).value = '';
-  totalRow.getCell(6).value = '';
-  totalRow.getCell(7).value = '';
-  totalRow.getCell(8).value = 'ИТОГО:';
-  totalRow.getCell(9).value = fmt(totalAmount) + ' ' + symbol;
 
   if (invoice.notes) {
-    ws.addRow([]);
-    ws.addRow(['Примечание:', invoice.notes]);
+    worksheet.addRow([]);
+    worksheet.addRow([
+      '\u041f\u0440\u0438\u043c\u0435\u0447\u0430\u043d\u0438\u0435:',
+      invoice.notes,
+    ]);
   }
 
   const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
-  const filename = `zakup_${invoice.invoiceNum.replace(/[^a-zA-Z0-9А-Яа-я]/g, '_')}.xlsx`;
+  const safeInvoiceNum = invoice.invoiceNum.replace(/[^\p{L}\p{N}]+/gu, '_');
+  const filename = `zakup_${safeInvoiceNum}.xlsx`;
 
   return { buffer, filename };
 }

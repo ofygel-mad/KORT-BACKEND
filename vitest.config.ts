@@ -55,8 +55,10 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
 
     // API
-    api: {
-      port: 51204,
-    },
+    api: process.env.VITEST_UI === 'true'
+      ? {
+          port: Number(process.env.VITEST_UI_PORT ?? 51204),
+        }
+      : undefined,
   },
 });

@@ -17,6 +17,7 @@ import {
   ValidationError,
 } from '../../lib/errors.js';
 import { sendPasswordResetEmail } from '../../lib/email.js';
+import { normalizeOrgCurrency } from '../../lib/currency.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -282,7 +283,7 @@ function buildSessionResponse(
           name: org.name,
           slug: org.slug,
           mode: org.mode,
-          currency: org.currency,
+          currency: normalizeOrgCurrency(org.currency),
           onboarding_completed: org.onboardingCompleted,
         }
       : null,
@@ -589,7 +590,7 @@ export async function bootstrap(userId: string, selectedOrgId?: string) {
           name: active.org.name,
           slug: active.org.slug,
           mode: active.org.mode,
-          currency: active.org.currency,
+          currency: normalizeOrgCurrency(active.org.currency),
           onboarding_completed: active.org.onboardingCompleted,
         }
       : null,
@@ -612,7 +613,7 @@ export async function bootstrap(userId: string, selectedOrgId?: string) {
       name: m.org.name,
       slug: m.org.slug,
       mode: m.org.mode,
-      currency: m.org.currency,
+      currency: normalizeOrgCurrency(m.org.currency),
       onboarding_completed: m.org.onboardingCompleted,
       role: m.role,
     })),

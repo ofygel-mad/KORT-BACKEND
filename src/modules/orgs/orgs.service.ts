@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../lib/errors.js';
+import { normalizeOrgCurrency, normalizeOrgCurrencyInput } from '../../lib/currency.js';
 
 function sanitizeSlug(value: string): string {
   return (
@@ -51,7 +52,7 @@ function serializeOrg(org: {
     name: org.name,
     slug: org.slug,
     mode: org.mode,
-    currency: org.currency,
+    currency: normalizeOrgCurrency(org.currency),
     industry: org.industry,
     onboarding_completed: org.onboardingCompleted,
     // Extended profile
@@ -100,7 +101,7 @@ export async function updateOrganization(
       name: s(data.name),
       slug: data.slug ? sanitizeSlug(String(data.slug)) : undefined,
       mode: s(data.mode),
-      currency: s(data.currency),
+      currency: normalizeOrgCurrencyInput(data.currency),
       industry: s(data.industry),
       onboardingCompleted: b(data.onboarding_completed),
       // Extended profile
@@ -158,7 +159,7 @@ export async function searchCompanies(query: string) {
     name: org.name,
     slug: org.slug,
     mode: org.mode,
-    currency: org.currency,
+    currency: normalizeOrgCurrency(org.currency),
     industry: org.industry,
     onboarding_completed: org.onboardingCompleted,
   }));
