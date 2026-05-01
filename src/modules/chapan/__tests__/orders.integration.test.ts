@@ -301,4 +301,44 @@ describe('Orders Service Integration Tests', () => {
     expect(restored.isArchived).toBe(false);
     expect(restored.archivedAt).toBeNull();
   });
+
+  it('restores a cancelled production order back to a clean new state', async () => {
+    const created = await createOrderForContext(context);
+    const confirmed = await confirm(context.orgId, created.id, context.authorId, context.authorName);
+
+    await updateStatus(
+      context.orgId,
+      confirmed.id,
+      'cancelled',
+      context.authorId,
+      context.authorName,
+    );
+
+    const cancelled = await getById(context.orgId, confirmed.id);
+    expect(cancelled.status).toBe('cancelled');
+    expect(cancelled.productionTasks).toHaveLength(0);
+    expect(cancelled.items.every((item) => item.fulfillmentMode === 'unassigned')).toBe(true);
+
+    await restore(context.orgId, confirmed.id, context.authorId, context.authorName);
+
+    const restored = await getById(context.orgId, confirmed.id);
+    expect(restored.status).toBe('new');
+    expect(restored.cancelledAt).toBeNull();
+    expect(restored.productionTasks).toHaveLength(0);
+    expect(restored.items.every((item) => item.fulfillmentMode === 'unassigned')).toBe(true);
+
+    await routeSingleItem(
+      context.orgId,
+      restored.id,
+      restored.items[0]!.id,
+      'production',
+      context.authorId,
+      context.authorName,
+    );
+
+    const rerouted = await getById(context.orgId, restored.id);
+    expect(rerouted.status).toBe('confirmed');
+    expect(rerouted.items.find((item) => item.id === restored.items[0]!.id)?.fulfillmentMode).toBe('production');
+    expect(rerouted.productionTasks).toHaveLength(1);
+  });
 });

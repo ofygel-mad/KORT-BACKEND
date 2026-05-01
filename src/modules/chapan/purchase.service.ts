@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import { NotFoundError } from '../../lib/errors.js';
+import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import {
   formatOrgCurrencyAmount,
   getOrgCurrencySymbol,
@@ -35,6 +35,8 @@ const invoiceSelect = {
   createdById: true,
   createdByName: true,
   createdAt: true,
+  updatedAt: true,
+  archivedAt: true,
   items: {
     select: {
       id: true,
@@ -67,11 +69,23 @@ export interface CreateManualInvoiceDto {
   items: ManualInvoiceItemDto[];
 }
 
-export async function list(orgId: string, type?: string) {
+export async function list(
+  orgId: string,
+  filters?: { type?: string; archived?: boolean },
+) {
   return prisma.chapanManualInvoice.findMany({
-    where: { orgId, ...(type ? { type } : {}) },
+    where: {
+      orgId,
+      ...(filters?.type ? { type: filters.type } : {}),
+      ...(filters?.archived === true
+        ? { archivedAt: { not: null } }
+        : { archivedAt: null }),
+    },
     select: invoiceSelect,
-    orderBy: { createdAt: 'desc' },
+    orderBy: [
+      { archivedAt: 'desc' },
+      { createdAt: 'desc' },
+    ],
   });
 }
 
@@ -126,7 +140,10 @@ export async function update(
   id: string,
   dto: Partial<Omit<CreateManualInvoiceDto, 'type'>>,
 ) {
-  await getById(orgId, id);
+  const invoice = await getById(orgId, id);
+  if (invoice.archivedAt) {
+    throw new ValidationError('\u0410\u0440\u0445\u0438\u0432\u043d\u0443\u044e \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u0443\u044e \u0441\u043d\u0430\u0447\u0430\u043b\u0430 \u043d\u0443\u0436\u043d\u043e \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c');
+  }
 
   return prisma.$transaction(async (tx) => {
     if (dto.items !== undefined) {
@@ -160,6 +177,32 @@ export async function remove(orgId: string, id: string) {
   await getById(orgId, id);
   await prisma.chapanManualInvoice.delete({ where: { id } });
   return { deleted: true };
+}
+
+export async function archive(orgId: string, id: string) {
+  const invoice = await getById(orgId, id);
+  if (invoice.archivedAt) {
+    throw new ValidationError('\u041d\u0430\u043a\u043b\u0430\u0434\u043d\u0430\u044f \u0443\u0436\u0435 \u0432 \u0430\u0440\u0445\u0438\u0432\u0435');
+  }
+
+  return prisma.chapanManualInvoice.update({
+    where: { id },
+    data: { archivedAt: new Date() },
+    select: invoiceSelect,
+  });
+}
+
+export async function restore(orgId: string, id: string) {
+  const invoice = await getById(orgId, id);
+  if (!invoice.archivedAt) {
+    throw new ValidationError('\u041d\u0430\u043a\u043b\u0430\u0434\u043d\u0430\u044f \u0438 \u0442\u0430\u043a \u0432 \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u043c \u0441\u043f\u0438\u0441\u043a\u0435');
+  }
+
+  return prisma.chapanManualInvoice.update({
+    where: { id },
+    data: { archivedAt: null },
+    select: invoiceSelect,
+  });
 }
 
 export async function generateXlsx(orgId: string, id: string) {

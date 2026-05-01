@@ -1091,6 +1091,17 @@ export async function updateStatus(orgId: string, id: string, status: string, au
       operationDocument,
     });
 
+    if (status === 'cancelled') {
+      await tx.chapanProductionTask.deleteMany({
+        where: { orderId: id },
+      });
+
+      await tx.chapanOrderItem.updateMany({
+        where: { orderId: id },
+        data: { fulfillmentMode: 'unassigned' },
+      });
+    }
+
     await tx.chapanOrder.update({
       where: { id },
       data: {
@@ -1424,6 +1435,7 @@ export async function restore(orgId: string, id: string, authorId: string, autho
     const restoreData: Prisma.ChapanOrderUpdateInput = {
       isArchived: false,
       archivedAt: null,
+      completedAt: null,
       status: 'new', // All archived orders are restored to 'new' to allow re-confirmation
     };
 
@@ -1431,6 +1443,15 @@ export async function restore(orgId: string, id: string, authorId: string, autho
     if (isCancelled) {
       restoreData.cancelReason = null;
       restoreData.cancelledAt = null;
+
+      await tx.chapanProductionTask.deleteMany({
+        where: { orderId: id },
+      });
+
+      await tx.chapanOrderItem.updateMany({
+        where: { orderId: id },
+        data: { fulfillmentMode: 'unassigned' },
+      });
     }
 
     await tx.chapanOrder.update({

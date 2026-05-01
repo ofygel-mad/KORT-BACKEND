@@ -2,6 +2,22 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import * as svc from './purchase.service.js';
 
+const archivedQuerySchema = z.preprocess((value) => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  if (value === true || value === 'true') {
+    return true;
+  }
+
+  if (value === false || value === 'false') {
+    return false;
+  }
+
+  return value;
+}, z.boolean().optional());
+
 const itemSchema = z.object({
   productName: z.string().min(1),
   gender: z.string().optional(),
@@ -19,14 +35,19 @@ const createSchema = z.object({
   items: z.array(itemSchema).min(1),
 });
 
+export const purchaseListQuerySchema = z.object({
+  type: z.string().optional(),
+  archived: archivedQuerySchema,
+});
+
 export async function chapanPurchaseRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate);
   app.addHook('preHandler', app.resolveOrg);
 
   // GET /api/v1/chapan/purchase
   app.get('/', async (request) => {
-    const { type } = z.object({ type: z.string().optional() }).parse(request.query);
-    const results = await svc.list(request.orgId, type);
+    const { type, archived } = purchaseListQuerySchema.parse(request.query);
+    const results = await svc.list(request.orgId, { type, archived });
     return { count: results.length, results };
   });
 
@@ -59,6 +80,18 @@ export async function chapanPurchaseRoutes(app: FastifyInstance) {
       })
       .parse(request.body);
     return svc.update(request.orgId, id, body);
+  });
+
+  // POST /api/v1/chapan/purchase/:id/archive
+  app.post('/:id/archive', async (request) => {
+    const { id } = request.params as { id: string };
+    return svc.archive(request.orgId, id);
+  });
+
+  // POST /api/v1/chapan/purchase/:id/restore
+  app.post('/:id/restore', async (request) => {
+    const { id } = request.params as { id: string };
+    return svc.restore(request.orgId, id);
   });
 
   // DELETE /api/v1/chapan/purchase/:id

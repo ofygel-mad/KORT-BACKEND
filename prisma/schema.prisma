@@ -2071,6 +2071,7 @@ model ChapanManualInvoice {
   createdByName String   @map("created_by_name")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
+  archivedAt    DateTime? @map("archived_at")
 
   org   Organization             @relation(fields: [orgId], references: [id], onDelete: Cascade)
   items ChapanManualInvoiceItem[]
@@ -2078,6 +2079,7 @@ model ChapanManualInvoice {
   @@unique([orgId, invoiceNum])
   @@index([orgId, type])
   @@index([orgId, createdAt])
+  @@index([orgId, archivedAt])
   @@map("chapan_manual_invoices")
 }
 
