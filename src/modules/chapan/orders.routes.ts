@@ -13,12 +13,79 @@ import { ForbiddenError } from '../../lib/errors.js';
 const idempotencyCache = new Map<string, { status: number; body: unknown; expiresAt: number }>();
 const IDEMPOTENCY_TTL_MS = 5 * 60 * 1000; // 5 minutes
 let idempSweepCounter = 0;
+const FULL_CHAPAN_ORDER_ACCESS_PERMISSIONS = new Set([
+  'full_access',
+  'chapan_full_access',
+  'production',
+  'warehouse_manager',
+  'chapan_access_production',
+  'chapan_access_ready',
+  'chapan_access_archive',
+  'chapan_access_warehouse_nav',
+  'chapan_manage_production',
+  'chapan_confirm_invoice',
+  'chapan_manage_settings',
+]);
 
 function sweepIdempotencyCache() {
   if (++idempSweepCounter % 50 !== 0) return;
   const now = Date.now();
   for (const [key, entry] of idempotencyCache) {
     if (entry.expiresAt <= now) idempotencyCache.delete(key);
+  }
+}
+
+async function resolveOrderAccessScope(orgId: string, userId: string) {
+  const membership = await prisma.membership.findUnique({
+    where: { userId_orgId: { userId, orgId } },
+    select: {
+      role: true,
+      employeePermissions: true,
+    },
+  });
+
+  const role = membership?.role ?? 'viewer';
+  const permissions = membership?.employeePermissions ?? [];
+  const canAccessAllOrders =
+    role === 'owner'
+    || role === 'admin'
+    || permissions.some((permission) => FULL_CHAPAN_ORDER_ACCESS_PERMISSIONS.has(permission));
+
+  return {
+    canAccessAllOrders,
+    managerId: canAccessAllOrders ? undefined : userId,
+  };
+}
+
+async function assertOrderReadAccess(
+  orgId: string,
+  userId: string,
+  orderId: string,
+  options?: { mineOnly?: boolean },
+) {
+  const order = await prisma.chapanOrder.findFirst({
+    where: { id: orderId, orgId },
+    select: { managerId: true },
+  });
+
+  if (!order) {
+    return;
+  }
+
+  if (options?.mineOnly) {
+    if (order.managerId !== userId) {
+      throw new ForbiddenError('Access denied for this order.');
+    }
+    return;
+  }
+
+  const accessScope = await resolveOrderAccessScope(orgId, userId);
+  if (accessScope.canAccessAllOrders) {
+    return;
+  }
+
+  if (order.managerId !== userId) {
+    throw new ForbiddenError('Access denied for this order.');
   }
 }
 // ──────────────────────────────────────────────────────────────────────────
@@ -42,6 +109,8 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
   // GET /api/v1/chapan/orders
   app.get('/', async (request) => {
     const query = request.query as Record<string, string>;
+    const accessScope = await resolveOrderAccessScope(request.orgId, request.userId);
+    const mineOnly = query.mineOnly === 'true';
     const archived = query.archived === 'true' ? true : query.archived === 'false' ? false : undefined;
     const statuses = query.statuses
       ? query.statuses.split(',').map((value) => value.trim()).filter(Boolean)
@@ -59,7 +128,9 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
       hasWarehouseItems: query.hasWarehouseItems === 'true',
       createdFrom,
       createdTo,
-      managerId: query.managerId || undefined,
+      managerId: mineOnly
+        ? request.userId
+        : accessScope.managerId ?? query.managerId ?? undefined,
       customerType: query.customerType || undefined,
     });
     return { count: orders.length, results: orders };
@@ -82,6 +153,10 @@ export async function chapanOrdersRoutes(app: FastifyInstance) {
   // GET /api/v1/chapan/orders/:id
   app.get('/:id', async (request) => {
     const { id } = request.params as { id: string };
+    const query = request.query as Record<string, string>;
+    await assertOrderReadAccess(request.orgId, request.userId, id, {
+      mineOnly: query.mineOnly === 'true',
+    });
     return svc.getById(request.orgId, id);
   });
 

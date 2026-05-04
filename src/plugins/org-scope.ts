@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import { prisma } from '../lib/prisma.js';
-import { ForbiddenError } from '../lib/errors.js';
+import { ForbiddenError, UnauthorizedError } from '../lib/errors.js';
 
 const ROLE_HIERARCHY: Record<string, number> = {
   owner: 4,
@@ -9,6 +9,10 @@ const ROLE_HIERARCHY: Record<string, number> = {
   manager: 2,
   viewer: 1,
 };
+
+function isBlockedEmployeeStatus(status: string | null | undefined) {
+  return status === 'dismissed' || status === 'pending_first_login';
+}
 
 async function orgScopePlugin(fastify: FastifyInstance) {
   fastify.decorateRequest('orgId', '');
@@ -35,15 +39,15 @@ async function orgScopePlugin(fastify: FastifyInstance) {
         include: { user: true },
       });
 
-      if (
-        requested &&
-        requested.status === 'active' &&
-        requested.employeeAccountStatus !== 'dismissed'
-      ) {
+      if (requested && requested.status === 'active' && !isBlockedEmployeeStatus(requested.employeeAccountStatus)) {
         request.orgId = requested.orgId;
         request.orgRole = requested.role;
         request.userFullName = requested.user.fullName;
         return;
+      }
+
+      if (requested && requested.status === 'active' && requested.employeeAccountStatus === 'pending_first_login') {
+        throw new UnauthorizedError('Password reset requires a new login.');
       }
     }
 
@@ -51,14 +55,26 @@ async function orgScopePlugin(fastify: FastifyInstance) {
       where: {
         userId: request.userId,
         status: 'active',
-        // Dismissed employees cannot access any org-scoped route
-        NOT: { employeeAccountStatus: 'dismissed' },
+        NOT: { employeeAccountStatus: { in: ['dismissed', 'pending_first_login'] } },
       },
       include: { user: true },
       orderBy: { joinedAt: 'desc' },
     });
 
     if (!membership) {
+      const pendingMembership = await prisma.membership.findFirst({
+        where: {
+          userId: request.userId,
+          status: 'active',
+          employeeAccountStatus: 'pending_first_login',
+        },
+        select: { userId: true },
+      });
+
+      if (pendingMembership) {
+        throw new UnauthorizedError('Password reset requires a new login.');
+      }
+
       throw new ForbiddenError('No active organization membership');
     }
 

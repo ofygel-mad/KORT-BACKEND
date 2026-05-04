@@ -222,6 +222,32 @@ async function createTokenPair(userId: string, email: string) {
 
 // ─── Session builder ──────────────────────────────────────────────────────────
 
+async function listActiveMembershipsForAuth(userId: string) {
+  return prisma.membership.findMany({
+    where: { userId, status: 'active' },
+    include: { org: true },
+    orderBy: { joinedAt: 'desc' },
+  });
+}
+
+function pickAuthMembership<T extends { employeeAccountStatus: string }>(
+  memberships: T[],
+) {
+  const activeMemberships = memberships.filter(
+    (membership) => membership.employeeAccountStatus !== 'dismissed',
+  );
+
+  if (activeMemberships.length === 0) {
+    return null;
+  }
+
+  return (
+    activeMemberships.find(
+      (membership) => membership.employeeAccountStatus === 'pending_first_login',
+    ) ?? activeMemberships[0]
+  );
+}
+
 type MembershipRow = {
   orgId: string | null;
   role: string;
@@ -333,14 +359,14 @@ export async function login(identifier: {
   }
 
   // Find the active membership for this user
-  const membership = await prisma.membership.findFirst({
-    where: { userId: user.id, status: 'active' },
-    include: { org: true },
-    orderBy: { joinedAt: 'desc' },
-  });
+  const memberships = await listActiveMembershipsForAuth(user.id);
+  const membership = pickAuthMembership(memberships);
 
   // Block dismissed employees BEFORE password check (don't leak timing)
-  if (membership?.employeeAccountStatus === 'dismissed') {
+  if (
+    !membership
+    && memberships.some((item) => item.employeeAccountStatus === 'dismissed')
+  ) {
     throw new ForbiddenError(
       'Ваш аккаунт деактивирован. Обратитесь к администратору.',
     );
@@ -771,11 +797,10 @@ export async function lookupEmployee(phone: string) {
   const user = await prisma.user.findUnique({ where: { phone } });
   if (!user) return { found: false as const };
 
-  const membership = await prisma.membership.findFirst({
-    where: { userId: user.id, status: 'active' },
-  });
+  const memberships = await listActiveMembershipsForAuth(user.id);
+  const membership = pickAuthMembership(memberships);
 
-  if (!membership || membership.employeeAccountStatus === 'dismissed') {
+  if (!membership) {
     return { found: false as const };
   }
 
