@@ -38,6 +38,7 @@ import { employeesRoutes } from './modules/employees/employees.routes.js';
 import { accountingRoutes } from './modules/accounting/accounting.routes.js';
 import { adsRoutes } from './modules/ads/ads.routes.js';
 import { serviceRoutes } from './modules/service/service.routes.js';
+import { kaspiIntegrationRoutes } from './modules/integrations/kaspi/kaspi.routes.js';
 import { warehouseRoutes } from './modules/warehouse/warehouse.routes.js';
 import { warehouseCatalogRoutes } from './modules/warehouse/warehouse-catalog.routes.js';
 import { warehouseFoundationRoutes } from './modules/warehouse/warehouse-foundation.routes.js';
@@ -189,6 +190,7 @@ export async function buildApp() {
 
 
   await app.register(serviceRoutes, { prefix: '/api/v1/service' });
+  await app.register(kaspiIntegrationRoutes, { prefix: '/api/v1/integrations/kaspi' });
   await app.register(warehouseRoutes, { prefix: '/api/v1/warehouse' });
   await app.register(warehouseCatalogRoutes, { prefix: '/api/v1/warehouse' });
   await app.register(warehouseFoundationRoutes, { prefix: '/api/v1/warehouse' });

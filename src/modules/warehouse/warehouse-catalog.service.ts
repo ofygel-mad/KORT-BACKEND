@@ -1,17 +1,10 @@
 import { prisma } from '../../lib/prisma.js';
+import { buildCanonicalVariantKey } from '../../shared/variant-key.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function normalizeName(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ');
-}
-
-function buildVariantKey(productName: string, attributes: Record<string, string>): string {
-  const base = normalizeName(productName);
-  const parts = Object.entries(attributes)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([k, v]) => `${k}:${normalizeName(v)}`);
-  return [base, ...parts].join('|');
 }
 
 // ── Field Definitions ──────────────────────────────────────────────────────────
@@ -282,20 +275,17 @@ export async function checkVariantAvailability(orgId: string, data: {
     },
   });
 
-  // Build variant key using only fields that affect availability
-  let attributesForKey = data.attributes;
-  if (product) {
-    const availabilityFields = new Set(
-      product.fieldLinks
-        .filter((fl) => fl.definition.affectsAvailability)
-        .map((fl) => fl.definition.code),
-    );
-    attributesForKey = Object.fromEntries(
-      Object.entries(data.attributes).filter(([k]) => availabilityFields.has(k)),
-    );
-  }
+  // Build variant key using only fields that affect availability.
+  // If the product has no catalog entry or no registered field links, fall back to
+  // "all attributes are axes" — matches legacy write path in upsertVariant.
+  const fieldsForKey = product && product.fieldLinks.length > 0
+    ? product.fieldLinks.map((fl) => ({
+        code: fl.definition.code,
+        affectsAvailability: fl.definition.affectsAvailability,
+      }))
+    : Object.keys(data.attributes).map((code) => ({ code, affectsAvailability: true }));
 
-  const variantKey = buildVariantKey(data.productName, attributesForKey);
+  const variantKey = buildCanonicalVariantKey(data.productName, data.attributes, fieldsForKey);
 
   const canonicalVariant = await prisma.warehouseVariant.findFirst({
     where: { orgId, variantKey },
@@ -399,7 +389,7 @@ export async function seedDefaultFieldDefinitions(orgId: string): Promise<{
       label: 'Пол',
       inputType: 'select',
       isVariantAxis: true,
-      affectsAvailability: false,
+      affectsAvailability: true,
       sortOrder: 2,
       options: ['Мужской', 'Женский'],
     },

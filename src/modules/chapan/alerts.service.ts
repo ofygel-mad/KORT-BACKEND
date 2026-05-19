@@ -47,17 +47,21 @@ export async function getUnpaidAlerts(orgId: string) {
       resolvedAt: null,
     },
     include: {
-      order: {
-        select: {
-          id: true,
-          orderNumber: true,
-          totalAmount: true,
-          paidAmount: true,
-          clientName: true,
-          paymentStatus: true,
+        order: {
+          select: {
+            id: true,
+            orderNumber: true,
+            totalAmount: true,
+            paidAmount: true,
+            orderDiscount: true,
+            deliveryFee: true,
+            bankCommissionPercent: true,
+            bankCommissionAmount: true,
+            clientName: true,
+            paymentStatus: true,
+          },
         },
       },
-    },
     orderBy: {
       createdAt: 'desc',
     },

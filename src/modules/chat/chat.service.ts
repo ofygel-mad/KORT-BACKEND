@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../lib/errors.js';
+import { calculateChapanOrderFinancials } from '../chapan/financials.js';
 
 // ── WS event hook ──────────────────────────────────────────────────────────
 export let emitChatEvent: ((userId: string, event: object) => void) | null = null;
@@ -437,20 +438,29 @@ export async function getOrderPreview(orderId: string, userId: string) {
   const order = await prisma.chapanOrder.findFirst({
     where: { id: orderId },
   });
-  if (!order) throw new NotFoundError('Заказ', orderId);
+  if (!order) throw new NotFoundError('Р—Р°РєР°Р·', orderId);
 
   // Verify user is in the same org
   const membership = await prisma.membership.findFirst({
     where: { userId, orgId: order.orgId, status: 'active' },
   });
-  if (!membership) throw new ForbiddenError('Нет доступа к этому заказу.');
+  if (!membership) throw new ForbiddenError('РќРµС‚ РґРѕСЃС‚СѓРїР° Рє СЌС‚РѕРјСѓ Р·Р°РєР°Р·Сѓ.');
+
+  const financials = calculateChapanOrderFinancials({
+    itemsSubtotal: Number(order.totalAmount ?? 0),
+    orderDiscount: Number(order.orderDiscount ?? 0),
+    deliveryFee: Number(order.deliveryFee ?? 0),
+    bankCommissionPercent: Number(order.bankCommissionPercent ?? 0),
+    bankCommissionAmount: Number(order.bankCommissionAmount ?? 0),
+  });
 
   return {
     id: order.id,
     order_number: order.orderNumber,
     status: order.status,
-    client_name: order.clientName ?? 'Без клиента',
+    client_name: order.clientName ?? 'Р‘РµР· РєР»РёРµРЅС‚Р°',
     total_amount: order.totalAmount ?? 0,
+    due_amount: financials.totalDue,
     created_at: order.createdAt.toISOString(),
   };
 }

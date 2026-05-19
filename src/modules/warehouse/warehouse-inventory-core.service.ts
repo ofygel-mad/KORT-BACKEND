@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../lib/errors.js';
+import { buildCanonicalVariantKey } from '../../shared/variant-key.js';
 
 type Tx = Prisma.TransactionClient | PrismaClient;
 export type WarehouseInventoryTx = Prisma.TransactionClient;
@@ -74,19 +75,6 @@ export interface ConsumeStockReservationResult {
     fromBinId: string | null;
     qtyDelta: number;
   }>;
-}
-
-function normalizeName(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, ' ');
-}
-
-function buildVariantKey(productName: string, attributes: Record<string, string>): string {
-  const base = normalizeName(productName);
-  const parts = Object.entries(attributes)
-    .filter(([, value]) => value.trim())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}:${normalizeName(value)}`);
-  return [base, ...parts].join('|');
 }
 
 function ensurePositiveNumber(value: number, label: string) {
@@ -385,17 +373,16 @@ export async function upsertVariant(orgId: string, dto: UpsertWarehouseVariantDt
   }
 
   const attributes = normalizeStringMap(dto.attributesJson);
-  const availabilityFields = new Set(
-    product.fieldLinks
-      .filter((link) => link.definition.affectsAvailability)
-      .map((link) => link.definition.code),
-  );
-  const attributesForKey =
-    availabilityFields.size > 0
-      ? Object.fromEntries(Object.entries(attributes).filter(([key]) => availabilityFields.has(key)))
-      : attributes;
+  // If product has registered field links, use them (canonical filtering by affectsAvailability).
+  // Legacy products without field links keep all attributes as axes — preserves prior behavior.
+  const fieldsForKey = product.fieldLinks.length > 0
+    ? product.fieldLinks.map((link) => ({
+        code: link.definition.code,
+        affectsAvailability: link.definition.affectsAvailability,
+      }))
+    : Object.keys(attributes).map((code) => ({ code, affectsAvailability: true }));
 
-  const variantKey = dto.variantKey?.trim() || buildVariantKey(product.name, attributesForKey);
+  const variantKey = dto.variantKey?.trim() || buildCanonicalVariantKey(product.name, attributes, fieldsForKey);
   if (!variantKey) {
     throw new AppError(400, 'Не удалось сформировать variantKey', 'VALIDATION');
   }

@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import ExcelJS from 'exceljs';
 import * as svc from './warehouse-catalog.service.js';
+import * as photosSvc from './warehouse-catalog-photos.service.js';
 
 async function loadRows(buffer: Uint8Array): Promise<string[]> {
   const wb = new ExcelJS.Workbook();
@@ -16,11 +17,12 @@ function extractColumnValues(ws: ExcelJS.Worksheet): string[] {
   const rows: string[] = [];
   ws.eachRow((row, rowNum) => {
     if (rowNum === 1) return;
-    // Try column 2 first (most xlsx have index col + data col), then column 1
     const c2 = String(row.getCell(2).value ?? '').trim();
     const c1 = String(row.getCell(1).value ?? '').trim();
     const val = c2 || c1;
-    if (val && val !== '0' && !/^(название|цвет|товар)/i.test(val)) rows.push(val);
+    if (val && val !== '0' && !/^(?:\u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435|\u0446\u0432\u0435\u0442|\u0442\u043E\u0432\u0430\u0440)/i.test(val)) {
+      rows.push(val);
+    }
   });
   return rows;
 }
@@ -28,25 +30,23 @@ function extractColumnValues(ws: ExcelJS.Worksheet): string[] {
 export async function warehouseCatalogRoutes(app: FastifyInstance) {
   const auth = { preHandler: [app.authenticate, app.resolveOrg] };
 
-  // ── Field Definitions ──────────────────────────────────────────────────────
-
   app.get('/catalog/definitions', auth, async (req) => {
     return svc.getFieldDefinitions(req.orgId);
   });
 
   app.post('/catalog/definitions', auth, async (req) => {
     const body = z.object({
-      code:                 z.string().min(1),
-      label:                z.string().min(1),
-      inputType:            z.enum(['select', 'multiselect', 'text', 'number', 'boolean']),
-      entityScope:          z.enum(['warehouse_item', 'order_item', 'both']).optional(),
-      isRequired:           z.boolean().optional(),
-      isVariantAxis:        z.boolean().optional(),
-      showInWarehouseForm:  z.boolean().optional(),
-      showInOrderForm:      z.boolean().optional(),
-      showInDocuments:      z.boolean().optional(),
-      affectsAvailability:  z.boolean().optional(),
-      sortOrder:            z.number().int().optional(),
+      code: z.string().min(1),
+      label: z.string().min(1),
+      inputType: z.enum(['select', 'multiselect', 'text', 'number', 'boolean']),
+      entityScope: z.enum(['warehouse_item', 'order_item', 'both']).optional(),
+      isRequired: z.boolean().optional(),
+      isVariantAxis: z.boolean().optional(),
+      showInWarehouseForm: z.boolean().optional(),
+      showInOrderForm: z.boolean().optional(),
+      showInDocuments: z.boolean().optional(),
+      affectsAvailability: z.boolean().optional(),
+      sortOrder: z.number().int().optional(),
     }).parse(req.body);
     return svc.createFieldDefinition(req.orgId, body);
   });
@@ -54,14 +54,14 @@ export async function warehouseCatalogRoutes(app: FastifyInstance) {
   app.patch('/catalog/definitions/:id', auth, async (req) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
     const body = z.object({
-      label:                z.string().min(1).optional(),
-      isRequired:           z.boolean().optional(),
-      isVariantAxis:        z.boolean().optional(),
-      showInWarehouseForm:  z.boolean().optional(),
-      showInOrderForm:      z.boolean().optional(),
-      showInDocuments:      z.boolean().optional(),
-      affectsAvailability:  z.boolean().optional(),
-      sortOrder:            z.number().int().optional(),
+      label: z.string().min(1).optional(),
+      isRequired: z.boolean().optional(),
+      isVariantAxis: z.boolean().optional(),
+      showInWarehouseForm: z.boolean().optional(),
+      showInOrderForm: z.boolean().optional(),
+      showInDocuments: z.boolean().optional(),
+      affectsAvailability: z.boolean().optional(),
+      sortOrder: z.number().int().optional(),
     }).parse(req.body);
     return svc.updateFieldDefinition(id, body);
   });
@@ -71,15 +71,13 @@ export async function warehouseCatalogRoutes(app: FastifyInstance) {
     return svc.deleteFieldDefinition(id);
   });
 
-  // ── Field Options ──────────────────────────────────────────────────────────
-
   app.post('/catalog/definitions/:id/options', auth, async (req) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
     const body = z.object({
-      value:    z.string().min(1),
-      label:    z.string().min(1),
+      value: z.string().min(1),
+      label: z.string().min(1),
       sortOrder: z.number().int().optional(),
-      colorHex:  z.string().optional(),
+      colorHex: z.string().optional(),
     }).parse(req.body);
     return svc.addFieldOption(id, body);
   });
@@ -87,7 +85,7 @@ export async function warehouseCatalogRoutes(app: FastifyInstance) {
   app.patch('/catalog/definitions/:defId/options/:optId', auth, async (req) => {
     const { optId } = z.object({ defId: z.string(), optId: z.string() }).parse(req.params);
     const body = z.object({
-      label:    z.string().min(1).optional(),
+      label: z.string().min(1).optional(),
       colorHex: z.string().optional(),
     }).parse(req.body);
     return svc.updateFieldOption(optId, body);
@@ -98,15 +96,13 @@ export async function warehouseCatalogRoutes(app: FastifyInstance) {
     return svc.deleteFieldOption(optId);
   });
 
-  // ── Product Catalog ────────────────────────────────────────────────────────
-
   app.get('/catalog/products', auth, async (req) => {
     return svc.getProductCatalog(req.orgId);
   });
 
   app.post('/catalog/products', auth, async (req) => {
     const body = z.object({
-      name:   z.string().min(1),
+      name: z.string().min(1),
       source: z.string().optional(),
     }).parse(req.body);
     return svc.createProduct(req.orgId, body);
@@ -128,78 +124,94 @@ export async function warehouseCatalogRoutes(app: FastifyInstance) {
     const body = z.object({
       fields: z.array(z.object({
         definitionId: z.string(),
-        isRequired:   z.boolean().optional(),
-        sortOrder:    z.number().int().optional(),
+        isRequired: z.boolean().optional(),
+        sortOrder: z.number().int().optional(),
       })),
     }).parse(req.body);
     return svc.setProductFields(id, body.fields);
   });
 
-  // ── Seed defaults ──────────────────────────────────────────────────────────
+  app.get('/catalog/products/:productId/photos', auth, async (req) => {
+    const { productId } = z.object({ productId: z.string() }).parse(req.params);
+    return photosSvc.listProductPhotos(req.orgId, productId);
+  });
+
+  app.post('/catalog/products/:productId/photos', auth, async (req, reply) => {
+    const { productId } = z.object({ productId: z.string() }).parse(req.params);
+    const data = await req.file({ limits: { fileSize: photosSvc.MAX_BYTES } });
+    if (!data) {
+      return reply.status(400).send({ code: 'NO_FILE', message: '\u0424\u0430\u0439\u043B \u043D\u0435 \u043F\u0440\u0438\u043A\u0440\u0435\u043F\u043B\u0451\u043D' });
+    }
+    const photo = await photosSvc.uploadProductPhoto(req.orgId, productId, {
+      filename: data.filename,
+      mimetype: data.mimetype,
+      stream: data.file,
+    });
+    return reply.status(201).send(photo);
+  });
+
+  app.get('/catalog/products/:productId/photos/:photoId/file', auth, async (req, reply) => {
+    const { productId, photoId } = z.object({ productId: z.string(), photoId: z.string() }).parse(req.params);
+    const url = await photosSvc.getProductPhotoUrl(req.orgId, productId, photoId);
+    return reply.redirect(url, 302);
+  });
+
+  app.delete('/catalog/products/:productId/photos/:photoId', auth, async (req) => {
+    const { photoId } = z.object({ productId: z.string(), photoId: z.string() }).parse(req.params);
+    return photosSvc.deleteProductPhoto(req.orgId, photoId);
+  });
 
   app.post('/catalog/seed-defaults', auth, async (req) => {
     return svc.seedDefaultFieldDefinitions(req.orgId);
   });
 
-  // ── Order Form Catalog (live dropdowns) ────────────────────────────────────
-
   app.get('/order-form/catalog', auth, async (req) => {
     return svc.getOrderFormCatalog(req.orgId);
   });
 
-  // ── Variant Availability ───────────────────────────────────────────────────
-
   app.post('/availability/check-variant', auth, async (req) => {
     const body = z.object({
       productName: z.string().min(1),
-      attributes:  z.record(z.string(), z.string()),
+      attributes: z.record(z.string(), z.string()),
     }).parse(req.body);
     return svc.checkVariantAvailability(req.orgId, body);
   });
 
-  // ── Smart import (one-click robot) ────────────────────────────────────────
-
   app.post('/catalog/smart-import/products', auth, async (req) => {
     const data = await req.file();
-    if (!data) throw app.httpErrors.badRequest('Файл не найден');
+    if (!data) throw app.httpErrors.badRequest('\u0424\u0430\u0439\u043B \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D');
     const rows = await loadRows(await data.toBuffer());
     return svc.smartImportProducts(req.orgId, rows);
   });
 
   app.post('/catalog/smart-import/colors', auth, async (req) => {
     const data = await req.file();
-    if (!data) throw app.httpErrors.badRequest('Файл не найден');
+    if (!data) throw app.httpErrors.badRequest('\u0424\u0430\u0439\u043B \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D');
     const rows = await loadRows(await data.toBuffer());
     return svc.smartImportColors(req.orgId, rows);
   });
 
-  // ── Excel import — products (raw, for advanced use) ────────────────────────
-
   app.post('/catalog/import/products', auth, async (req) => {
     const data = await req.file();
-    if (!data) throw app.httpErrors.badRequest('Файл не найден');
+    if (!data) throw app.httpErrors.badRequest('\u0424\u0430\u0439\u043B \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D');
     const rows = await loadRows(await data.toBuffer());
     return svc.importProductsFromRows(req.orgId, rows);
   });
 
-  // ── Excel import — field options ───────────────────────────────────────────
-
   app.post('/catalog/import/field-options/:code', auth, async (req) => {
     const { code } = z.object({ code: z.string().min(1) }).parse(req.params);
     const data = await req.file();
-    if (!data) throw app.httpErrors.badRequest('Файл не найден');
+    if (!data) throw app.httpErrors.badRequest('\u0424\u0430\u0439\u043B \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D');
     const rows = await loadRows(await data.toBuffer());
     return svc.importFieldOptionsFromRows(req.orgId, code, rows);
   });
-
-  // ── Bulk add field options from JSON (manual input) ────────────────────────
 
   app.post('/catalog/definitions/:id/options/bulk', auth, async (req) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
     const body = z.object({
       values: z.array(z.object({
-        value:     z.string().min(1),
-        label:     z.string().min(1),
+        value: z.string().min(1),
+        label: z.string().min(1),
         sortOrder: z.number().int().optional(),
       })).min(1),
     }).parse(req.body);

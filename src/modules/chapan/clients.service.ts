@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../lib/errors.js';
 import { Prisma } from '@prisma/client';
+import { calculateChapanOrderFinancials } from './financials.js';
 
 interface AggregatedClientRow {
   id: string;
@@ -84,7 +85,17 @@ export async function listClients(
       c.updated_at        AS "updatedAt",
       c.crm_customer_id   AS "crmCustomerId",
       COUNT(o.id)::int                                               AS "orderCount",
-      COALESCE(SUM(o.total_amount), 0)::int                          AS "totalSpent",
+      COALESCE(SUM(
+        ROUND(
+          GREATEST(o.total_amount - COALESCE(o.order_discount, 0), 0)
+          + COALESCE(o.delivery_fee, 0)
+          + CASE
+              WHEN COALESCE(o.bank_commission_percent, 0) > 0
+                THEN ROUND(GREATEST(o.total_amount - COALESCE(o.order_discount, 0), 0) * COALESCE(o.bank_commission_percent, 0) / 100.0)
+              ELSE COALESCE(o.bank_commission_amount, 0)
+            END
+        )
+      ), 0)::int                          AS "totalSpent",
       COALESCE(SUM(o.paid_amount), 0)::int                           AS "totalPaid",
       MAX(o.created_at)                                              AS "lastOrderAt",
       COUNT(o.id) FILTER (WHERE o.customer_type = 'retail')::int     AS "retailOrderCount",
@@ -134,6 +145,10 @@ export async function getClientDetail(orgId: string, clientId: string) {
       status: true,
       totalAmount: true,
       paidAmount: true,
+      orderDiscount: true,
+      deliveryFee: true,
+      bankCommissionPercent: true,
+      bankCommissionAmount: true,
       customerType: true,
       createdAt: true,
       items: {
@@ -148,7 +163,13 @@ export async function getClientDetail(orgId: string, clientId: string) {
     take: 50,
   });
 
-  const totalSpent = orders.reduce((s, o) => s + o.totalAmount, 0);
+  const totalSpent = orders.reduce((s, o) => s + calculateChapanOrderFinancials({
+    itemsSubtotal: o.totalAmount,
+    orderDiscount: o.orderDiscount,
+    deliveryFee: o.deliveryFee,
+    bankCommissionPercent: o.bankCommissionPercent,
+    bankCommissionAmount: o.bankCommissionAmount,
+  }).totalDue, 0);
   const totalPaid = orders.reduce((s, o) => s + o.paidAmount, 0);
   const retailOrders = orders.filter((o) => o.customerType === 'retail')
     .length;

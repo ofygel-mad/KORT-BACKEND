@@ -1,62 +1,57 @@
-/**
- * Google Sheets row schema for Chapan orders.
- *
- * Separated from transport/retry logic (sheets.sync.ts) so the schema is
- * independently versioned, testable, and not coupled to the Prisma client.
- *
- * Each column is documented inline. The schema is append-only: new columns
- * go at the end so existing spreadsheets don't shift their column layout.
- */
+import { calculateChapanOrderFinancials } from '../financials.js';
+import { formatOrderItemNumber } from '../order-item-number.js';
+
+export type SheetCellValue = string | number;
 
 export const SHEET_HEADER = [
-  'ID заказа',            // A — idempotency key
-  'Номер заказа',         // B
-  'Дата создания',        // C
-  'Дата заказа',          // D
-  'Статус',               // E
-  'Статус оплаты',        // F
-  'Срочность',            // G
-  'Требовательный',       // H
-  'Клиент',               // I
-  'Телефон',              // J
-  'Город',                // K
-  'Улица / адрес',        // L
-  'Индекс',               // M
-  'Тип доставки',         // N
-  'Источник',             // O
-  'Срок готовности',      // P
-  'Ожидаемый способ оплаты', // Q
-  'Позиции (коротко)',    // R — human-readable summary
-  'Позиции JSON',         // S — full machine-readable payload
-  'Количество позиций',   // T
-  'Количество единиц',    // U
-  'Итого по позициям',    // V
-  'Скидка заказа',        // W
-  'Доставка',             // X
-  'Комиссия банка %',     // Y
-  'Комиссия банка сумма', // Z
-  'Итого к оплате',       // AA
-  'Оплачено',             // AB
-  'Остаток',              // AC
-  'Способы оплаты',       // AD
-  'Смешанная разбивка',   // AE
-  'Внутренняя заметка',   // AF
-  'Примечание к доставке',// AG
-  'Вложений',             // AH
-  'Имена вложений',       // AI
-  'Комментарий цеху',     // AJ — aggregated workshopNotes across items
-  'Source request id',    // AK
-  'Обновлено',            // AL
+  'Номер заказа 1',
+  'Количество позиций',
+  'Количество единиц',
+  'Номер заказа 2',
+  'Дата создания',
+  'Дата заказа',
+  'Источник',
+  'Клиент',
+  'Телефон',
+  'Позиции (коротко)',
+  'Название Товара',
+  'Пол',
+  'Размер',
+  'Цвет',
+  'Длина Изделия',
+  'Итого по позициям',
+  'Скидка заказа',
+  'Доставка',
+  'Комиссия банка %',
+  'Комиссия банка сумма',
+  'Итого к оплате',
+  'Оплачено',
+  'Остаток',
+  'Способы оплаты',
+  'Способы оплаты',
+  'Смешанная разбивка',
+  'Наличные',
+  'Kaspi Терминал',
+  'Перевод',
+  'Халык',
+  'Тип доставки',
+  'Город',
+  'Индекс',
+  'Улица / адрес',
+  'Срочность',
+  'Требовательный',
+  '',
+  '__order_id',
 ] as const;
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtDate(value: Date | string | null | undefined): string {
   if (!value) return '';
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleDateString('ru-KZ', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   });
 }
 
@@ -70,13 +65,13 @@ function compact(value: string | null | undefined): string {
 }
 
 function paymentLabel(method: string): string {
-  if (method === 'cash')             return 'Наличные';
-  if (method === 'card')             return 'Карта';
-  if (method === 'kaspi_qr')         return 'Kaspi QR';
-  if (method === 'kaspi_terminal')   return 'Kaspi Терминал';
-  if (method === 'transfer')         return 'Перевод';
-  if (method === 'halyk')            return 'Халык';
-  if (method === 'mixed')            return 'Смешанный';
+  if (method === 'cash') return 'Наличные';
+  if (method === 'card') return 'Карта';
+  if (method === 'kaspi_qr') return 'Kaspi QR';
+  if (method === 'kaspi_terminal') return 'Kaspi Терминал';
+  if (method === 'transfer') return 'Перевод';
+  if (method === 'halyk') return 'Халык';
+  if (method === 'mixed') return 'Смешанная';
   return method;
 }
 
@@ -86,12 +81,13 @@ function buildItemPrimaryLine(item: {
   gender?: string | null;
 }): string {
   const parts = [compact(item.productName), compact(item.color)].filter(Boolean);
-  const line  = parts.join(' - ');
+  const line = parts.join(' - ');
   const gender = compact(item.gender);
   return line && gender ? `${line} (${gender})` : line;
 }
 
-function buildShortItemSummary(items: Array<{
+function buildShortItemSummary(orderNumber: string, items: Array<{
+  position?: number | null;
   productName?: string | null;
   color?: string | null;
   gender?: string | null;
@@ -100,7 +96,9 @@ function buildShortItemSummary(items: Array<{
   quantity?: number | null;
 }>): string {
   return items.map((item) => {
+    const itemNumber = formatOrderItemNumber(orderNumber, item.position);
     return [
+      `#${itemNumber}`,
       buildItemPrimaryLine(item),
       compact(item.size),
       item.length ? `дл. ${compact(item.length)}` : '',
@@ -109,56 +107,93 @@ function buildShortItemSummary(items: Array<{
   }).join('; ');
 }
 
-function buildItemsJson(items: Array<{
-  productName?: string | null;
-  color?: string | null;
-  gender?: string | null;
-  length?: string | null;
-  size?: string | null;
-  quantity?: number | null;
-  unitPrice?: number | null;
-  itemDiscount?: number | null;
-  workshopNotes?: string | null;
-}>): string {
-  return JSON.stringify(items.map((item) => ({
-    productName:   compact(item.productName),
-    color:         compact(item.color),
-    gender:        compact(item.gender),
-    length:        compact(item.length),
-    size:          compact(item.size),
-    quantity:      item.quantity   ?? 0,
-    unitPrice:     item.unitPrice  ?? 0,
-    itemDiscount:  item.itemDiscount ?? 0,
-    workshopNotes: compact(item.workshopNotes),
-  })));
+function normalizePaymentBreakdown(input: SheetOrderPayload): Record<string, number> {
+  const sums = new Map<string, number>();
+  const add = (method: string, amount: number | null | undefined) => {
+    const numericAmount = Number(amount ?? 0);
+    if (!method || !Number.isFinite(numericAmount) || numericAmount <= 0) return;
+    sums.set(method, (sums.get(method) ?? 0) + numericAmount);
+  };
+
+  for (const [method, amount] of Object.entries(input.paymentBreakdown ?? {})) {
+    add(method, amount);
+  }
+
+  if (sums.size > 0) {
+    return Object.fromEntries(sums.entries());
+  }
+
+  for (const payment of input.payments) {
+    if (payment.method === 'mixed') continue;
+    add(payment.method, payment.amount);
+  }
+
+  return Object.fromEntries(sums.entries());
 }
 
-function buildPaymentMethods(payments: Array<{ method: string }>): string {
-  return [...new Set(payments.map(p => paymentLabel(p.method)))].join(', ');
+function listPaymentMethods(input: SheetOrderPayload, breakdown: Record<string, number>): string[] {
+  const methods = new Set<string>();
+
+  Object.entries(breakdown).forEach(([method, amount]) => {
+    if (amount > 0) {
+      methods.add(method);
+    }
+  });
+
+  input.payments.forEach((payment) => {
+    if (payment.method === 'mixed') return;
+    methods.add(payment.method);
+  });
+
+  if (methods.size === 0 && input.payments.some((payment) => payment.method === 'mixed')) {
+    methods.add('mixed');
+  }
+
+  return [...methods];
 }
 
-function buildMixedBreakdown(payments: Array<{ method: string; amount: number }>): string {
-  return payments
-    .filter(p => p.method !== 'mixed' && p.amount > 0)
-    .map(p => `${paymentLabel(p.method)}: ${p.amount.toLocaleString('ru-KZ')} ₸`)
+function buildLegacyPaymentMethods(input: SheetOrderPayload, breakdown: Record<string, number>): string {
+  return listPaymentMethods(input, breakdown).map(paymentLabel).join(', ');
+}
+
+function buildPrimaryPaymentMethod(input: SheetOrderPayload, breakdown: Record<string, number>): string {
+  const methods = listPaymentMethods(input, breakdown);
+  if (methods.length > 1) return paymentLabel('mixed');
+  if (methods.length === 1) return paymentLabel(methods[0] ?? '');
+  return compact(input.expectedPaymentMethod);
+}
+
+function buildMixedBreakdown(input: SheetOrderPayload, breakdown: Record<string, number>): string {
+  const parts = Object.entries(breakdown)
+    .filter(([, amount]) => amount > 0)
+    .map(([method, amount]) => `${paymentLabel(method)}: ${amount.toLocaleString('ru-KZ')} ₸`);
+
+  if (parts.length > 0) {
+    return parts.join(' / ');
+  }
+
+  return input.payments
+    .filter((payment) => payment.method !== 'mixed' && payment.amount > 0)
+    .map((payment) => `${paymentLabel(payment.method)}: ${payment.amount.toLocaleString('ru-KZ')} ₸`)
     .join(' / ');
 }
 
-function buildAttachmentNames(attachments: Array<{ originalName?: string | null; filename?: string | null }>): string {
-  return attachments
-    .map(a => compact(a.originalName) || compact(a.filename))
-    .filter(Boolean)
-    .join('; ');
+function getPaymentBucketAmount(
+  bucket: 'cash' | 'kaspi_terminal' | 'transfer' | 'halyk',
+  breakdown: Record<string, number>,
+): number | '' {
+  if (bucket === 'kaspi_terminal') {
+    const kaspiAmount = (breakdown.kaspi_terminal ?? 0) + (breakdown.kaspi_qr ?? 0) + (breakdown.card ?? 0);
+    return kaspiAmount > 0 ? kaspiAmount : '';
+  }
+
+  const amount = breakdown[bucket] ?? 0;
+  return amount > 0 ? amount : '';
 }
 
-function buildWorkshopNotes(items: Array<{ workshopNotes?: string | null; productName?: string | null }>): string {
-  return items
-    .filter(i => compact(i.workshopNotes))
-    .map(i => `${compact(i.productName) || 'Позиция'}: ${compact(i.workshopNotes)}`)
-    .join(' | ');
+function buildUrgencyLabel(urgency: string | null | undefined): string {
+  return urgency === 'urgent' ? 'Срочный' : 'Обычный';
 }
-
-// ── Public types ─────────────────────────────────────────────────────────────
 
 export type SheetOrderPayload = {
   id: string;
@@ -188,7 +223,9 @@ export type SheetOrderPayload = {
   internalNote?: string | null;
   shippingNote?: string | null;
   sourceRequestId?: string | null;
+  paymentBreakdown?: Record<string, number> | null;
   items: Array<{
+    position?: number | null;
     productName?: string | null;
     color?: string | null;
     gender?: string | null;
@@ -203,54 +240,64 @@ export type SheetOrderPayload = {
   attachments: Array<{ originalName?: string | null; filename?: string | null }>;
 };
 
-// ── Row builder ───────────────────────────────────────────────────────────────
-
-export function buildSheetRow(order: SheetOrderPayload): string[] {
+export function buildSheetRows(order: SheetOrderPayload): SheetCellValue[][] {
   const itemsSubtotal = order.items.reduce(
-    (sum, i) => sum + (i.quantity ?? 0) * (i.unitPrice ?? 0),
+    (sum, item) => sum + (item.quantity ?? 0) * (item.unitPrice ?? 0),
     0,
   );
+  const financials = calculateChapanOrderFinancials({
+    itemsSubtotal,
+    orderDiscount: order.orderDiscount,
+    deliveryFee: order.deliveryFee,
+    bankCommissionPercent: order.bankCommissionPercent,
+    bankCommissionAmount: order.bankCommissionAmount,
+  });
   const itemCount = order.items.length;
-  const unitCount = order.items.reduce((sum, i) => sum + (i.quantity ?? 0), 0);
+  const unitCount = order.items.reduce((sum, item) => sum + (item.quantity ?? 0), 0);
+  const summary = buildShortItemSummary(order.orderNumber, order.items);
+  const breakdown = normalizePaymentBreakdown(order);
+  const items = order.items.length > 0
+    ? order.items
+    : [{ position: null, productName: '', color: '', gender: '', length: '', size: '', quantity: 0 }];
 
-  return [
-    order.id,
-    order.orderNumber,
+  return items.map((item) => [
+    compact(order.orderNumber),
+    itemCount,
+    unitCount,
+    formatOrderItemNumber(order.orderNumber, item.position),
     fmtDate(order.createdAt),
     fmtDate(order.orderDate ?? null),
-    order.status,
-    order.paymentStatus,
-    order.urgency === 'urgent' ? 'Срочный' : 'Обычный',
-    order.isDemandingClient ? 'Да' : '',
+    compact(order.source),
     compact(order.clientName),
     compact(order.clientPhone),
-    compact(order.city),
-    compact(order.streetAddress),
-    compact(order.postalCode),
-    compact(order.deliveryType),
-    compact(order.source),
-    fmtDate(order.dueDate ?? null),
-    compact(order.expectedPaymentMethod),
-    buildShortItemSummary(order.items),
-    buildItemsJson(order.items),
-    String(itemCount),
-    String(unitCount),
+    summary,
+    compact(item.productName),
+    compact(item.gender),
+    compact(item.size),
+    compact(item.color),
+    compact(item.length),
     fmtMoney(itemsSubtotal),
     fmtMoney(order.orderDiscount ?? 0),
     fmtMoney(order.deliveryFee ?? 0),
     order.bankCommissionPercent ? String(order.bankCommissionPercent) : '',
     fmtMoney(order.bankCommissionAmount ?? 0),
-    fmtMoney(order.totalAmount),
+    fmtMoney(financials.totalDue),
     fmtMoney(order.paidAmount),
-    fmtMoney(order.totalAmount - order.paidAmount),
-    buildPaymentMethods(order.payments),
-    buildMixedBreakdown(order.payments),
-    compact(order.internalNote),
-    compact(order.shippingNote),
-    order.attachments.length > 0 ? String(order.attachments.length) : '',
-    buildAttachmentNames(order.attachments),
-    buildWorkshopNotes(order.items),
-    compact(order.sourceRequestId),
-    fmtDate(order.updatedAt),
-  ];
+    fmtMoney(Math.max(0, financials.totalDue - order.paidAmount)),
+    buildLegacyPaymentMethods(order, breakdown),
+    buildPrimaryPaymentMethod(order, breakdown),
+    buildMixedBreakdown(order, breakdown),
+    getPaymentBucketAmount('cash', breakdown),
+    getPaymentBucketAmount('kaspi_terminal', breakdown),
+    getPaymentBucketAmount('transfer', breakdown),
+    getPaymentBucketAmount('halyk', breakdown),
+    compact(order.deliveryType),
+    compact(order.city),
+    compact(order.postalCode),
+    compact(order.streetAddress),
+    buildUrgencyLabel(order.urgency),
+    order.isDemandingClient ? 'Да' : '',
+    '',
+    order.id,
+  ]);
 }

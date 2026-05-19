@@ -6,16 +6,17 @@ import {
   normalizeProductionStatus,
 } from './workflow.js';
 
-function mapTask<T extends { status: string | null; orderItem?: { color?: string | null; gender?: string | null; length?: string | null; workshopNotes?: string | null } | null }>(task: T) {
+function mapTask<T extends { status: string | null; orderItem?: { position?: number | null; color?: string | null; gender?: string | null; length?: string | null; workshopNotes?: string | null } | null }>(task: T) {
   const { orderItem, ...rest } = task;
   return {
     ...rest,
     status: normalizeProductionStatus(task.status),
+    orderItemPosition: orderItem?.position ?? null,
     color: orderItem?.color ?? null,
     gender: orderItem?.gender ?? null,
     length: orderItem?.length ?? null,
     workshopNotes: orderItem?.workshopNotes ?? null,
-  } as Omit<T, 'orderItem'> & { status: ReturnType<typeof normalizeProductionStatus>; color: string | null; gender: string | null; length: string | null; workshopNotes: string | null };
+  } as Omit<T, 'orderItem'> & { status: ReturnType<typeof normalizeProductionStatus>; orderItemPosition: number | null; color: string | null; gender: string | null; length: string | null; workshopNotes: string | null };
 }
 
 function getOrderStatusLabel(status: string) {
@@ -161,6 +162,7 @@ export async function list(orgId: string, filters?: { status?: string; assignedT
       },
       orderItem: {
         select: {
+          position: true,
           color: true,
           gender: true,
           length: true,
@@ -209,6 +211,7 @@ export async function listForWorkshop(orgId: string) {
       },
       orderItem: {
         select: {
+          position: true,
           color: true,
           gender: true,
           length: true,

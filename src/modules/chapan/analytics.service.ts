@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/prisma.js';
+import { calculateChapanOrderFinancials } from './financials.js';
 
 export async function getOverview(orgId: string, dateFrom?: Date, dateTo?: Date) {
   const dateFilter =
@@ -14,18 +15,31 @@ export async function getOverview(orgId: string, dateFrom?: Date, dateTo?: Date)
   const orders = await prisma.chapanOrder.findMany({
     where: { orgId, deletedAt: null, ...dateFilter },
     select: {
+      id: true,
       status: true,
       totalAmount: true,
       paidAmount: true,
+      orderDiscount: true,
+      deliveryFee: true,
+      bankCommissionPercent: true,
+      bankCommissionAmount: true,
       managerId: true,
       managerName: true,
       createdAt: true,
     },
   });
 
-  const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
+  const orderDueAmounts = orders.map((o) => calculateChapanOrderFinancials({
+    itemsSubtotal: o.totalAmount,
+    orderDiscount: o.orderDiscount,
+    deliveryFee: o.deliveryFee,
+    bankCommissionPercent: o.bankCommissionPercent,
+    bankCommissionAmount: o.bankCommissionAmount,
+  }).totalDue);
+  const totalRevenue = orderDueAmounts.reduce((s, amount) => s + amount, 0);
   const totalPaid = orders.reduce((s, o) => s + o.paidAmount, 0);
   const completed = orders.filter((o) => o.status === 'completed');
+  const orderDueById = new Map(orders.map((o, index) => [o.id ?? String(index), orderDueAmounts[index] ?? 0] as const));
 
   const byStatus: Record<string, number> = {};
   for (const o of orders) {
@@ -33,10 +47,10 @@ export async function getOverview(orgId: string, dateFrom?: Date, dateTo?: Date)
   }
 
   const timelineMap = new Map<string, { count: number; revenue: number }>();
-  for (const o of orders) {
+  for (const [index, o] of orders.entries()) {
     const day = o.createdAt.toISOString().slice(0, 10);
     const cur = timelineMap.get(day) ?? { count: 0, revenue: 0 };
-    timelineMap.set(day, { count: cur.count + 1, revenue: cur.revenue + o.totalAmount });
+    timelineMap.set(day, { count: cur.count + 1, revenue: cur.revenue + (orderDueAmounts[index] ?? 0) });
   }
   const timeline = [...timelineMap.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
@@ -46,7 +60,7 @@ export async function getOverview(orgId: string, dateFrom?: Date, dateTo?: Date)
     string,
     { id: string; name: string; count: number; totalAmount: number; paidAmount: number }
   >();
-  for (const o of orders) {
+  for (const [index, o] of orders.entries()) {
     if (!o.managerId) continue;
     const cur = managerMap.get(o.managerId) ?? {
       id: o.managerId,
@@ -58,7 +72,7 @@ export async function getOverview(orgId: string, dateFrom?: Date, dateTo?: Date)
     managerMap.set(o.managerId, {
       ...cur,
       count: cur.count + 1,
-      totalAmount: cur.totalAmount + o.totalAmount,
+      totalAmount: cur.totalAmount + (orderDueAmounts[index] ?? 0),
       paidAmount: cur.paidAmount + o.paidAmount,
     });
   }
@@ -74,7 +88,7 @@ export async function getOverview(orgId: string, dateFrom?: Date, dateTo?: Date)
       total: totalRevenue,
       paid: totalPaid,
       unpaid: totalRevenue - totalPaid,
-      completed: completed.reduce((s, o) => s + o.totalAmount, 0),
+      completed: completed.reduce((s, o) => s + (orderDueById.get(o.id) ?? 0), 0),
     },
     orders: {
       total: orders.length,

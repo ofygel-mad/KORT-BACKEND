@@ -11,6 +11,7 @@ type TemplateOrder = {
   clientPhoneForeign: string | null;
   createdAt: Date;
   items: Array<{
+    position?: number | null;
     productName: string;
     size: string;
     quantity: number;
@@ -263,13 +264,23 @@ function buildTemplateLines(orders: TemplateOrder[]): TemplateLine[] {
   let seq = 1;
 
   for (const order of orders) {
-    for (let itemIndex = 0; itemIndex < order.items.length; itemIndex++) {
-      const item = order.items[itemIndex]!;
+    const items = [...order.items].sort((left, right) => {
+      const leftPosition = Number(left.position ?? 0);
+      const rightPosition = Number(right.position ?? 0);
+      if (leftPosition !== rightPosition) {
+        return leftPosition - rightPosition;
+      }
+      return 0;
+    });
+
+    for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
+      const item = items[itemIndex]!;
+      const itemPosition = item.position ?? itemIndex + 1;
       const amount = Math.round(item.quantity * item.unitPrice * 100) / 100;
       lines.push({
         seq,
         description: formatItemDescription(item),
-        nomenclature: `${order.orderNumber}-${itemIndex + 1}`,
+        nomenclature: `${order.orderNumber}-${itemPosition}`,
         unit: 'шт',
         qtyToRelease: item.quantity,
         qtyReleased: item.quantity,

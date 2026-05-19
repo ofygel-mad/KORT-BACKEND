@@ -234,8 +234,65 @@ model Organization {
   adDailyMetrics       AdDailyMetric[]
   conversations        Conversation[]
   chatAttachments      ChatAttachment[]
+  kaspiConnections     KaspiConnection[]
+  kaspiOrderLinks      KaspiOrderLink[]
 
   @@map("organizations")
+}
+
+model KaspiConnection {
+  id            String    @id @default(cuid())
+  orgId         String    @map("org_id")
+  sellerName    String?   @map("seller_name")
+  apiToken      String    @map("api_token")
+  tokenLast4    String    @map("token_last4")
+  isActive      Boolean   @default(true) @map("is_active")
+  archivedAt    DateTime? @map("archived_at")
+  lastCheckedAt DateTime? @map("last_checked_at")
+  lastSyncAt    DateTime? @map("last_sync_at")
+  lastSyncError String?   @map("last_sync_error")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  org        Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orderLinks KaspiOrderLink[]
+
+  @@index([orgId, isActive])
+  @@index([orgId, archivedAt])
+  @@map("kaspi_connections")
+}
+
+model KaspiOrderLink {
+  id                   String    @id @default(cuid())
+  orgId                String    @map("org_id")
+  connectionId         String    @map("connection_id")
+  externalOrderId      String    @map("external_order_id")
+  externalOrderCode    String?   @map("external_order_code")
+  externalState        String?   @map("external_state")
+  externalStatus       String?   @map("external_status")
+  externalDeliveryMode String?   @map("external_delivery_mode")
+  internalOrderId      String?   @map("internal_order_id")
+  internalOrderType    String?   @map("internal_order_type")
+  rawPayload           Json?     @map("raw_payload")
+  lastExternalUpdateAt DateTime? @map("last_external_update_at")
+  acceptedAt           DateTime? @map("accepted_at")
+  completedAt          DateTime? @map("completed_at")
+  cancelledAt          DateTime? @map("cancelled_at")
+  lastSyncedAt         DateTime? @map("last_synced_at")
+  syncError            String?   @map("sync_error")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  org        Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  connection KaspiConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, externalOrderId])
+  @@index([orgId, externalStatus])
+  @@index([orgId, externalState])
+  @@index([orgId, connectionId])
+  @@index([orgId, internalOrderId])
+  @@index([connectionId, lastSyncedAt])
+  @@map("kaspi_order_links")
 }
 
 model ExchangeRate {
@@ -760,6 +817,7 @@ model ChapanOrder {
 model ChapanOrderItem {
   id                String  @id @default(cuid())
   orderId           String  @map("order_id")
+  position          Int     @map("item_position")
   productName       String  @map("product_name")
   size              String
   quantity          Int     @default(1)
@@ -778,6 +836,8 @@ model ChapanOrderItem {
   order          ChapanOrder           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productionTask ChapanProductionTask?
 
+  @@unique([orderId, position])
+  @@index([orderId, position])
   @@map("chapan_order_items")
 }
 
@@ -1287,10 +1347,28 @@ model WarehouseProductCatalog {
   fieldLinks     WarehouseProductField[]
   warehouseItems WarehouseItem[]
   variants       WarehouseVariant[]
+  photos         WarehouseProductPhoto[]
 
   @@unique([orgId, normalizedName])
   @@index([orgId])
   @@map("warehouse_product_catalog")
+}
+
+model WarehouseProductPhoto {
+  id          String   @id @default(cuid())
+  productId   String   @map("product_id")
+  orgId       String   @map("org_id")
+  fileName    String   @map("file_name")
+  mimeType    String   @map("mime_type")
+  sizeBytes   Int      @map("size_bytes")
+  storagePath String   @map("storage_path")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  product WarehouseProductCatalog @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("warehouse_product_photos")
 }
 
 model WarehouseProductField {

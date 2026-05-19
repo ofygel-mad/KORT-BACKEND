@@ -8,9 +8,11 @@
 
 import { prisma } from '../../../lib/prisma.js';
 import { syncChapanPayment } from '../../accounting/accounting.sync.js';
+import { parseOrderItemNumber } from '../../chapan/order-item-number.js';
 
 export interface OrderRow {
   order_number?: string;
+  item_position?: number | string;
   customer_name?: string;
   phone?: string;
   product_name?: string;
@@ -70,12 +72,14 @@ export async function importOrders(
   const result: AdapterResult = { created: 0, skipped: 0, errors: [] };
 
   // Group rows by order_number (one order can have multiple items)
-  const orderGroups = new Map<string, OrderRow[]>();
+  const orderGroups = new Map<string, Array<OrderRow & { __rowIndex: number; __parsedPosition: number | null }>>();
 
-  for (const row of rows) {
-    const num = row.order_number?.trim() ?? `IMP-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    if (!orderGroups.has(num)) orderGroups.set(num, []);
-    orderGroups.get(num)!.push(row);
+  for (const [rowIndex, row] of rows.entries()) {
+    const rawOrderNumber = row.order_number?.trim() ?? '';
+    const parsed = rawOrderNumber ? parseOrderItemNumber(rawOrderNumber) : { orderNumber: '', position: null };
+    const groupNumber = parsed.orderNumber || `IMP-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    if (!orderGroups.has(groupNumber)) orderGroups.set(groupNumber, []);
+    orderGroups.get(groupNumber)!.push({ ...row, __rowIndex: rowIndex, __parsedPosition: parsed.position });
   }
 
   for (const [orderNumber, items] of orderGroups) {
@@ -128,15 +132,42 @@ export async function importOrders(
       });
 
       // Create order items
-      for (const row of items) {
+      const usedPositions = new Set<number>();
+      const sortedRows = [...items].sort((left, right) => {
+        const leftPosition = left.__parsedPosition ?? Number.MAX_SAFE_INTEGER;
+        const rightPosition = right.__parsedPosition ?? Number.MAX_SAFE_INTEGER;
+        if (leftPosition !== rightPosition) {
+          return leftPosition - rightPosition;
+        }
+        return left.__rowIndex - right.__rowIndex;
+      });
+
+      for (const [itemIndex, row] of sortedRows.entries()) {
         const qty = Math.max(1, Math.round(parseNum(row.quantity || 1)));
         const unitPrice = parseNum(row.unit_price);
         const productName = row.product_name?.trim() ?? 'Без названия';
         const size = row.size?.trim() ?? '—';
+        const explicitPosition = Math.max(0, Math.round(parseNum(row.item_position)));
+        const parsedPosition = row.__parsedPosition;
+        const fallbackPosition = itemIndex + 1;
+        const preferredPositions: number[] = [];
+        if (explicitPosition > 0) preferredPositions.push(explicitPosition);
+        if (parsedPosition !== null && parsedPosition > 0) preferredPositions.push(parsedPosition);
+
+        let position = preferredPositions.find((value) => !usedPositions.has(value));
+        if (!position) {
+          let candidate = fallbackPosition;
+          while (usedPositions.has(candidate)) {
+            candidate++;
+          }
+          position = candidate;
+        }
+        usedPositions.add(position);
 
         await prisma.chapanOrderItem.create({
           data: {
             orderId: order.id,
+            position,
             productName,
             size,
             quantity: qty,

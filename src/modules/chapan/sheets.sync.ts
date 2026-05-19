@@ -3,7 +3,7 @@
  *
  * Architecture:
  * - Server-side only (never called from frontend)
- * - Idempotency: one row per orderId, keyed by orderId in column A
+ * - Idempotency: one order block per order number in column A
  * - Retry with exponential backoff (3 attempts)
  * - Graceful degradation: sync errors are logged but never crash the order flow
  * - Triggered on: order create, status change, payment
@@ -14,21 +14,43 @@
  * 3. Set env vars: GOOGLE_SHEETS_SPREADSHEET_ID, GOOGLE_SERVICE_ACCOUNT_EMAIL,
  *    GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY (base64-encoded or raw with \n)
  * 4. npm install googleapis
- * 5. Remove the `SHEETS_DISABLED` guard at the bottom of this file
  *
  * Row schema is defined in sheets/row-builder.ts (independently testable).
  */
 
+import { config } from '../../config.js';
 import { prisma } from '../../lib/prisma.js';
-import { buildSheetRow, SHEET_HEADER } from './sheets/row-builder.js';
-
-// ── Types ─────────────────────────────────────────────────────────────────────
+import { calculateChapanOrderFinancials } from './financials.js';
+import { buildSheetRows, SHEET_HEADER, type SheetCellValue } from './sheets/row-builder.js';
 
 type SyncResult =
   | { ok: true; rowIndex: number }
   | { ok: false; error: string };
 
-// ── Retry logic ───────────────────────────────────────────────────────────────
+type SheetsClient = Awaited<ReturnType<typeof buildSheetsClient>>;
+const TECH_ORDER_ID_COLUMN_INDEX = SHEET_HEADER.length - 1;
+
+function getSheetsConfig() {
+  return {
+    spreadsheetId: config.GOOGLE_SHEETS_SPREADSHEET_ID,
+    sheetName: config.GOOGLE_SHEETS_SHEET_NAME ?? 'Orders',
+    serviceAccountEmail: config.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    privateKey: config.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
+  };
+}
+
+function columnLetter(columnNumber: number): string {
+  let value = columnNumber;
+  let result = '';
+
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    result = String.fromCharCode(65 + remainder) + result;
+    value = Math.floor((value - 1) / 26);
+  }
+
+  return result;
+}
 
 async function withRetry<T>(
   fn: () => Promise<T>,
@@ -50,16 +72,6 @@ async function withRetry<T>(
   throw lastError;
 }
 
-// ── Core sync function ────────────────────────────────────────────────────────
-
-/**
- * Sync a single order to Google Sheets.
- *
- * Strategy:
- * 1. Load full order from DB (ensures we always push source-of-truth data)
- * 2. Find existing row by orderId in column A (idempotency)
- * 3. Update row if found, append if not
- */
 export async function syncOrderToSheets(
   orgId: string,
   orderId: string,
@@ -69,7 +81,6 @@ export async function syncOrderToSheets(
   }
 
   try {
-    // 1. Load full order
     const order = await prisma.chapanOrder.findFirst({
       where: { id: orderId, orgId },
       include: {
@@ -88,59 +99,73 @@ export async function syncOrderToSheets(
       return { ok: false, error: `Order ${orderId} not found` };
     }
 
-    // 2. Build row values using the versioned row-builder
-    const rowValues = buildSheetRow({
-      id:            order.id,
-      orderNumber:   order.orderNumber,
-      createdAt:     order.createdAt,
-      updatedAt:     order.updatedAt,
-      orderDate:     (order as any).orderDate     ?? null,
-      status:        order.status,
+    const rowValues = buildSheetRows({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      orderDate: (order as any).orderDate ?? null,
+      status: order.status,
       paymentStatus: order.paymentStatus,
-      urgency:               (order as any).urgency               ?? null,
-      isDemandingClient:     (order as any).isDemandingClient     ?? null,
-      clientName:    order.clientName,
-      clientPhone:   order.clientPhone,
-      city:                  (order as any).city                  ?? null,
-      streetAddress:         (order as any).streetAddress         ?? null,
-      postalCode:            (order as any).postalCode            ?? null,
-      deliveryType:          (order as any).deliveryType          ?? null,
-      source:                (order as any).source                ?? null,
-      dueDate:       order.dueDate ?? null,
+      urgency: (order as any).urgency ?? null,
+      isDemandingClient: (order as any).isDemandingClient ?? null,
+      clientName: order.clientName,
+      clientPhone: order.clientPhone,
+      city: (order as any).city ?? null,
+      streetAddress: (order as any).streetAddress ?? null,
+      postalCode: (order as any).postalCode ?? null,
+      deliveryType: (order as any).deliveryType ?? null,
+      source: (order as any).source ?? null,
+      dueDate: order.dueDate ?? null,
       expectedPaymentMethod: (order as any).expectedPaymentMethod ?? null,
-      totalAmount:   order.totalAmount,
-      paidAmount:    order.paidAmount,
-      orderDiscount:         (order as any).orderDiscount         ?? 0,
-      deliveryFee:           (order as any).deliveryFee           ?? 0,
+      totalAmount: calculateChapanOrderFinancials({
+        itemsSubtotal: order.totalAmount,
+        orderDiscount: (order as any).orderDiscount ?? 0,
+        deliveryFee: (order as any).deliveryFee ?? 0,
+        bankCommissionPercent: (order as any).bankCommissionPercent ?? 0,
+        bankCommissionAmount: (order as any).bankCommissionAmount ?? 0,
+      }).totalDue,
+      paidAmount: order.paidAmount,
+      orderDiscount: (order as any).orderDiscount ?? 0,
+      deliveryFee: (order as any).deliveryFee ?? 0,
       bankCommissionPercent: (order as any).bankCommissionPercent ?? 0,
-      bankCommissionAmount:  (order as any).bankCommissionAmount  ?? 0,
-      internalNote:          (order as any).internalNote          ?? null,
-      shippingNote:          (order as any).shippingNote          ?? null,
-      sourceRequestId:       (order as any).sourceRequestId       ?? null,
-      items: order.items.map(item => ({
-        productName:   item.productName,
-        color:         item.color,
-        gender:        item.gender,
-        length:        item.length,
-        size:          item.size,
-        quantity:      item.quantity,
-        unitPrice:     item.unitPrice,
-        itemDiscount:  (item as any).itemDiscount ?? 0,
-        workshopNotes: item.workshopNotes,
+      bankCommissionAmount: (order as any).bankCommissionAmount ?? 0,
+      internalNote: (order as any).internalNote ?? null,
+      shippingNote: (order as any).shippingNote ?? null,
+      sourceRequestId: (order as any).sourceRequestId ?? null,
+      paymentBreakdown: (order as any).paymentBreakdown ?? null,
+      items: [...order.items]
+        .sort((left, right) => {
+          const leftPosition = Number((left as any).position ?? 0);
+          const rightPosition = Number((right as any).position ?? 0);
+          if (leftPosition !== rightPosition) {
+            return leftPosition - rightPosition;
+          }
+          return left.id.localeCompare(right.id);
+        })
+        .map(item => ({
+          position: (item as any).position ?? null,
+          productName: item.productName,
+          color: item.color,
+          gender: item.gender,
+          length: item.length,
+          size: item.size,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          itemDiscount: (item as any).itemDiscount ?? 0,
+          workshopNotes: item.workshopNotes,
+        })),
+      payments: order.payments.map(payment => ({
+        method: payment.method,
+        amount: (payment as any).amount ?? 0,
       })),
-      payments: order.payments.map(p => ({
-        method: p.method,
-        amount: (p as any).amount ?? 0,
-      })),
-      attachments: order.attachments.map(a => ({
-        originalName: a.fileName ?? null,
-        filename:     a.fileName ?? null,
+      attachments: order.attachments.map(attachment => ({
+        originalName: attachment.fileName ?? null,
+        filename: attachment.fileName ?? null,
       })),
     });
 
-    // 3. Upsert to sheet
-    return await withRetry(() => upsertRow(orderId, rowValues));
-
+    return await withRetry(() => upsertRows(order.id, order.orderNumber, rowValues));
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`[sheets.sync] Failed to sync order ${orderId}:`, message);
@@ -148,10 +173,6 @@ export async function syncOrderToSheets(
   }
 }
 
-/**
- * Ensure the header row exists in the sheet.
- * Safe to call multiple times — checks first.
- */
 export async function ensureSheetHeader(): Promise<void> {
   if (!isSheetsConfigured()) return;
   try {
@@ -161,25 +182,23 @@ export async function ensureSheetHeader(): Promise<void> {
   }
 }
 
-// ── Google Sheets API integration ─────────────────────────────────────────────
-
 function isSheetsConfigured(): boolean {
+  const sheetsConfig = getSheetsConfig();
   const missing: string[] = [];
-  if (!process.env.GOOGLE_SHEETS_SPREADSHEET_ID) missing.push('GOOGLE_SHEETS_SPREADSHEET_ID');
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL)  missing.push('GOOGLE_SERVICE_ACCOUNT_EMAIL');
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY) missing.push('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY');
+  if (!sheetsConfig.spreadsheetId) missing.push('GOOGLE_SHEETS_SPREADSHEET_ID');
+  if (!sheetsConfig.serviceAccountEmail) missing.push('GOOGLE_SERVICE_ACCOUNT_EMAIL');
+  if (!sheetsConfig.privateKey) missing.push('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY');
 
-  // Warn once per process start if partially configured
   if (missing.length > 0 && missing.length < 3) {
     console.warn('[sheets.sync] Partially configured — missing:', missing.join(', '));
   }
-  // Detect common mistake: SPREADSHEET_ID looks like an OAuth Client ID
-  const sid = process.env.GOOGLE_SHEETS_SPREADSHEET_ID ?? '';
+
+  const sid = sheetsConfig.spreadsheetId ?? '';
   if (sid && sid.endsWith('.apps.googleusercontent.com')) {
     console.error(
       '[sheets.sync] GOOGLE_SHEETS_SPREADSHEET_ID looks like an OAuth Client ID, not a spreadsheet ID.\n' +
       '  Expected format: the alphanumeric ID from the Google Sheets URL, e.g.\n' +
-      '  https://docs.google.com/spreadsheets/d/<SPREADSHEET_ID>/edit'
+      '  https://docs.google.com/spreadsheets/d/<SPREADSHEET_ID>/edit',
     );
     return false;
   }
@@ -187,21 +206,17 @@ function isSheetsConfigured(): boolean {
   return missing.length === 0;
 }
 
-/**
- * Build an authenticated Google Sheets client using a Service Account.
- * The private key can be stored as base64 (recommended for env vars) or
- * raw with literal \n characters (they are normalised here).
- */
 async function buildSheetsClient() {
   const { google } = await import('googleapis');
+  const sheetsConfig = getSheetsConfig();
 
-  const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY ?? '';
+  const rawKey = sheetsConfig.privateKey ?? '';
   const privateKey = rawKey.startsWith('-----')
     ? rawKey.replace(/\\n/g, '\n')
     : Buffer.from(rawKey, 'base64').toString('utf-8').replace(/\\n/g, '\n');
 
   const auth = new google.auth.JWT({
-    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    email: sheetsConfig.serviceAccountEmail,
     key: privateKey,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
@@ -215,7 +230,7 @@ function toSheetRange(sheetName: string, range: string): string {
 }
 
 async function ensureWorksheetExists(
-  sheets: Awaited<ReturnType<typeof buildSheetsClient>>,
+  sheets: SheetsClient,
   spreadsheetId: string,
   sheetName: string,
 ) {
@@ -250,76 +265,128 @@ async function ensureWorksheetExists(
   });
 }
 
-/**
- * Upsert a row in the sheet.
- * Searches column A for the orderId (idempotency key).
- * Updates the row if found, appends a new row if not.
- */
-async function upsertRow(
-  orderId: string,
-  values: string[],
-): Promise<SyncResult> {
-  const sheets = await buildSheetsClient();
-  const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID!;
-  const sheetName = process.env.GOOGLE_SHEETS_SHEET_NAME ?? 'Orders';
-  const columnARange = toSheetRange(sheetName, 'A:A');
-  const appendRange = toSheetRange(sheetName, 'A1');
-
+async function getWorksheetId(
+  sheets: SheetsClient,
+  spreadsheetId: string,
+  sheetName: string,
+): Promise<number> {
   await ensureWorksheetExists(sheets, spreadsheetId, sheetName);
 
-  // Find existing row
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: 'sheets.properties.sheetId,sheets.properties.title',
+  });
+
+  const sheetId = (meta.data.sheets ?? [])
+    .map(sheet => sheet.properties)
+    .find((properties) => properties?.title === sheetName)
+    ?.sheetId;
+
+  if (sheetId == null) {
+    throw new Error(`Worksheet ${sheetName} not found`);
+  }
+
+  return sheetId;
+}
+
+async function deleteRows(
+  sheets: SheetsClient,
+  spreadsheetId: string,
+  sheetId: number,
+  rowIndexes: number[],
+) {
+  if (rowIndexes.length === 0) return;
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: rowIndexes
+        .sort((left, right) => right - left)
+        .map((rowIndex) => ({
+          deleteDimension: {
+            range: {
+              sheetId,
+              dimension: 'ROWS',
+              startIndex: rowIndex - 1,
+              endIndex: rowIndex,
+            },
+          },
+        })),
+    },
+  });
+}
+
+async function upsertRows(
+  orderId: string,
+  orderNumber: string,
+  values: SheetCellValue[][],
+): Promise<SyncResult> {
+  const sheets = await buildSheetsClient();
+  const sheetsConfig = getSheetsConfig();
+  const spreadsheetId = sheetsConfig.spreadsheetId!;
+  const sheetName = sheetsConfig.sheetName;
+  const sheetId = await getWorksheetId(sheets, spreadsheetId, sheetName);
+
   const existing = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: columnARange,
+    range: toSheetRange(sheetName, `A:${columnLetter(SHEET_HEADER.length)}`),
   });
 
   const rows = existing.data.values ?? [];
-  const existingRowIndex = rows.findIndex(row => row[0] === orderId);
+  const indexedRows = rows.map((row, index) => ({ row, rowIndex: index + 1 })).filter(({ rowIndex }) => rowIndex > 1);
+  const idMatchedRows = indexedRows
+    .filter(({ row }) => row[TECH_ORDER_ID_COLUMN_INDEX] === orderId)
+    .map(({ rowIndex }) => rowIndex);
+  const hasTechnicalIds = indexedRows.some(({ row }) => Boolean(row[TECH_ORDER_ID_COLUMN_INDEX]));
+  const legacyMatchedRows = idMatchedRows.length === 0
+    && !hasTechnicalIds
+    ? indexedRows
+      .filter(({ row }) => {
+        const columnA = row[0];
+        const columnB = row[1];
+        return columnA === orderNumber || columnA === orderId || columnB === orderNumber;
+      })
+      .map(({ rowIndex }) => rowIndex)
+    : [];
+  const existingRowIndexes = idMatchedRows.length > 0 ? idMatchedRows : legacyMatchedRows;
 
-  if (existingRowIndex >= 1) {
-    // Update existing row (1-indexed, skip header at row 1)
-    const rowNumber = existingRowIndex + 1;
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: toSheetRange(sheetName, `A${rowNumber}`),
-      valueInputOption: 'USER_ENTERED',
-      requestBody: { values: [values] },
-    });
-    return { ok: true, rowIndex: rowNumber };
-  } else {
-    // Append new row
-    const result = await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: appendRange,
-      valueInputOption: 'USER_ENTERED',
-      insertDataOption: 'INSERT_ROWS',
-      requestBody: { values: [values] },
-    });
-    const updatedRange = result.data.updates?.updatedRange ?? '';
-    const match = updatedRange.match(/!A(\d+)/);
-    const rowIndex = match?.[1] != null ? parseInt(match[1], 10) : -1;
-    return { ok: true, rowIndex };
-  }
+  await deleteRows(sheets, spreadsheetId, sheetId, existingRowIndexes);
+
+  const result = await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: toSheetRange(sheetName, 'A1'),
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: { values },
+  });
+
+  const updatedRange = result.data.updates?.updatedRange ?? '';
+  const match = updatedRange.match(/!A(\d+)/);
+  const rowIndex = match?.[1] != null ? parseInt(match[1], 10) : -1;
+  return { ok: true, rowIndex };
 }
 
 async function ensureHeaderRow(): Promise<void> {
   const sheets = await buildSheetsClient();
-  const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID!;
-  const sheetName = process.env.GOOGLE_SHEETS_SHEET_NAME ?? 'Orders';
-  const headerRange = toSheetRange(sheetName, 'A1:A1');
+  const sheetsConfig = getSheetsConfig();
+  const spreadsheetId = sheetsConfig.spreadsheetId!;
+  const sheetName = sheetsConfig.sheetName;
 
   await ensureWorksheetExists(sheets, spreadsheetId, sheetName);
 
   const existing = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: headerRange,
+    range: toSheetRange(sheetName, `A1:${columnLetter(SHEET_HEADER.length)}1`),
   });
 
-  if (!existing.data.values?.[0]?.[0]) {
+  const currentHeader = existing.data.values?.[0] ?? [];
+  const isSameHeader = SHEET_HEADER.every((value, index) => (currentHeader[index] ?? '') === value);
+
+  if (!isSameHeader) {
     await sheets.spreadsheets.values.update({
       spreadsheetId,
       range: toSheetRange(sheetName, 'A1'),
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       requestBody: { values: [[...SHEET_HEADER]] },
     });
   }

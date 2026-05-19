@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "prisma generate && tsc",
+    "build": "prisma generate && node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc",
     "start": "prisma migrate deploy && node dist/index.js",
     "start:docker": "node scripts/start-docker.mjs",
     "postinstall": "prisma generate",

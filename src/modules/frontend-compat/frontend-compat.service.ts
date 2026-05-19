@@ -872,7 +872,7 @@ export async function searchWorkspace(orgId: string, query: SearchQuery) {
         type: 'customer',
         label: customer.fullName,
         sublabel: customer.companyName ?? customer.email ?? '',
-        path: `/customers/${customer.id}`,
+        path: '/crm/customers',
         meta: {
           follow_up_due_at: null,
         },
@@ -882,7 +882,7 @@ export async function searchWorkspace(orgId: string, query: SearchQuery) {
         type: 'deal',
         label: deal.title,
         sublabel: deal.customer?.fullName ?? deal.fullName,
-        path: `/deals/${deal.id}`,
+        path: '/crm/deals',
         meta: {
           amount: deal.value,
           currency: deal.currency,
@@ -895,7 +895,7 @@ export async function searchWorkspace(orgId: string, query: SearchQuery) {
           type: 'task',
           label: task.title,
           sublabel: serialized.customer?.full_name ?? serialized.deal?.title ?? '',
-          path: '/tasks',
+          path: '/crm/tasks',
           meta: {
             priority: serialized.priority,
           },

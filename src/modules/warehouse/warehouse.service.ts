@@ -13,6 +13,7 @@
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../lib/errors.js';
 import { nanoid } from 'nanoid';
+import { buildCanonicalVariantKey } from '../../shared/variant-key.js';
 import { Prisma } from '@prisma/client';
 import {
   createStockReservation as createCanonicalStockReservation,
@@ -144,13 +145,12 @@ function normalizeWarehouseName(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
+// Thin shim over the canonical variant-key builder for legacy call-sites that
+// have already pre-filtered attributes by affectsAvailability before reaching us.
+// New code paths should call buildCanonicalVariantKey directly with field defs.
 function buildWarehouseVariantKey(productName: string, attributes: Record<string, string>) {
-  const base = normalizeWarehouseName(productName);
-  const parts = Object.entries(attributes)
-    .filter(([, value]) => value.trim())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}:${normalizeWarehouseName(value)}`);
-  return [base, ...parts].join('|');
+  const fields = Object.keys(attributes).map((code) => ({ code, affectsAvailability: true }));
+  return buildCanonicalVariantKey(productName, attributes, fields);
 }
 
 function readStringMapFromJson(value?: Prisma.JsonValue | null): Record<string, string> {
@@ -1639,6 +1639,22 @@ export async function checkVariantAvailability(
 ): Promise<Record<string, VariantAvailabilityResult>> {
   const result: Record<string, VariantAvailabilityResult> = {};
 
+  // Load org-level field definitions once. Variant-key construction must use
+  // affectsAvailability filtering so the response key matches what the FE built
+  // when issuing the request — see buildCanonicalVariantKey contract.
+  const orgFieldDefs = await prisma.warehouseFieldDefinition.findMany({
+    where: { orgId },
+    select: { code: true, affectsAvailability: true },
+  });
+  const fieldsForKey = orgFieldDefs.length > 0
+    ? orgFieldDefs
+    : [
+        { code: 'color',  affectsAvailability: true },
+        { code: 'gender', affectsAvailability: true },
+        { code: 'length', affectsAvailability: true },
+        { code: 'size',   affectsAvailability: true },
+      ];
+
   for (const v of variants) {
     const name = v.name?.trim();
     if (!name) continue;
@@ -1649,34 +1665,86 @@ export async function checkVariantAvailability(
     if (v.size?.trim()) attrs.size = v.size.trim();
     if (v.length?.trim()) attrs.length = v.length.trim();
 
-    const variantKey = buildWarehouseVariantKey(name, attrs);
-    const hasAttributes = Object.keys(attrs).length > 0;
+    const variantKey = buildCanonicalVariantKey(name, attrs, fieldsForKey);
+    const allowedAxes = new Set(fieldsForKey.filter((f) => f.affectsAvailability).map((f) => f.code));
+    const hasAttributes = Object.keys(attrs).some((code) => allowedAxes.has(code));
+    const normalizedName = normalizeWarehouseName(name);
 
-    // Exact variantKey match first
-    let item = await prisma.warehouseItem.findFirst({
+    // 1. New catalog system: WarehouseProductCatalog → WarehouseVariant → WarehouseStockBalance.
+    // Match only by normalizedName (exact) — `contains: name` previously caused false
+    // matches like "Абай бомбер" → catalog row "Бомбер Амир", which then poisoned the
+    // availability lookup with the wrong product's variants.
+    const catalogProduct = await prisma.warehouseProductCatalog.findFirst({
+      where: { orgId, normalizedName },
+      select: { id: true, name: true },
+    });
+
+    if (catalogProduct) {
+      const catalogVariants = await prisma.warehouseVariant.findMany({
+        where: hasAttributes
+          ? { orgId, productCatalogId: catalogProduct.id, variantKey }
+          : { orgId, productCatalogId: catalogProduct.id },
+        select: { id: true },
+      });
+
+      if (catalogVariants.length > 0) {
+        const balance = await prisma.warehouseStockBalance.aggregate({
+          where: {
+            orgId,
+            variantId: { in: catalogVariants.map((cv) => cv.id) },
+            stockStatus: 'available',
+          },
+          _sum: { qtyAvailable: true },
+        });
+
+        const totalAvailable = balance._sum.qtyAvailable ?? 0;
+        const status: VariantAvailabilityStatus = totalAvailable === 0 ? 'none' : 'ok';
+
+        result[variantKey] = {
+          qty: totalAvailable,
+          available: totalAvailable,
+          status,
+          itemName: catalogProduct.name,
+        };
+        continue;
+      }
+    }
+
+    // 2. Fall back to legacy WarehouseItem.
+    // Sum across all rows that share the same variantKey — historically the table
+    // accumulated duplicate rows (separate batches, manual receipts), and findFirst
+    // would non-deterministically pick one of them. The accounting truth is the sum.
+    const rows = await prisma.warehouseItem.findMany({
       where: { orgId, variantKey },
       select: { name: true, qty: true, qtyReserved: true, qtyMin: true },
     });
 
-    // Fall back to name-only match when no attributes given
-    if (!item && !hasAttributes) {
-      item = await prisma.warehouseItem.findFirst({
+    let workingRows = rows;
+    if (workingRows.length === 0 && !hasAttributes) {
+      workingRows = await prisma.warehouseItem.findMany({
         where: { orgId, name: { contains: name, mode: 'insensitive' } },
         select: { name: true, qty: true, qtyReserved: true, qtyMin: true },
       });
     }
 
-    if (!item) {
+    if (workingRows.length === 0) {
       result[variantKey] = { qty: 0, available: 0, status: 'none', itemName: null };
       continue;
     }
 
-    const available = Math.max(0, item.qty - item.qtyReserved);
-    const qtyMin = item.qtyMin ?? 0;
+    const totalQty = workingRows.reduce((sum, r) => sum + r.qty, 0);
+    const totalReserved = workingRows.reduce((sum, r) => sum + r.qtyReserved, 0);
+    const available = Math.max(0, totalQty - totalReserved);
+    const qtyMin = workingRows[0]?.qtyMin ?? 0;
     const status: VariantAvailabilityStatus =
       available === 0 ? 'none' : available <= qtyMin ? 'low' : 'ok';
 
-    result[variantKey] = { qty: item.qty, available, status, itemName: item.name };
+    result[variantKey] = {
+      qty: totalQty,
+      available,
+      status,
+      itemName: workingRows[0]?.name ?? null,
+    };
   }
 
   return result;

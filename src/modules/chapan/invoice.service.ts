@@ -22,6 +22,7 @@ interface OrderForInvoice {
   orderNumber: string;
   createdAt: Date;
   items: Array<{
+    position?: number | null;
     productName: string;
     size: string;
     quantity: number;

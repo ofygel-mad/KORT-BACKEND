@@ -207,7 +207,7 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
   // POST /api/v1/warehouse/items/variant-availability
   // Body: { variants: Array<{ name, color?, size?, gender? }> }
   app.post<{
-    Body: { variants: Array<{ name: string; color?: string; size?: string; gender?: string }> };
+    Body: { variants: Array<{ name: string; color?: string; size?: string; gender?: string; length?: string }> };
   }>('/items/variant-availability', async (req) => {
     return svc.checkVariantAvailability(req.orgId!, req.body.variants ?? []);
   });
